@@ -66,7 +66,7 @@ Convert character stream into token stream.
 
 
 
-*Defined in _lib/Tokenizer.ts:80*
+*Defined in _lib/Tokenizer.ts:95*
 
 
 
@@ -96,7 +96,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:76*
+*Defined in _lib/Tokenizer.ts:91*
 
 
 
@@ -118,7 +118,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:96*
+*Defined in _lib/Tokenizer.ts:111*
 
 
 
@@ -148,7 +148,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:93*
+*Defined in _lib/Tokenizer.ts:108*
 
 
 
@@ -178,7 +178,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:99*
+*Defined in _lib/Tokenizer.ts:114*
 
 
 
@@ -208,7 +208,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:102*
+*Defined in _lib/Tokenizer.ts:117*
 
 
 
@@ -238,7 +238,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:105*
+*Defined in _lib/Tokenizer.ts:120*
 
 
 
@@ -268,7 +268,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:84*
+*Defined in _lib/Tokenizer.ts:99*
 
 
 
@@ -298,7 +298,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:90*
+*Defined in _lib/Tokenizer.ts:105*
 
 
 
@@ -328,7 +328,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:87*
+*Defined in _lib/Tokenizer.ts:102*
 
 
 

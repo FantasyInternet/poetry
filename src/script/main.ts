@@ -1,12 +1,16 @@
 import Tokenizer from "./_lib/Tokenizer"
 import CharReader from "./_lib/CharReader"
 
-async function compileFile(filename: string) {
-  let src = "" + (await fetch(filename)).text()
+//@ts-ignore
+window.compileFile = async function (filename: string) {
+  let src = await (await fetch(filename)).text()
   let tokenizer = new Tokenizer(new CharReader(src))
   let tokens = []
   while (!tokenizer.isEof()) {
-    tokens.push(tokenizer.next())
+    let token = tokenizer.next()
+    console.log(token)
+    tokens.push(token)
   }
+  console.log("dONE!")
   return tokens
 }

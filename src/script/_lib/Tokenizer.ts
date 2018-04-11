@@ -16,11 +16,18 @@ export default class Tokenizer {
       type: "unknown",
       val: ""
     }
-    if (char === "\n") {
+    if (this.charReader.isEof() && this.indents.length > 1) {
+      token.type = "dedent"
+      while (this.indents.length > 1) {
+        this.indents.pop()
+        this.buffer.push(token)
+      }
+      token = this.buffer.shift()
+    } else if (char === "\n") {
       let indentDelta = 0
-      token.type = "newline"
       while (this.charReader.peek() === "\n") {
         this.charReader.next()
+        token.type = "newline"
         token.val = this.readWhile(this.isWhitespace)
       }
       while (this.currentIndent() > token.val.length) {
@@ -47,18 +54,22 @@ export default class Tokenizer {
     } else if (this.isWhitespace(char)) {
       token.type = "whitespace"
       token.val = this.readWhile(this.isWhitespace)
-    } else if (this.isNumberStart(char)) {
-      token.type = "number"
-      token.val = this.charReader.next() + this.readWhile(this.isNumber)
-    } else if (this.isWordStart(char)) {
-      token.type = "word"
-      token.val = this.charReader.next() + this.readWhile(this.isWord)
-    } else if (this.isOperator(char)) {
-      token.type = "operator"
-      token.val = this.readWhile(this.isOperator)
     } else if (this.isPunctuation(char)) {
       token.type = "punctuation"
       token.val = this.charReader.next()
+      this.readWhile(this.isWhitespace)
+    } else if (this.isOperator(char)) {
+      token.type = "operator"
+      token.val = this.readWhile(this.isOperator)
+      this.readWhile(this.isWhitespace)
+    } else if (this.isNumber(char)) {
+      token.type = "number"
+      token.val = this.readWhile(this.isNumber)
+      this.readWhile(this.isWhitespace)
+    } else if (this.isWordStart(char)) {
+      token.type = "word"
+      token.val = this.charReader.next() + this.readWhile(this.isWord)
+      this.readWhile(this.isWhitespace)
     } else if (this.isQuote(char)) {
       token.type = "string"
       token.val = this.charReader.next()
@@ -69,12 +80,16 @@ export default class Tokenizer {
         token.val += this.charReader.next()
       }
       token.val += this.charReader.next()
+      this.readWhile(this.isWhitespace)
+    } else {
+      token.val = this.charReader.next()
+      this.readWhile(this.isWhitespace)
     }
     return token
   }
 
   isEof() {
-    return this.buffer.length > 0 || this.charReader.isEof()
+    return this.charReader.isEof() && this.buffer.length <= 0 && this.indents.length <= 1
   }
 
   error(msg: string) {
@@ -97,7 +112,7 @@ export default class Tokenizer {
     return "0123456789.".includes(str)
   }
   isOperator(str: string) {
-    return "+-*/&%=|<>".includes(str)
+    return "+-*/&%=|<>.".includes(str)
   }
   isPunctuation(str: string) {
     return "()[]{},;".includes(str)
@@ -107,7 +122,7 @@ export default class Tokenizer {
   }
 
   /* _privates */
-  private indents: number[] = []
+  private indents: number[] = [0]
   private buffer: any[] = []
 
   private readWhile(test: Function) {
