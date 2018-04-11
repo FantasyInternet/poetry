@@ -1,7 +1,7 @@
 
 Poetry
 ======
-A programming language.
+A programming language that compiles to WebAssembly.
 
 Made by [codeartistic.ninja](http://the.codeartistic.ninja/)
 
@@ -14,6 +14,9 @@ Follow development of this app [live on Twitch!](https://www.twitch.tv/codeartis
 
 ### External modules
 
+* ["_lib/CharReader"](modules/__lib_charreader_.md)
+* ["_lib/Tokenizer"](modules/__lib_tokenizer_.md)
+* ["main"](modules/_main_.md)
 
 
 

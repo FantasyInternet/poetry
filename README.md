@@ -1,6 +1,6 @@
 Poetry
 ======
-A programming language.
+A programming language that compiles to WebAssembly.
 
 Made by [codeartistic.ninja](http://the.codeartistic.ninja/)
 

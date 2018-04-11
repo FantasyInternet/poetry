@@ -1,27 +1,7 @@
 {
   "name": "poetry",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
-  "build": {
-    "appId": "ninja.codeartistic",
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
-    },
-    "win": {
-      "target": [
-        "nsis",
-        "portable"
-      ]
-    },
-    "mac": {
-      "category": "your.app.category.type"
-    },
-    "directories": {
-      "app": "./build/",
-      "output": "./build-desktop/"
-    }
-  },
   "scripts": {
     "prepublish": "jake",
     "build": "jake",
