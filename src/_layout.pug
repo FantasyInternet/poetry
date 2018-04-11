@@ -1,0 +1,32 @@
+doctype html
+html
+  head
+    meta(charset="utf-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0, user-scalable=no")
+    meta(http-equiv="X-UA-Compatible", content="IE=EmulateIE9")
+    meta(name="theme-color", content="#222")
+    if(title)
+      - title += " - " + appTitle
+    else
+      - title = appTitle
+    title= title
+    meta(name="twitter:card", content="summary")
+    meta(name="twitter:site" content=twitter)
+    meta(name="twitter:title" content=title)
+    meta(name="twitter:description" content=description)
+    meta(name="twitter:creator" content=twitter)
+    meta(name="twitter:image" content=baseUrl+"images/cover.png")
+    meta(property="og:url", content=baseUrl)
+    meta(property="og:title", content=title)
+    meta(property="og:description", content=description)
+    meta(property="og:type", content="game")
+    meta(property="og:image", content=baseUrl+"images/cover.png")
+    link(rel="icon", type="image/png", href="images/icon.png")
+    //link(rel="stylesheet", type="text/css", href="style/defaults.css")
+    link(rel="stylesheet", type="text/css", href="style/style.css")
+    base(target="_blank")
+  body.wide
+    | <!--[if IE]>
+    .noscript Sadly this game doesn't run on Internet Explorer.
+    | <![endif]-->
+    yield

@@ -1,0 +1,30 @@
+@import "_reset";
+
+html {
+  background-color: #666;
+  color:white;
+  overflow: hidden;
+}
+
+fantasy-terminal {
+  //margin: 1em;
+  height:100vh;
+}
+
+textarea {
+  background-color: rgba(0, 0, 0, .5);
+  color:white;
+  display: block;
+  font-family: 'Courier New', Courier, monospace;
+  transition: bottom 1s;
+
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  bottom: -90vh;
+  left: 0;
+  
+  &:focus {
+    bottom: 0;
+  }
+}
