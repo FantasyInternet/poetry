@@ -1,7 +1,7 @@
 ! This is a comment?
 print "some string"
 pset 100 100 red
-JSON.parse ( JSON.stringify obj )
+parse ( stringify obj )
 
 let integer meaning_of_life be 42
 let float pi be 3.14

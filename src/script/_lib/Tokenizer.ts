@@ -27,6 +27,8 @@ export default class Tokenizer {
         this.buffer.push(token)
       }
       token = this.buffer.shift()
+    } else if (this.charReader.isEof()) {
+      return
     } else if (char === "\n") {
       let indentDelta = 0
       while (this.charReader.peek() === "\n") {
@@ -100,12 +102,17 @@ export default class Tokenizer {
     return token
   }
 
+  peek() {
+    if (!this.buffer.length) this.buffer.push(this.next())
+    return this.buffer[0]
+  }
+
   isEof() {
     return this.charReader.isEof() && this.buffer.length === 0 && this.indents.length === 0
   }
 
   error(msg: string) {
-    this.charReader.error(msg)
+    return this.charReader.error(msg)
   }
 
   isWhitespace(str: string) {
@@ -139,20 +146,21 @@ export default class Tokenizer {
     return str !== "\n"
   }
 
+  currentIndent() {
+    return this.indents[this.indents.length - 1] || 0
+  }
+
   /* _privates */
   private indents: number[] = []
   private buffer: any[] = []
 
   private readWhile(test: Function, not: boolean = false) {
     let str = ""
-    while (test(this.charReader.peek()) != not) {
+    while (!this.charReader.isEof() && test(this.charReader.peek()) != not) {
       str += this.charReader.next()
     }
     return str
   }
 
-  private currentIndent() {
-    return this.indents[this.indents.length - 1] || 0
-  }
 
 }

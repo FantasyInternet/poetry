@@ -15,6 +15,7 @@ Follow development of this app [live on Twitch!](https://www.twitch.tv/codeartis
 ### External modules
 
 * ["_lib/CharReader"](modules/__lib_charreader_.md)
+* ["_lib/Parser"](modules/__lib_parser_.md)
 * ["_lib/Tokenizer"](modules/__lib_tokenizer_.md)
 
 
