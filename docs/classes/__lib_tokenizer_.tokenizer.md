@@ -38,7 +38,7 @@ Convert character stream into token stream.
 ### ⊕ **new Tokenizer**(charReader: *[CharReader](__lib_charreader_.charreader.md)*): [Tokenizer](__lib_tokenizer_.tokenizer.md)
 
 
-*Defined in _lib/Tokenizer.ts:6*
+*Defined in [_lib/Tokenizer.ts:6](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L6)*
 
 
 
@@ -66,7 +66,7 @@ Convert character stream into token stream.
 
 
 
-*Defined in _lib/Tokenizer.ts:95*
+*Defined in [_lib/Tokenizer.ts:95](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L95)*
 
 
 
@@ -96,7 +96,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:91*
+*Defined in [_lib/Tokenizer.ts:91](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L91)*
 
 
 
@@ -118,7 +118,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:111*
+*Defined in [_lib/Tokenizer.ts:111](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L111)*
 
 
 
@@ -148,7 +148,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:108*
+*Defined in [_lib/Tokenizer.ts:108](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L108)*
 
 
 
@@ -178,7 +178,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:114*
+*Defined in [_lib/Tokenizer.ts:114](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L114)*
 
 
 
@@ -208,7 +208,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:117*
+*Defined in [_lib/Tokenizer.ts:117](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L117)*
 
 
 
@@ -238,7 +238,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:120*
+*Defined in [_lib/Tokenizer.ts:120](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L120)*
 
 
 
@@ -268,7 +268,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:99*
+*Defined in [_lib/Tokenizer.ts:99](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L99)*
 
 
 
@@ -298,7 +298,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:105*
+*Defined in [_lib/Tokenizer.ts:105](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L105)*
 
 
 
@@ -328,7 +328,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:102*
+*Defined in [_lib/Tokenizer.ts:102](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L102)*
 
 
 
@@ -358,7 +358,7 @@ ___
 
 
 
-*Defined in _lib/Tokenizer.ts:10*
+*Defined in [_lib/Tokenizer.ts:10](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L10)*
 
 
 

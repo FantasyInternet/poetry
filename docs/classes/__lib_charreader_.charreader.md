@@ -39,7 +39,7 @@ Character reader for reading strings one character at a time.
 ### ⊕ **new CharReader**(src: *`string`*): [CharReader](__lib_charreader_.charreader.md)
 
 
-*Defined in _lib/CharReader.ts:7*
+*Defined in [_lib/CharReader.ts:7](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/CharReader.ts#L7)*
 
 
 
@@ -65,7 +65,7 @@ Character reader for reading strings one character at a time.
 
 **●  column**:  *`number`*  = 0
 
-*Defined in _lib/CharReader.ts:7*
+*Defined in [_lib/CharReader.ts:7](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/CharReader.ts#L7)*
 
 
 
@@ -79,7 +79,7 @@ ___
 
 **●  line**:  *`number`*  = 1
 
-*Defined in _lib/CharReader.ts:6*
+*Defined in [_lib/CharReader.ts:6](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/CharReader.ts#L6)*
 
 
 
@@ -93,7 +93,7 @@ ___
 
 **●  pos**:  *`number`*  = 0
 
-*Defined in _lib/CharReader.ts:5*
+*Defined in [_lib/CharReader.ts:5](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/CharReader.ts#L5)*
 
 
 
@@ -107,7 +107,7 @@ ___
 
 **●  src**:  *`string`* 
 
-*Defined in _lib/CharReader.ts:9*
+*Defined in [_lib/CharReader.ts:9](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/CharReader.ts#L9)*
 
 
 
@@ -125,7 +125,7 @@ ___
 
 
 
-*Defined in _lib/CharReader.ts:32*
+*Defined in [_lib/CharReader.ts:32](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/CharReader.ts#L32)*
 
 
 
@@ -155,7 +155,7 @@ ___
 
 
 
-*Defined in _lib/CharReader.ts:28*
+*Defined in [_lib/CharReader.ts:28](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/CharReader.ts#L28)*
 
 
 
@@ -177,7 +177,7 @@ ___
 
 
 
-*Defined in _lib/CharReader.ts:13*
+*Defined in [_lib/CharReader.ts:13](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/CharReader.ts#L13)*
 
 
 
@@ -199,7 +199,7 @@ ___
 
 
 
-*Defined in _lib/CharReader.ts:24*
+*Defined in [_lib/CharReader.ts:24](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/CharReader.ts#L24)*
 
 
 

@@ -16,9 +16,9 @@ export default class Tokenizer {
       type: "unknown",
       val: ""
     }
-    if (this.charReader.isEof() && this.indents.length > 1) {
-      token.type = "dedent"
-      while (this.indents.length > 1) {
+    if (this.charReader.isEof() && this.indents.length) {
+      token.type = "outdent"
+      while (this.indents.length) {
         this.indents.pop()
         this.buffer.push(token)
       }
@@ -45,7 +45,7 @@ export default class Tokenizer {
           indentDelta--
         }
         while (indentDelta < 0) {
-          token.type = "dedent"
+          token.type = "outdent"
           this.buffer.push(token)
           indentDelta++
         }
@@ -89,7 +89,7 @@ export default class Tokenizer {
   }
 
   isEof() {
-    return this.charReader.isEof() && this.buffer.length <= 0 && this.indents.length <= 1
+    return this.charReader.isEof() && this.buffer.length === 0 && this.indents.length === 0
   }
 
   error(msg: string) {
@@ -122,7 +122,7 @@ export default class Tokenizer {
   }
 
   /* _privates */
-  private indents: number[] = [0]
+  private indents: number[] = []
   private buffer: any[] = []
 
   private readWhile(test: Function) {
@@ -134,7 +134,7 @@ export default class Tokenizer {
   }
 
   private currentIndent() {
-    return this.indents[this.indents.length - 1]
+    return this.indents[this.indents.length - 1] || 0
   }
 
 }
