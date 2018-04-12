@@ -4,6 +4,10 @@ import CharReader from "./CharReader"
  * Convert character stream into token stream.
  */
 export default class Tokenizer {
+  keywords: string[] = ["if", "else", "function", "let", "while", "for", "in",
+    "is", "isnt", "be", "return", "true", "false", "null", "class",
+    "constructor", "integer", "float", "boolean", "string"]
+
   constructor(private charReader: CharReader) {
   }
 
@@ -54,6 +58,9 @@ export default class Tokenizer {
     } else if (this.isWhitespace(char)) {
       token.type = "whitespace"
       token.val = this.readWhile(this.isWhitespace)
+    } else if (this.isCommentStart(char)) {
+      token.type = "comment"
+      token.val = this.readWhile(this.isComment)
     } else if (this.isPunctuation(char)) {
       token.type = "punctuation"
       token.val = this.charReader.next()
@@ -69,6 +76,11 @@ export default class Tokenizer {
     } else if (this.isWordStart(char)) {
       token.type = "word"
       token.val = this.charReader.next() + this.readWhile(this.isWord)
+      if (this.keywords.indexOf(token.val) >= 0) {
+        token.type = "keyword"
+      } else {
+        token.type = "name"
+      }
       this.readWhile(this.isWhitespace)
     } else if (this.isQuote(char)) {
       token.type = "string"
@@ -120,14 +132,20 @@ export default class Tokenizer {
   isQuote(str: string) {
     return "\"".includes(str)
   }
+  isCommentStart(str: string) {
+    return str === "!"
+  }
+  isComment(str: string) {
+    return str !== "\n"
+  }
 
   /* _privates */
   private indents: number[] = []
   private buffer: any[] = []
 
-  private readWhile(test: Function) {
+  private readWhile(test: Function, not: boolean = false) {
     let str = ""
-    while (test(this.charReader.peek())) {
+    while (test(this.charReader.peek()) != not) {
       str += this.charReader.next()
     }
     return str
