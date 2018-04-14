@@ -14,11 +14,6 @@ Converting token stream into syntax tree.
 * [constructor](__lib_parser_.parser.md#constructor)
 
 
-### Properties
-
-* [flowControl](__lib_parser_.parser.md#flowcontrol)
-
-
 ### Methods
 
 * [error](__lib_parser_.parser.md#error)
@@ -37,7 +32,7 @@ Converting token stream into syntax tree.
 ### ⊕ **new Parser**(tokenizer: *[Tokenizer](__lib_tokenizer_.tokenizer.md)*): [Parser](__lib_parser_.parser.md)
 
 
-*Defined in _lib/Parser.ts:7*
+*Defined in [_lib/Parser.ts:6](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Parser.ts#L6)*
 
 
 
@@ -56,22 +51,6 @@ Converting token stream into syntax tree.
 ---
 
 
-## Properties
-<a id="flowcontrol"></a>
-
-###  flowControl
-
-**●  flowControl**:  *`string`[]*  =  ["if", "else", "while", "for", "function", "class", "constructor"]
-
-*Defined in _lib/Parser.ts:7*
-
-
-
-
-
-___
-
-
 ## Methods
 <a id="error"></a>
 
@@ -81,7 +60,7 @@ ___
 
 
 
-*Defined in _lib/Parser.ts:95*
+*Defined in [_lib/Parser.ts:98](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Parser.ts#L98)*
 
 
 
@@ -111,7 +90,7 @@ ___
 
 
 
-*Defined in _lib/Parser.ts:91*
+*Defined in [_lib/Parser.ts:94](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Parser.ts#L94)*
 
 
 
@@ -133,7 +112,7 @@ ___
 
 
 
-*Defined in _lib/Parser.ts:100*
+*Defined in [_lib/Parser.ts:103](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Parser.ts#L103)*
 
 
 
@@ -163,7 +142,7 @@ ___
 
 
 
-*Defined in _lib/Parser.ts:64*
+*Defined in [_lib/Parser.ts:64](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Parser.ts#L64)*
 
 
 
@@ -185,7 +164,7 @@ ___
 
 
 
-*Defined in _lib/Parser.ts:12*
+*Defined in [_lib/Parser.ts:11](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Parser.ts#L11)*
 
 
 

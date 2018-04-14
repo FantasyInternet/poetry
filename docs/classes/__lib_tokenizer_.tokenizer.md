@@ -16,6 +16,7 @@ Convert character stream into token stream.
 
 ### Properties
 
+* [flowControl](__lib_tokenizer_.tokenizer.md#flowcontrol)
 * [keywords](__lib_tokenizer_.tokenizer.md#keywords)
 
 
@@ -47,7 +48,7 @@ Convert character stream into token stream.
 ### ⊕ **new Tokenizer**(charReader: *[CharReader](__lib_charreader_.charreader.md)*): [Tokenizer](__lib_tokenizer_.tokenizer.md)
 
 
-*Defined in [_lib/Tokenizer.ts:9](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L9)*
+*Defined in [_lib/Tokenizer.ts:10](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L10)*
 
 
 
@@ -67,6 +68,20 @@ Convert character stream into token stream.
 
 
 ## Properties
+<a id="flowcontrol"></a>
+
+###  flowControl
+
+**●  flowControl**:  *`string`[]*  =  ["if", "else", "while", "for", "function", "class", "constructor"]
+
+*Defined in [_lib/Tokenizer.ts:10](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L10)*
+
+
+
+
+
+___
+
 <a id="keywords"></a>
 
 ###  keywords
@@ -93,7 +108,7 @@ ___
 
 
 
-*Defined in [_lib/Tokenizer.ts:149](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L149)*
+*Defined in [_lib/Tokenizer.ts:181](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L181)*
 
 
 
@@ -115,7 +130,7 @@ ___
 
 
 
-*Defined in [_lib/Tokenizer.ts:114](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L114)*
+*Defined in [_lib/Tokenizer.ts:146](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L146)*
 
 
 
@@ -145,7 +160,7 @@ ___
 
 
 
-*Defined in [_lib/Tokenizer.ts:145](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L145)*
+*Defined in [_lib/Tokenizer.ts:177](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L177)*
 
 
 
@@ -175,7 +190,7 @@ ___
 
 
 
-*Defined in [_lib/Tokenizer.ts:142](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L142)*
+*Defined in [_lib/Tokenizer.ts:174](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L174)*
 
 
 
@@ -205,7 +220,7 @@ ___
 
 
 
-*Defined in [_lib/Tokenizer.ts:110](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L110)*
+*Defined in [_lib/Tokenizer.ts:142](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L142)*
 
 
 
@@ -227,7 +242,7 @@ ___
 
 
 
-*Defined in [_lib/Tokenizer.ts:130](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L130)*
+*Defined in [_lib/Tokenizer.ts:162](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L162)*
 
 
 
@@ -257,7 +272,7 @@ ___
 
 
 
-*Defined in [_lib/Tokenizer.ts:127](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L127)*
+*Defined in [_lib/Tokenizer.ts:159](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L159)*
 
 
 
@@ -287,7 +302,7 @@ ___
 
 
 
-*Defined in [_lib/Tokenizer.ts:133](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L133)*
+*Defined in [_lib/Tokenizer.ts:165](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L165)*
 
 
 
@@ -317,7 +332,7 @@ ___
 
 
 
-*Defined in [_lib/Tokenizer.ts:136](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L136)*
+*Defined in [_lib/Tokenizer.ts:168](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L168)*
 
 
 
@@ -347,7 +362,7 @@ ___
 
 
 
-*Defined in [_lib/Tokenizer.ts:139](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L139)*
+*Defined in [_lib/Tokenizer.ts:171](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L171)*
 
 
 
@@ -377,7 +392,7 @@ ___
 
 
 
-*Defined in [_lib/Tokenizer.ts:118](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L118)*
+*Defined in [_lib/Tokenizer.ts:150](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L150)*
 
 
 
@@ -407,7 +422,7 @@ ___
 
 
 
-*Defined in [_lib/Tokenizer.ts:124](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L124)*
+*Defined in [_lib/Tokenizer.ts:156](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L156)*
 
 
 
@@ -437,7 +452,7 @@ ___
 
 
 
-*Defined in [_lib/Tokenizer.ts:121](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L121)*
+*Defined in [_lib/Tokenizer.ts:153](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L153)*
 
 
 
@@ -467,7 +482,7 @@ ___
 
 
 
-*Defined in [_lib/Tokenizer.ts:14](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L14)*
+*Defined in [_lib/Tokenizer.ts:15](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L15)*
 
 
 
@@ -489,7 +504,7 @@ ___
 
 
 
-*Defined in [_lib/Tokenizer.ts:105](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L105)*
+*Defined in [_lib/Tokenizer.ts:136](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L136)*
 
 
 

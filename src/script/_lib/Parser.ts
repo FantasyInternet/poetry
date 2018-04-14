@@ -4,7 +4,6 @@ import Tokenizer from "./Tokenizer"
  * Converting token stream into syntax tree.
  */
 export default class Parser {
-  flowControl: string[] = ["if", "else", "while", "for", "function", "class", "constructor"]
 
   constructor(private tokenizer: Tokenizer) {
   }
@@ -14,50 +13,51 @@ export default class Parser {
       type: "statement",
       tokens: []
     }
-    let hasBlock = false
+    //let hasBlock = false
     let end = false
     let indents = 0
     while (!end) {
       end = this.tokenizer.isEof()
       let token = this.tokenizer.peek()
-      console.log(token)
       if (!token) {
         end = true
       } else if (token.type === "indent") {
         this.tokenizer.next()
-        if (hasBlock) {
-          statement.tokens.push(this.nextBlock())
-          let token = this.tokenizer.peek()
-          if (token && token.type !== "outdent") this.error(`unexpected token`)
-        } else {
+        //if (hasBlock) {
+        //  hasBlock = false
+        statement.tokens.push(this.nextBlock())
+        let token = this.tokenizer.next()
+        if (token && token.type !== "outdent") this.error(`1unexpected token '${token.val}'`)
+        /*} else {
           indents++
-        }
-      } else if (token.type === "outdent") {
-        if (--indents === 0) {
-          end = true
-        } else {
-          this.tokenizer.next()
-        }
+        }*/
+        /*} else if (token.type === "outdent") {
+          if (--indents <= 0) {
+            end = true
+          } else {
+            this.tokenizer.next()
+          }*/
       } else if (token.type === "newline") {
-        if (indents === 0) {
-          end = true
-        } else {
-          this.tokenizer.next()
-        }
+        //if (indents <= 0) {
+        end = true
+        //} else {
+        //this.tokenizer.next()
+        //}
       } else if (token.type === "punctuation" && token.val === "(") {
         this.tokenizer.next()
         statement.tokens.push(this.nextStatement())
         let token = this.tokenizer.next()
-        if (token && token.val !== ")") this.error(`unexpected token`)
+        if (token && token.val !== ")") this.error(`2unexpected token '${token.val}'`)
       } else if (token.type === "punctuation" && token.val === ")") {
         end = true
       } else {
         statement.tokens.push(this.tokenizer.next())
-        if (statement.tokens.length === 1 && statement.tokens[0].type === "keyword" && this.flowControl.indexOf(statement.tokens[0].val) >= 0) {
+        /*if (statement.tokens.length === 1 && statement.tokens[0].type === "keyword" && this.flowControl.indexOf(statement.tokens[0].val) >= 0) {
           hasBlock = true
-        }
+        }*/
       }
     }
+    console.log(statement)
     return statement
   }
 
@@ -66,23 +66,26 @@ export default class Parser {
       type: "block",
       statements: []
     }
+    let baseIndent = this.tokenizer.currentIndent()
     let end = false
     while (!end) {
       end = this.tokenizer.isEof()
       let token = this.tokenizer.peek()
       if (!token) {
         end = true
-      } else if (token.type === "indent") {
-        this.tokenizer.next()
-        block.statements.push(this.nextBlock())
-        let token = this.tokenizer.next()
-        if (token && token.type !== "outdent") this.error(`unexpected token`)
+        /*} else if (token.type === "indent") {
+          this.tokenizer.next()
+          block.statements.push(this.nextBlock())
+          let token = this.tokenizer.next()
+          if (token && token.type !== "outdent") this.error(`3unexpected token '${token.val}'`)*/
       } else if (token.type === "outdent") {
         end = true
       } else {
         block.statements.push(this.nextStatement())
         let token = this.tokenizer.next()
-        if (token && token.type !== "outdent" && token.type !== "newline") this.error(`unexpected token`)
+        if (token && token.type !== "newline") this.error(`4unexpected token '${token.val.trim() || token.type}'`)
+        //if (token.type === "outdent") end = true
+        //if (token.type === "newline") this.tokenizer.next()
       }
     }
     return block
@@ -108,20 +111,5 @@ export default class Parser {
   }
 
   /* _privates */
-  private readWhile(test: Function, not: boolean = false) {
-    let tokens: any[] = []
-    while (test(this.tokenizer.peek()) != not) {
-      tokens.push(this.tokenizer.next())
-    }
-    return tokens
-  }
 
-  private readStatement() {
-    let tokens: any[] = []
-    let baseIndent = this.tokenizer.currentIndent()
-    do {
-      tokens.concat(...this.readWhile((token: any) => { return token.type === "newline" || token.type === "outdent" }, true))
-    } while (baseIndent !== this.tokenizer.currentIndent())
-    return tokens
-  }
 }

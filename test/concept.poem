@@ -9,7 +9,9 @@ let string name be "John"
 let boolean married be false
 let string[] friends be
   "Alice"
-  "Bob"
+    "Bob"
+  "Carol"
+    "Daniel"
 
 print "Hello! my name is $name"
 for friend in friends
@@ -29,9 +31,11 @@ class Person
   let string last_name be "Doe"
 
   constructor name
-    let string[] names be (split name " ")
+    let string[] names
+      be (split name " ")
     let first_name be names[0]
-    let last_name be names[1]
+    let last_name
+      be names[1]
   
   function full_name
     return "$first_name $last_name"
