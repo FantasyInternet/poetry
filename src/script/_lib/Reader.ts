@@ -1,7 +1,7 @@
 /**
  * Character reader for reading strings one character at a time.
  */
-export default class CharReader {
+export default class Reader {
   pos: number = 0
   line: number = 1
   column: number = 0

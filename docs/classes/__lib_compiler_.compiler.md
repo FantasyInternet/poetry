@@ -28,7 +28,7 @@ Converting syntax tree into wast
 ### ⊕ **new Compiler**(parser: *[Parser](__lib_parser_.parser.md)*): [Compiler](__lib_compiler_.compiler.md)
 
 
-*Defined in _lib/Compiler.ts:6*
+*Defined in [_lib/Compiler.ts:6](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Compiler.ts#L6)*
 
 
 
@@ -56,7 +56,7 @@ Converting syntax tree into wast
 
 
 
-*Defined in _lib/Compiler.ts:10*
+*Defined in [_lib/Compiler.ts:10](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Compiler.ts#L10)*
 
 
 

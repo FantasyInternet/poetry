@@ -1,4 +1,4 @@
-import CharReader from "./CharReader"
+import Reader from "./Reader"
 
 /**
  * Convert character stream into token stream.
@@ -9,7 +9,7 @@ export default class Tokenizer {
     "constructor", "integer", "float", "boolean", "string"]
   flowControl: string[] = ["if", "else", "while", "for", "function", "class", "constructor"]
 
-  constructor(private charReader: CharReader) {
+  constructor(private charReader: Reader) {
   }
 
   next() {
@@ -22,19 +22,18 @@ export default class Tokenizer {
       val: ""
     }
     if (this.charReader.isEof() && this.indents.length) {
-      token.type = "outdent"
       while (this.indents.length) {
         this.indents.pop()
-        this.buffer.push(this.nlToken)
-        this.buffer.push(token)
+        this.buffer.push(this.eolToken)
+        //this.buffer.push(token)
       }
-      this.buffer.push(this.nlToken)
+      //this.buffer.push(this.nlToken)
       token = this.buffer.shift()
     } else if (this.charReader.isEof()) {
       return
     } else if (char === "\n") {
+      token.type = "line"
       let indentDelta = 0
-      token.type = "newline"
       while (this.charReader.peek() === "\n") {
         this.charReader.next()
         token.val = this.readWhile(this.isWhitespace)
@@ -50,18 +49,16 @@ export default class Tokenizer {
           indentDelta++
         }
         if (indentDelta !== 0) {
-          while (indentDelta > 0) {
+          /*while (indentDelta > 0) {
             token.type = "indent"
             this.buffer.push(token)
             indentDelta--
-          }
-          while (indentDelta < 0) {
-            token.type = "outdent"
-            this.buffer.push(this.nlToken)
-            this.buffer.push(token)
+          }*/
+          while (indentDelta <= 0) {
+            this.buffer.push(this.eolToken)
             indentDelta++
           }
-          this.buffer.push(this.nlToken)
+          this.buffer.push(token)
           token = this.next()
         }
       } else {
@@ -72,11 +69,11 @@ export default class Tokenizer {
           if (token.val.length < this.currentIndent()) {
             while (this.currentIndent() > token.val.length) {
               this.indents.pop()
-              token.type = "outdent"
-              this.buffer.push(this.nlToken)
-              this.buffer.push(token)
+              //token.type = "outdent"
+              this.buffer.push(this.eolToken)
+              //this.buffer.push(token)
             }
-            this.buffer.push(this.nlToken)
+            //this.buffer.push(this.nlToken)
             token = this.next()
           }
         }
@@ -186,7 +183,8 @@ export default class Tokenizer {
   private indents: number[] = []
   private buffer: any[] = []
   private expectBlock: number = 0
-  private nlToken: any = { type: "newline", val: "" }
+  private eolToken: any = { type: "/line", val: "\n" }
+  //private nlToken: any = { type: "newline", val: "" }
 
   private readWhile(test: Function, not: boolean = false) {
     let str = ""

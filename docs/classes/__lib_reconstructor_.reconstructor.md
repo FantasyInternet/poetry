@@ -29,7 +29,7 @@ Reconstruct original source code from parser tree.
 ### ⊕ **new Reconstructor**(): [Reconstructor](__lib_reconstructor_.reconstructor.md)
 
 
-*Defined in _lib/Reconstructor.ts:7*
+*Defined in [_lib/Reconstructor.ts:7](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Reconstructor.ts#L7)*
 
 
 
@@ -49,7 +49,7 @@ Reconstruct original source code from parser tree.
 
 
 
-*Defined in _lib/Reconstructor.ts:31*
+*Defined in [_lib/Reconstructor.ts:31](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Reconstructor.ts#L31)*
 
 
 
@@ -79,7 +79,7 @@ ___
 
 
 
-*Defined in _lib/Reconstructor.ts:11*
+*Defined in [_lib/Reconstructor.ts:11](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Reconstructor.ts#L11)*
 
 
 
