@@ -1,11 +1,12 @@
 [poetry](../README.md) > ["_lib/Tokenizer"](../modules/__lib_tokenizer_.md) > [Tokenizer](../classes/__lib_tokenizer_.tokenizer.md)
 
-
-
 # Class: Tokenizer
 
-
 Convert character stream into token stream.
+
+## Hierarchy
+
+**Tokenizer**
 
 ## Index
 
@@ -13,12 +14,10 @@ Convert character stream into token stream.
 
 * [constructor](__lib_tokenizer_.tokenizer.md#constructor)
 
-
 ### Properties
 
 * [flowControl](__lib_tokenizer_.tokenizer.md#flowcontrol)
 * [keywords](__lib_tokenizer_.tokenizer.md#keywords)
-
 
 ### Methods
 
@@ -38,484 +37,282 @@ Convert character stream into token stream.
 * [next](__lib_tokenizer_.tokenizer.md#next)
 * [peek](__lib_tokenizer_.tokenizer.md#peek)
 
-
-
 ---
+
 ## Constructors
+
 <a id="constructor"></a>
 
+###  constructor
 
-### ⊕ **new Tokenizer**(charReader: *[Reader](__lib_reader_.reader.md)*): [Tokenizer](__lib_tokenizer_.tokenizer.md)
-
+⊕ **new Tokenizer**(charReader: *[Reader](__lib_reader_.reader.md)*): [Tokenizer](__lib_tokenizer_.tokenizer.md)
 
 *Defined in [_lib/Tokenizer.ts:10](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L10)*
 
-
-
 **Parameters:**
 
-| Param | Type | Description |
-| ------ | ------ | ------ |
-| charReader | [Reader](__lib_reader_.reader.md)   |  - |
-
-
-
-
+| Param | Type |
+| ------ | ------ |
+| charReader | [Reader](__lib_reader_.reader.md) |
 
 **Returns:** [Tokenizer](__lib_tokenizer_.tokenizer.md)
 
----
-
+___
 
 ## Properties
+
 <a id="flowcontrol"></a>
 
 ###  flowControl
 
-**●  flowControl**:  *`string`[]*  =  ["if", "else", "while", "for", "function", "class", "constructor"]
+**● flowControl**: *`string`[]* =  ["if", "else", "while", "for", "function", "class", "constructor"]
 
 *Defined in [_lib/Tokenizer.ts:10](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L10)*
 
-
-
-
-
 ___
-
 <a id="keywords"></a>
 
 ###  keywords
 
-**●  keywords**:  *`string`[]*  =  ["if", "else", "function", "let", "while", "for", "in",
+**● keywords**: *`string`[]* =  ["if", "else", "function", "let", "while", "for", "in",
     "is", "isnt", "be", "return", "true", "false", "null", "class",
     "constructor", "integer", "float", "boolean", "string"]
 
 *Defined in [_lib/Tokenizer.ts:7](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L7)*
 
-
-
-
-
 ___
 
-
 ## Methods
+
 <a id="currentindent"></a>
 
 ###  currentIndent
 
-► **currentIndent**(): `number`
-
-
+▸ **currentIndent**(): `number`
 
 *Defined in [_lib/Tokenizer.ts:178](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L178)*
 
-
-
-
-
 **Returns:** `number`
 
-
-
-
-
 ___
-
 <a id="error"></a>
 
 ###  error
 
-► **error**(msg: *`string`*): `void`
-
-
+▸ **error**(msg: *`string`*): `void`
 
 *Defined in [_lib/Tokenizer.ts:143](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L143)*
 
-
-
 **Parameters:**
 
-| Param | Type | Description |
-| ------ | ------ | ------ |
-| msg | `string`   |  - |
-
-
-
-
+| Param | Type |
+| ------ | ------ |
+| msg | `string` |
 
 **Returns:** `void`
 
-
-
-
-
 ___
-
 <a id="iscomment"></a>
 
 ###  isComment
 
-► **isComment**(str: *`string`*): `boolean`
-
-
+▸ **isComment**(str: *`string`*): `boolean`
 
 *Defined in [_lib/Tokenizer.ts:174](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L174)*
 
-
-
 **Parameters:**
 
-| Param | Type | Description |
-| ------ | ------ | ------ |
-| str | `string`   |  - |
-
-
-
-
+| Param | Type |
+| ------ | ------ |
+| str | `string` |
 
 **Returns:** `boolean`
 
-
-
-
-
 ___
-
 <a id="iscommentstart"></a>
 
 ###  isCommentStart
 
-► **isCommentStart**(str: *`string`*): `boolean`
-
-
+▸ **isCommentStart**(str: *`string`*): `boolean`
 
 *Defined in [_lib/Tokenizer.ts:171](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L171)*
 
-
-
 **Parameters:**
 
-| Param | Type | Description |
-| ------ | ------ | ------ |
-| str | `string`   |  - |
-
-
-
-
+| Param | Type |
+| ------ | ------ |
+| str | `string` |
 
 **Returns:** `boolean`
 
-
-
-
-
 ___
-
 <a id="iseof"></a>
 
 ###  isEof
 
-► **isEof**(): `boolean`
-
-
+▸ **isEof**(): `boolean`
 
 *Defined in [_lib/Tokenizer.ts:139](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L139)*
 
-
-
-
-
 **Returns:** `boolean`
 
-
-
-
-
 ___
-
 <a id="isnumber"></a>
 
 ###  isNumber
 
-► **isNumber**(str: *`string`*): `boolean`
-
-
+▸ **isNumber**(str: *`string`*): `boolean`
 
 *Defined in [_lib/Tokenizer.ts:159](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L159)*
 
-
-
 **Parameters:**
 
-| Param | Type | Description |
-| ------ | ------ | ------ |
-| str | `string`   |  - |
-
-
-
-
+| Param | Type |
+| ------ | ------ |
+| str | `string` |
 
 **Returns:** `boolean`
 
-
-
-
-
 ___
-
 <a id="isnumberstart"></a>
 
 ###  isNumberStart
 
-► **isNumberStart**(str: *`string`*): `boolean`
-
-
+▸ **isNumberStart**(str: *`string`*): `boolean`
 
 *Defined in [_lib/Tokenizer.ts:156](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L156)*
 
-
-
 **Parameters:**
 
-| Param | Type | Description |
-| ------ | ------ | ------ |
-| str | `string`   |  - |
-
-
-
-
+| Param | Type |
+| ------ | ------ |
+| str | `string` |
 
 **Returns:** `boolean`
 
-
-
-
-
 ___
-
 <a id="isoperator"></a>
 
 ###  isOperator
 
-► **isOperator**(str: *`string`*): `boolean`
-
-
+▸ **isOperator**(str: *`string`*): `boolean`
 
 *Defined in [_lib/Tokenizer.ts:162](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L162)*
 
-
-
 **Parameters:**
 
-| Param | Type | Description |
-| ------ | ------ | ------ |
-| str | `string`   |  - |
-
-
-
-
+| Param | Type |
+| ------ | ------ |
+| str | `string` |
 
 **Returns:** `boolean`
 
-
-
-
-
 ___
-
 <a id="ispunctuation"></a>
 
 ###  isPunctuation
 
-► **isPunctuation**(str: *`string`*): `boolean`
-
-
+▸ **isPunctuation**(str: *`string`*): `boolean`
 
 *Defined in [_lib/Tokenizer.ts:165](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L165)*
 
-
-
 **Parameters:**
 
-| Param | Type | Description |
-| ------ | ------ | ------ |
-| str | `string`   |  - |
-
-
-
-
+| Param | Type |
+| ------ | ------ |
+| str | `string` |
 
 **Returns:** `boolean`
 
-
-
-
-
 ___
-
 <a id="isquote"></a>
 
 ###  isQuote
 
-► **isQuote**(str: *`string`*): `boolean`
-
-
+▸ **isQuote**(str: *`string`*): `boolean`
 
 *Defined in [_lib/Tokenizer.ts:168](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L168)*
 
-
-
 **Parameters:**
 
-| Param | Type | Description |
-| ------ | ------ | ------ |
-| str | `string`   |  - |
-
-
-
-
+| Param | Type |
+| ------ | ------ |
+| str | `string` |
 
 **Returns:** `boolean`
 
-
-
-
-
 ___
-
 <a id="iswhitespace"></a>
 
 ###  isWhitespace
 
-► **isWhitespace**(str: *`string`*): `boolean`
-
-
+▸ **isWhitespace**(str: *`string`*): `boolean`
 
 *Defined in [_lib/Tokenizer.ts:147](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L147)*
 
-
-
 **Parameters:**
 
-| Param | Type | Description |
-| ------ | ------ | ------ |
-| str | `string`   |  - |
-
-
-
-
+| Param | Type |
+| ------ | ------ |
+| str | `string` |
 
 **Returns:** `boolean`
 
-
-
-
-
 ___
-
 <a id="isword"></a>
 
 ###  isWord
 
-► **isWord**(str: *`string`*): `boolean`
-
-
+▸ **isWord**(str: *`string`*): `boolean`
 
 *Defined in [_lib/Tokenizer.ts:153](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L153)*
 
-
-
 **Parameters:**
 
-| Param | Type | Description |
-| ------ | ------ | ------ |
-| str | `string`   |  - |
-
-
-
-
+| Param | Type |
+| ------ | ------ |
+| str | `string` |
 
 **Returns:** `boolean`
 
-
-
-
-
 ___
-
 <a id="iswordstart"></a>
 
 ###  isWordStart
 
-► **isWordStart**(str: *`string`*): `boolean`
-
-
+▸ **isWordStart**(str: *`string`*): `boolean`
 
 *Defined in [_lib/Tokenizer.ts:150](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L150)*
 
-
-
 **Parameters:**
 
-| Param | Type | Description |
-| ------ | ------ | ------ |
-| str | `string`   |  - |
-
-
-
-
+| Param | Type |
+| ------ | ------ |
+| str | `string` |
 
 **Returns:** `boolean`
 
-
-
-
-
 ___
-
 <a id="next"></a>
 
 ###  next
 
-► **next**(): `any`
-
-
+▸ **next**(): `any`
 
 *Defined in [_lib/Tokenizer.ts:15](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L15)*
 
-
-
-
-
 **Returns:** `any`
 
-
-
-
-
 ___
-
 <a id="peek"></a>
 
 ###  peek
 
-► **peek**(): `any`
-
-
+▸ **peek**(): `any`
 
 *Defined in [_lib/Tokenizer.ts:133](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Tokenizer.ts#L133)*
 
-
-
-
-
 **Returns:** `any`
 
-
-
-
-
 ___
-
 
