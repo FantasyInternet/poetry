@@ -13,8 +13,7 @@ let os = require("os"),
   browserify = require("browserify"),
   tsify = require("tsify"),
   jsmin = require("jsmin").jsmin,
-  walt = require("walt-compiler").default,
-  wabt = require("wabt"),
+  asc = require("assemblyscript"),
   FtpClient = require("ftp"),
   md5 = require("md5")
 
@@ -22,7 +21,7 @@ let os = require("os"),
 * Jakefile.js
 * For building web apps
 *
-* @date 10-apr-2018
+* @date 12-jul-2018
 */
 let srcDir = "./src/",
   outDir = "./build/",
@@ -32,7 +31,7 @@ let srcDir = "./src/",
   reloadServer,
   watchThrottle = {}
 
-task("default", ["clean", "html:pug", "html:md", "css:less", "js:ts", "wasm:walt", "wasm:wast", "static:json", "static:all"])
+task("default", ["clean", "html:pug", "html:md", "css:less", "js:ts", "wasm:asc", "static:json", "static:all"])
 
 task("watch", function () {
   http.get("http://localhost:8000/").on("error", function () { })
@@ -42,8 +41,7 @@ task("watch", function () {
   startWatching(".md", "html:md")
   startWatching(".less", "css:less")
   startWatching(".ts", "js:ts")
-  startWatching(".walt", "wasm:walt")
-  startWatching(".wast", "wasm:wast")
+  startWatching(".wasm.ts", "wasm:asc")
   startWatching(".json", "static:json")
   startWatching("", "static:all")
 
@@ -143,6 +141,16 @@ task("clean", function () {
   excludeIgnoredFiles(files).forEach(function (file) {
     jake.rmRf(file)
   })
+  if (fs.existsSync("./.git/hooks")) {
+    let hooks = ["applypatch-msg", "post-update", "prepare-commit-msg", "pre-receive",
+      "commit-msg", "pre-applypatch", "pre-push", "update",
+      "fsmonitor-watchman", "pre-commit", "pre-rebase"]
+    for (let hook of hooks) {
+      if (fs.existsSync("./" + hook)) {
+        jake.cpR("./" + hook, "./.git/hooks/" + hook)
+      }
+    }
+  }
   console.log("...dONE!")
 })
 
@@ -253,7 +261,7 @@ namespace("js", function () {
 
   task("ts", { async: true }, function () {
     console.log("\nCompiling TypeScript...")
-    let filesLeft = fileTypeList(".ts").length
+    let filesLeft = fileTypeList([".ts", "!.wasm.ts"]).length
     if (!filesLeft) { console.log("...dONE!"); complete(); }
     fileTypeList(".ts").forEach(function (inFile) {
       let outFile = outputFile(inFile, ".js")
@@ -267,7 +275,7 @@ namespace("js", function () {
             fail("\u0007TypeScript err!\t" + err)
           } else {
             let output = "" + buf
-            if (!debug) { output = jsmin(output); }
+            if (!debug) { output = jsmin(output) }
             jake.mkdirP(path.dirname(outFile))
             fs.writeFileSync(outFile, output)
             if (--filesLeft <= 0) {
@@ -284,33 +292,23 @@ namespace("js", function () {
 })
 
 namespace("wasm", function () {
-  let wabt_opts = {
-
+  let asc_opts = {
+    target: asc.CompilerTarget.WASM32,
+    silent: true
   }
-
-  task("wast", function () {
-    console.log("\nCompiling Wast...")
-    fileTypeList([".wast", ".wat"]).forEach(function (inFile) {
+  task("asc", function () {
+    console.log("\nCompiling AssemblyScript...")
+    fileTypeList(".wasm.ts").forEach(function (inFile) {
       let outFile = outputFile(inFile, ".wasm"),
-        output = "" + fs.readFileSync(inFile)
+        output = "" //+ fs.readFileSync(inFile)
       console.log(inFile, "->", outFile)
 
-      let module = wabt.parseWat(inFile, output)
-      output = module.toBinary(wabt_opts).buffer
-
-      jake.mkdirP(path.dirname(outFile))
-      fs.writeFileSync(outFile, new Uint8Array(output))
-    })
-    console.log("...dONE!")
-  })
-  task("walt", function () {
-    console.log("\nCompiling Walt...")
-    fileTypeList(".walt").forEach(function (inFile) {
-      let outFile = outputFile(inFile, ".wasm"),
-        output = "" + fs.readFileSync(inFile)
-      console.log(inFile, "->", outFile)
-
-      output = walt(output)
+      let module = asc.Compiler.compileFile(inFile, asc_opts)
+      console.error(asc.typescript.formatDiagnosticsWithColorAndContextEx(asc.Compiler.lastDiagnostics))
+      if (!module) fail("compile err!")
+      module.optimize()
+      if (!module.validate()) fail("validation err!")
+      output = module.emitBinary()
 
       jake.mkdirP(path.dirname(outFile))
       fs.writeFileSync(outFile, new Uint8Array(output))
@@ -405,11 +403,16 @@ function fileTypeList(suffixes, inverse) {
     staticFiles.include(srcDir + "**/.*")
   }
   suffixes.forEach(function (suffix) {
-    files.include(srcDir + "**/*" + suffix)
-    files.include(srcDir + "**/.*" + suffix)
-    if (suffix) {
-      staticFiles.exclude(srcDir + "**/*" + suffix)
-      staticFiles.exclude(srcDir + "**/.*" + suffix)
+    if (suffix.substr(0, 1) === "!") {
+      files.exclude(srcDir + "**/*" + suffix.substr(1))
+      files.exclude(srcDir + "**/.*" + suffix.substr(1))
+    } else {
+      files.include(srcDir + "**/*" + suffix)
+      files.include(srcDir + "**/.*" + suffix)
+      if (suffix) {
+        staticFiles.exclude(srcDir + "**/*" + suffix)
+        staticFiles.exclude(srcDir + "**/.*" + suffix)
+      }
     }
   })
   return excludeIgnoredFiles(files.toArray(), inverse)

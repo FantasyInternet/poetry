@@ -39,7 +39,7 @@ Character reader for reading strings one character at a time.
 ### ⊕ **new Reader**(src: *`string`*): [Reader](__lib_reader_.reader.md)
 
 
-*Defined in _lib/Reader.ts:7*
+*Defined in [_lib/Reader.ts:7](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Reader.ts#L7)*
 
 
 
@@ -65,7 +65,7 @@ Character reader for reading strings one character at a time.
 
 **●  column**:  *`number`*  = 0
 
-*Defined in _lib/Reader.ts:7*
+*Defined in [_lib/Reader.ts:7](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Reader.ts#L7)*
 
 
 
@@ -79,7 +79,7 @@ ___
 
 **●  line**:  *`number`*  = 1
 
-*Defined in _lib/Reader.ts:6*
+*Defined in [_lib/Reader.ts:6](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Reader.ts#L6)*
 
 
 
@@ -93,7 +93,7 @@ ___
 
 **●  pos**:  *`number`*  = 0
 
-*Defined in _lib/Reader.ts:5*
+*Defined in [_lib/Reader.ts:5](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Reader.ts#L5)*
 
 
 
@@ -107,7 +107,7 @@ ___
 
 **●  src**:  *`string`* 
 
-*Defined in _lib/Reader.ts:9*
+*Defined in [_lib/Reader.ts:9](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Reader.ts#L9)*
 
 
 
@@ -125,7 +125,7 @@ ___
 
 
 
-*Defined in _lib/Reader.ts:32*
+*Defined in [_lib/Reader.ts:32](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Reader.ts#L32)*
 
 
 
@@ -155,7 +155,7 @@ ___
 
 
 
-*Defined in _lib/Reader.ts:28*
+*Defined in [_lib/Reader.ts:28](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Reader.ts#L28)*
 
 
 
@@ -177,7 +177,7 @@ ___
 
 
 
-*Defined in _lib/Reader.ts:13*
+*Defined in [_lib/Reader.ts:13](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Reader.ts#L13)*
 
 
 
@@ -199,7 +199,7 @@ ___
 
 
 
-*Defined in _lib/Reader.ts:24*
+*Defined in [_lib/Reader.ts:24](https://github.com/FantasyInternet/poetry/blob/HEAD/src/script/_lib/Reader.ts#L24)*
 
 
 

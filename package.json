@@ -1,15 +1,16 @@
 {
   "name": "poetry",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "private": true,
   "scripts": {
-    "prepublish": "jake",
+    "prepare": "jake",
     "build": "jake",
     "deploy": "jake deploy",
     "start": "statify -d ./build/",
     "watch": "jake watch"
   },
   "devDependencies": {
+    "assemblyscript": "^0.3.0",
     "browserify": "^16.1.1",
     "cssmin": "^0.4.3",
     "file-watch": "^0.1.0",
@@ -25,9 +26,7 @@
     "tsify": "^3.0.4",
     "typedoc": "^0.11.1",
     "typedoc-plugin-markdown": "^1.0.14",
-    "typescript": "^2.7.2",
-    "wabt": "^1.0.0",
-    "walt-compiler": "^0.4.3"
+    "typescript": "^2.7.2"
   },
   "dependencies": {
     "statify": "^2.0.1"
