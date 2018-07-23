@@ -21,7 +21,7 @@ let os = require("os"),
 * Jakefile.js
 * For building web apps
 *
-* @date 12-jul-2018
+* @date 23-jul-2018
 */
 let srcDir = "./src/",
   outDir = "./build/",
@@ -263,7 +263,7 @@ namespace("js", function () {
     console.log("\nCompiling TypeScript...")
     let filesLeft = fileTypeList([".ts", "!.wasm.ts"]).length
     if (!filesLeft) { console.log("...dONE!"); complete(); }
-    fileTypeList(".ts").forEach(function (inFile) {
+    fileTypeList([".ts", "!.wasm.ts"]).forEach(function (inFile) {
       let outFile = outputFile(inFile, ".js")
       console.log(inFile, "->", outFile)
 
@@ -300,7 +300,7 @@ namespace("wasm", function () {
     console.log("\nCompiling AssemblyScript...")
     fileTypeList(".wasm.ts").forEach(function (inFile) {
       let outFile = outputFile(inFile, ".wasm"),
-        output = "" //+ fs.readFileSync(inFile)
+        output// = "" + fs.readFileSync(inFile)
       console.log(inFile, "->", outFile)
 
       let module = asc.Compiler.compileFile(inFile, asc_opts)
@@ -311,7 +311,8 @@ namespace("wasm", function () {
       output = module.emitBinary()
 
       jake.mkdirP(path.dirname(outFile))
-      fs.writeFileSync(outFile, new Uint8Array(output))
+      fs.writeFileSync(outFile, output)
+      module.dispose()
     })
     console.log("...dONE!")
   })
