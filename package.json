@@ -1,6 +1,6 @@
 {
   "name": "poetry",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "private": true,
   "scripts": {
     "prepare": "jake",
@@ -10,7 +10,7 @@
     "watch": "jake watch"
   },
   "devDependencies": {
-    "assemblyscript": "^0.3.0",
+    "assemblyscript": "github:AssemblyScript/assemblyscript",
     "browserify": "^16.2.2",
     "cssmin": "^0.4.3",
     "file-watch": "^0.1.0",

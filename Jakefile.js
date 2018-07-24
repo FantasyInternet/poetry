@@ -13,7 +13,7 @@ let os = require("os"),
   browserify = require("browserify"),
   tsify = require("tsify"),
   jsmin = require("jsmin").jsmin,
-  asc = require("assemblyscript"),
+  asc = require("assemblyscript/cli/asc"),
   FtpClient = require("ftp"),
   md5 = require("md5")
 
@@ -292,29 +292,27 @@ namespace("js", function () {
 })
 
 namespace("wasm", function () {
-  let asc_opts = {
-    target: asc.CompilerTarget.WASM32,
-    silent: true
-  }
-  task("asc", function () {
+  let asc_opts = {}
+
+  task("asc", { async: true }, function () {
     console.log("\nCompiling AssemblyScript...")
+    let filesLeft = fileTypeList(".wasm.ts").length
+    if (!filesLeft) { console.log("...dONE!"); complete(); }
     fileTypeList(".wasm.ts").forEach(function (inFile) {
       let outFile = outputFile(inFile, ".wasm"),
-        output// = "" + fs.readFileSync(inFile)
+        output = "" + fs.readFileSync(inFile)
       console.log(inFile, "->", outFile)
 
-      let module = asc.Compiler.compileFile(inFile, asc_opts)
-      console.error(asc.typescript.formatDiagnosticsWithColorAndContextEx(asc.Compiler.lastDiagnostics))
-      if (!module) fail("compile err!")
-      module.optimize()
-      if (!module.validate()) fail("validation err!")
-      output = module.emitBinary()
-
       jake.mkdirP(path.dirname(outFile))
-      fs.writeFileSync(outFile, output)
-      module.dispose()
+      asc.main([inFile, "-b", outFile, "--validate", "--measure", "--optimize"], (err) => {
+        if (err) {
+          fail(err)
+        } else if (--filesLeft <= 0) {
+          console.log("...dONE!")
+          complete()
+        }
+      })
     })
-    console.log("...dONE!")
   })
 })
 
