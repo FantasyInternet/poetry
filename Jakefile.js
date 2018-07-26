@@ -21,7 +21,7 @@ let os = require("os"),
 * Jakefile.js
 * For building web apps
 *
-* @date 23-jul-2018
+* @date 24-jul-2018
 */
 let srcDir = "./src/",
   outDir = "./build/",
@@ -304,7 +304,7 @@ namespace("wasm", function () {
       console.log(inFile, "->", outFile)
 
       jake.mkdirP(path.dirname(outFile))
-      asc.main([inFile, "-b", outFile, "--validate", "--measure", "--optimize"], (err) => {
+      asc.main([inFile, "-b", outFile, "--validate", "--optimize"], (err) => {
         if (err) {
           fail(err)
         } else if (--filesLeft <= 0) {
