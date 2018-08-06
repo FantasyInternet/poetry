@@ -1,0 +1,44 @@
+~ This is a comment?
+print "some string"
+pset 100 100 red
+parse ( stringify obj )
+
+@if age >= 18
+  print "Get a job!"
+
+@let integer meaning_of_life = 42;;;
+@let float [[[pi]]] = 3.14
+@let string {{name}} = "John"
+@let boolean ((married)) = false
+@let string[] friends =
+  "Alice"
+  "Bob"
+  "Carol"
+  "Daniel"
+
+print "Hello! my name is $name"
+@for friend @in friends
+  print "My friend is $friend!"
+
+@if name == "John"
+  print "You are my best friend!"
+@else
+  print "Go away!"
+
+@function double n
+  @return n * 2
+
+
+@class Person
+  @let string first_name be "John"
+  @let string last_name be "Doe"
+
+  @constructor name
+    let string[] names
+      be (split name " ")
+    let first_name be names[0]
+    let last_name
+      be names[1]
+  
+  @function full_name
+    return "$first_name $last_name"
