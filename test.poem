@@ -1,0 +1,5 @@
+@func myFunction one two three
+  print "Hello world or something.."
+
+@func print string
+  printing some stuff..
