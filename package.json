@@ -1,6 +1,6 @@
 {
   "name": "poetry",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Poetic programming language that compiles to webassembly",
   "main": "index.js",
   "scripts": {
@@ -22,5 +22,8 @@
   "bugs": {
     "url": "https://github.com/FantasyInternet/poetry/issues"
   },
-  "homepage": "https://github.com/FantasyInternet/poetry#readme"
+  "homepage": "https://github.com/FantasyInternet/poetry#readme",
+  "devDependencies": {
+    "wabt": "^1.0.0"
+  }
 }
