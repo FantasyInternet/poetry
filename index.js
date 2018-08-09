@@ -10,7 +10,8 @@ function compile(path) {
     col: 1,
     indents: [0],
     lastNl: 0,
-    metaphors: {}
+    metaphors: {},
+    strings: [null, false, 0, "", null, true, true, true]
   }
   let token
   let line = ""
@@ -128,6 +129,12 @@ function nextToken(c) {
   }
 
   if (c.metaphors[token]) token = c.metaphors[token]
+  if (isString(token)) {
+    let str = JSON.parse(token)
+    if (str) {
+      c.strings.push(str)
+    }
+  }
   return token
 }
 
@@ -213,10 +220,21 @@ function scanForGlobals(tokenTree) {
 function compileModule(c) {
   let imports = ""
   let runtime = fs.readFileSync("runtime.wast")
+  let memory = `(memory $-memory 2)  (export "memory" (memory $-memory))\n`
   let globals = ""
   let functions = ""
-  let start = ""
+  let start = "(call $-initruntime)\n"
   let exports = ""
+
+  let offset = 1024 * 64
+  for (let i = 8; i < c.strings.length; i++) {
+    let len = Buffer.byteLength(c.strings[i], 'utf8')
+    memory += `(data (i32.const ${offset}) "${c.strings[i].replace(/\"/g, '\"')}")\n`
+    start += `(call $-string (i32.const ${offset}) (i32.const ${len}))\n`
+    offset += len
+    offset = Math.floor(offset / 8) * 8 + 8
+  }
+  c.globals["-string"] = c.strings
 
   let statement = []
   for (let token of c.tokenTree) {
@@ -241,6 +259,9 @@ function compileModule(c) {
 
       ;; runtime
       ${runtime}
+
+      ;; memory
+      ${memory}
 
       ;; globals
       ${globals}
@@ -395,6 +416,10 @@ function compileExpression(tokenTree, globals, locals) {
     if (isNumber(token)) {
       let num = values.pop()
       values.push(`(call $-number (f32.const ${num}))`)
+    }
+    if (isString(token)) {
+      let str = JSON.parse(values.pop())
+      values.push(`(i32.const ${globals["-string"].indexOf(str)})`)
     }
   }
 

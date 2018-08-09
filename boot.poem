@@ -1,5 +1,5 @@
 @set meaning_of_life = 42
-
+@set name = "android"
 
 @func sum a b
   @return a + b + meaning_of_life
