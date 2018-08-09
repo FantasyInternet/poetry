@@ -145,7 +145,7 @@ function createTokenTree(c) {
 }
 
 function scanForGlobals(tokenTree) {
-  let globals = {}
+  let globals = require("./runtime.json")
 
   let statement = []
   for (let token of tokenTree) {
