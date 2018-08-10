@@ -1,5 +1,10 @@
 @set meaning_of_life = 42
-@set name = "android"
+@set meaning_of_life2 = 43
+@set name = "Hello world! :)"
 
 @func sum a b
   @return a + b + meaning_of_life
+
+@func init
+  logNumber sum 2 meaning_of_life2
+  log name

@@ -1,1 +1,8 @@
-{}
+{
+  "logNumber": [
+    "num"
+  ],
+  "log": [
+    "msg"
+  ]
+}

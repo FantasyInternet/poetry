@@ -241,10 +241,11 @@ function compileModule(c) {
     if (";}".includes(token)) {
       if (statement[0] === "@set") {
         globals += `(global $${statement[1]} (mut i32) (i32.const 0))\n`
-        start += compileStatement(statement, c.globals, [])
       }
       if (statement[0] === "@func") {
         functions += compileFunction(statement, c.globals) + "\n"
+      } else {
+        start += compileStatement(statement, c.globals, [])
       }
       statement = []
     } else {

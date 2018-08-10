@@ -1,6 +1,11 @@
 let importObject = {
   env: {
-    logNumber: console.log
+    logNumber: console.log,
+    log: (offset, len) => {
+      let dec = new TextDecoder()
+      let buf = wasm.memory.buffer.slice(offset, offset + len)
+      console.log(dec.decode(buf))
+    }
   }
 }
 
@@ -10,7 +15,6 @@ fetch('boot.wasm').then(response =>
   WebAssembly.instantiate(bytes, importObject)
 ).then(obj => {
   window.wasm = obj.instance.exports
-  obj.instance.exports.test()
-  console.log(new Uint32Array(obj.instance.exports.memory))
+  wasm.init()
 }
 )
