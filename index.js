@@ -299,9 +299,9 @@ function compileFunction(tokenTree, globals) {
       for (let i = paramlength; i < locals.length; i++) {
         wast += `(local $${locals[i]} i32)`
       }
-      wast += `(local $-ret i32)`
+      wast += `(local $-ret i32)(call $-funcstart)`
       wast += block
-      wast += `(get_local $-ret)`
+      wast += `(call $-funcend)(get_local $-ret)`
     }
   }
   wast += `)\n`
@@ -342,11 +342,11 @@ function compileStatement(tokenTree, globals, locals) {
       if (typeof globals[tokenTree[1]] === "object") {
         throw "attempt to assign value to function"
       } else {
-        wast += `(set_global $${tokenTree[1]} ${compileExpression(tokenTree.slice(3), globals, locals)})`
+        wast += `(set_global $${tokenTree[1]} (call $-reref (get_global $${tokenTree[1]}) ${compileExpression(tokenTree.slice(3), globals, locals)}))\n`
       }
     } else {
       locals.push(tokenTree[1])
-      wast += `(set_local $${tokenTree[1]} ${compileExpression(tokenTree.slice(3), globals, locals)})`
+      wast += `(set_local $${tokenTree[1]} (call $-reref (get_local $${tokenTree[1]}) ${compileExpression(tokenTree.slice(3), globals, locals)}))\n`
     }
   } else if (tokenTree[0] === "@if") {
     wast += `(if ${compileExpression(tokenTree[1], globals, locals)} (then ${compileBlock(tokenTree[2], globals, locals)}))`
@@ -413,6 +413,18 @@ function compileExpression(tokenTree, globals, locals) {
       } else {
         values.push(`(i32.const 0)`)
       }
+    }
+    if (token === "@null") {
+      values.pop()
+      values.push(`(i32.const 0)`)
+    }
+    if (token === "@false") {
+      values.pop()
+      values.push(`(i32.const 1)`)
+    }
+    if (token === "@true") {
+      values.pop()
+      values.push(`(i32.const 5)`)
     }
     if (isNumber(token)) {
       let num = values.pop()

@@ -25,6 +25,18 @@
   ;; (i32.store (i32.const 16) (i32.const 100))
 )
 
+(global $-calls (mut i32) (i32.const 0))
+;; function wrapper
+(func $-funcstart
+  (if (i32.eqz (get_global $-calls))(then
+    (call $-garbagecollect)
+  ))
+  (set_global $-calls (i32.add (get_global $-calls) (i32.const 1)))
+)
+(func $-funcend
+  (set_global $-calls (i32.sub (get_global $-calls) (i32.const 1)))
+)
+
 ;; allocate memory
 (func $-alloc (param $len i32) (result i32)
   (local $offset i32)
@@ -394,20 +406,20 @@
 
       ;; functions
       (func $sum (param $a i32) (param $b i32) (result i32)
-(local $-ret i32)(block
+(local $-ret i32)(call $-funcstart)(block
 (return (tee_local $-ret (call $-add (call $-add (get_local $a) (get_local $b)) (get_global $meaning_of_life))))
 
 )
-(get_local $-ret))
+(call $-funcend)(get_local $-ret))
 
 (func $init (result i32)
-(local $-ret i32)(block
+(local $-ret i32)(call $-funcstart)(block
 (drop (call $logNumber (call $sum (call $-number (f32.const 2)) (get_global $meaning_of_life2) ) ))
 
 (drop (call $log (get_global $name) ))
 
 )
-(get_local $-ret))
+(call $-funcend)(get_local $-ret))
 
 
 
@@ -415,7 +427,10 @@
       (func $-start
       (call $-initruntime)
 (call $-string (i32.const 65536) (i32.const 15))
-(set_global $meaning_of_life (call $-number (f32.const 42)))(set_global $meaning_of_life2 (call $-number (f32.const 43)))(set_global $name (i32.const 8)))
+(set_global $meaning_of_life (call $-reref (get_global $meaning_of_life) (call $-number (f32.const 42))))
+(set_global $meaning_of_life2 (call $-reref (get_global $meaning_of_life2) (call $-number (f32.const 43))))
+(set_global $name (call $-reref (get_global $name) (i32.const 8)))
+)
       (start $-start)
       
       ;; exports

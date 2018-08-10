@@ -20,6 +20,18 @@
   ;; (i32.store (i32.const 16) (i32.const 100))
 )
 
+(global $-calls (mut i32) (i32.const 0))
+;; function wrapper
+(func $-funcstart
+  (if (i32.eqz (get_global $-calls))(then
+    (call $-garbagecollect)
+  ))
+  (set_global $-calls (i32.add (get_global $-calls) (i32.const 1)))
+)
+(func $-funcend
+  (set_global $-calls (i32.sub (get_global $-calls) (i32.const 1)))
+)
+
 ;; allocate memory
 (func $-alloc (param $len i32) (result i32)
   (local $offset i32)
