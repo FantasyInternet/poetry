@@ -1,34 +1,30 @@
 {
   "name": "poetry",
-  "version": "0.0.15",
-  "private": true,
+  "version": "0.1.2",
+  "description": "Poetic programming language that compiles to webassembly",
+  "main": "index.js",
   "scripts": {
-    "prepare": "jake",
-    "build": "jake",
-    "deploy": "jake deploy",
-    "start": "statify -d ./build/",
-    "watch": "jake watch"
+    "build": "node .",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FantasyInternet/poetry.git"
+  },
+  "keywords": [
+    "wasm",
+    "webassembly",
+    "compiler",
+    "programming",
+    "language"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/FantasyInternet/poetry/issues"
+  },
+  "homepage": "https://github.com/FantasyInternet/poetry#readme",
   "devDependencies": {
-    "assemblyscript": "github:AssemblyScript/assemblyscript",
-    "browserify": "^16.2.2",
-    "cssmin": "^0.4.3",
-    "file-watch": "^0.1.0",
-    "ftp": "^0.3.10",
-    "htmlmin": "0.0.7",
-    "jake": "^8.0.16",
-    "jsmin": "^1.0.1",
-    "jstransformer-markdown-it": "^2.1.0",
-    "less": "^3.7.1",
-    "livereload": "^0.7.0",
-    "md5": "^2.2.1",
-    "pug": "^2.0.3",
-    "tsify": "^4.0.0",
-    "typedoc": "^0.11.1",
-    "typedoc-plugin-markdown": "^1.1.13",
-    "typescript": "^2.9.2"
-  },
-  "dependencies": {
-    "statify": "^2.0.1"
+    "wabt": "^1.0.0"
   }
 }
