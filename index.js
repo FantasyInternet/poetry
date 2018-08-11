@@ -100,7 +100,7 @@ function nextToken(c) {
     }
   } else if (token.match(/[\@]/)) {
     char = nextChar(c, true)
-    while (char.match(/[a-z]/)) {
+    while (char.match(/[_a-z]/)) {
       token += nextChar(c)
       char = nextChar(c, true)
     }
@@ -236,7 +236,7 @@ function compileModule(c) {
   let imports = ""
   let stdlib = fs.readFileSync("stdlib.wast")
   let runtime = fs.readFileSync("runtime.wast")
-  let memory = `(memory $-memory 2)  (export "memory" (memory $-memory))\n`
+  let memory = `(memory $-memory 2) \n`
   let globals = ""
   let functions = ""
   let start = "(call $-initruntime)\n"
@@ -302,6 +302,11 @@ function compileModule(c) {
           functions += `(i32.const 0)`
         }
         functions += `)\n`
+      } else if (statement[0] === "@import_memory") {
+        imports += `(import ${statement[1]} ${statement[2]} (memory 2))\n`
+        memory = memory.substr(memory.indexOf(")") + 1)
+      } else if (statement[0] === "@export_memory") {
+        exports += `(export ${statement[1]} (memory $-memory))\n`
       } else if (statement[0] === "@func") {
         functions += compileFunction(statement, c.globals) + "\n"
       } else {
