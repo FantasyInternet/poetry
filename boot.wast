@@ -1,24 +1,23 @@
 (module
       ;; imports
-      
+      (import "env" "logNumber"  (func $--logNumber (param f64) ))
+(import "env" "log"  (func $--_log (param f64) (param f64) ))
+
+
+      ;; stdlib
+      ;; (export "init" (func $init))
+
+(func $address_of (param $id i32) (result i32)
+  (call $-number (f64.convert_u/i32 (call $-offset (get_local $id))))
+)
+(func $size_of (param $id i32) (result i32)
+  (call $-number (f64.convert_u/i32 (call $-len (get_local $id))))
+)
+
+
 
       ;; runtime
-      (import "env" "logNumber" (func $--logNumber (param f64) ))
-(import "env" "log" (func $--log (param $offset i32) (param $len i32) ))
-
-(func $logNumber (param $id i32) (result i32)
-  (call $--logNumber (call $-f64 (get_local $id)))
-  (i32.const 0)
-)
-(func $log (param $id i32) (result i32)
-  (call $--log (call $-offset (get_local $id)) (call $-len (get_local $id)))
-  (i32.const 0)
-)
-
-
-(export "init" (func $init))
-
-;; memory management
+      ;; memory management
 (func $-initruntime
   (i32.store (i32.const 0) (i32.sub (i32.mul (i32.const 65536) (current_memory)) (i32.const 8)))
   (set_global $-mindex (call $-alloc (i32.const 8)))
@@ -756,14 +755,19 @@
 
       ;; memory
       (memory $-memory 2)  (export "memory" (memory $-memory))
-(data (i32.const 65536) "Hello world! :)")
-(data (i32.const 65552) "Alice")
-(data (i32.const 65560) "Bob")
-(data (i32.const 65568) "Charlie")
-(data (i32.const 65576) "Dennis")
-(data (i32.const 65584) " ")
-(data (i32.const 65592) "yay!")
-(data (i32.const 65600) "nay...")
+(data (i32.const 65536) "env")
+(data (i32.const 65544) "logNumber")
+(data (i32.const 65560) "env")
+(data (i32.const 65568) "log")
+(data (i32.const 65576) "Hello world! :)")
+(data (i32.const 65592) "Alice")
+(data (i32.const 65600) "Bob")
+(data (i32.const 65608) "Charlie")
+(data (i32.const 65616) "Dennis")
+(data (i32.const 65624) "init")
+(data (i32.const 65632) " ")
+(data (i32.const 65640) "yay!")
+(data (i32.const 65648) "nay...")
 
 
       ;; globals
@@ -774,7 +778,18 @@
 
 
       ;; functions
-      (func $sum (param $a i32) (param $b i32) (result i32)
+      (func $logNumber(param $p0 i32) (result i32)
+(call $--logNumber (call $-f64 (call $-toNumber (get_local $p0))) )(i32.const 0))
+(func $_log(param $p0 i32) (param $p1 i32) (result i32)
+(call $--_log (call $-f64 (call $-toNumber (get_local $p0))) (call $-f64 (call $-toNumber (get_local $p1))) )(i32.const 0))
+(func $log (param $msg i32) (result i32)
+(local $-ret i32)(local $-success i32)(call $-funcstart)(block
+(drop (call $_log (call $address_of (get_local $msg) ) (call $size_of (get_local $msg) ) ))
+
+(set_local $-success (i32.const 1)))
+(call $-funcend)(get_local $-ret))
+
+(func $sum (param $a i32) (param $b i32) (result i32)
 (local $-ret i32)(local $-success i32)(call $-funcstart)(block
 (return (tee_local $-ret (call $-add (call $-add (get_local $a) (get_local $b)) (get_global $meaning_of_life))))
 
@@ -785,7 +800,7 @@
 (local $friend i32)(local $i i32)(local $-ret i32)(local $-success i32)(call $-funcstart)(block
 (drop (call $logNumber (call $sum (call $-number (f64.const 2)) (get_global $meaning_of_life2) ) ))
 
-(drop (call $log (call $-add (call $-add (get_global $name) (i32.const 13)) (call $-sub (call $-number (f64.const 0)) (call $-number (f64.const 32.00125)))) ))
+(drop (call $log (call $-add (call $-add (get_global $name) (i32.const 18)) (call $-sub (call $-number (f64.const 0)) (call $-number (f64.const 32.00125)))) ))
 
 (set_local $friend (call $-reref (get_local $friend) (call $-getFromObj (get_global $friends) (call $-number (f64.const 2)) )))
 
@@ -793,13 +808,13 @@
 
 (if (call $-truthy (call $-gt (get_local $i) (call $-number (f64.const 0))))
 (then (block
-(drop (call $log (i32.const 14) ))
+(drop (call $log (i32.const 19) ))
 
 (set_local $-success (i32.const 1)))
 )(else (set_local $-success (i32.const 0))))
 (if (i32.eqz (get_local $-success))
 (then (block
-(drop (call $log (i32.const 15) ))
+(drop (call $log (i32.const 20) ))
 
 (set_local $-success (i32.const 1)))
 ))
@@ -812,26 +827,33 @@
       (func $-start
         (local $-success i32)
       (local $-obj0 i32)(call $-initruntime)
-(call $-string (i32.const 65536) (i32.const 15))
-(call $-string (i32.const 65552) (i32.const 5))
+(call $-string (i32.const 65536) (i32.const 3))
+(call $-string (i32.const 65544) (i32.const 9))
 (call $-string (i32.const 65560) (i32.const 3))
-(call $-string (i32.const 65568) (i32.const 7))
-(call $-string (i32.const 65576) (i32.const 6))
-(call $-string (i32.const 65584) (i32.const 1))
-(call $-string (i32.const 65592) (i32.const 4))
-(call $-string (i32.const 65600) (i32.const 6))
+(call $-string (i32.const 65568) (i32.const 3))
+(call $-string (i32.const 65576) (i32.const 15))
+(call $-string (i32.const 65592) (i32.const 5))
+(call $-string (i32.const 65600) (i32.const 3))
+(call $-string (i32.const 65608) (i32.const 7))
+(call $-string (i32.const 65616) (i32.const 6))
+(call $-string (i32.const 65624) (i32.const 4))
+(call $-string (i32.const 65632) (i32.const 1))
+(call $-string (i32.const 65640) (i32.const 4))
+(call $-string (i32.const 65648) (i32.const 6))
 (set_global $meaning_of_life (call $-reref (get_global $meaning_of_life) (call $-number (f64.const 42))))
 (set_global $meaning_of_life2 (call $-reref (get_global $meaning_of_life2) (call $-number (f64.const 43))))
-(set_global $name (call $-reref (get_global $name) (i32.const 8)))
+(set_global $name (call $-reref (get_global $name) (i32.const 12)))
 (set_global $friends (call $-reref (get_global $friends) (tee_local $-obj0 (call $-newValue (i32.const 4) (i32.const 0)))
-(call $-setToObj (get_local $-obj0) (call $-number (f64.const 0)) (i32.const 9))
-(call $-setToObj (get_local $-obj0) (call $-number (f64.const 1)) (i32.const 10))
-(call $-setToObj (get_local $-obj0) (call $-number (f64.const 2)) (i32.const 11))
-(call $-setToObj (get_local $-obj0) (call $-number (f64.const 3)) (i32.const 12))
+(call $-setToObj (get_local $-obj0) (call $-number (f64.const 0)) (i32.const 13))
+(call $-setToObj (get_local $-obj0) (call $-number (f64.const 1)) (i32.const 14))
+(call $-setToObj (get_local $-obj0) (call $-number (f64.const 2)) (i32.const 15))
+(call $-setToObj (get_local $-obj0) (call $-number (f64.const 3)) (i32.const 16))
 ))
 )
       (start $-start)
       
       ;; exports
-      
+      (func $--init
+(result f64)(call $-f64 (call $init)))(export "init" (func $--init))
+
     )

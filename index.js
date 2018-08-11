@@ -156,7 +156,7 @@ function createTokenTree(c) {
 }
 
 function scanForGlobals(tokenTree) {
-  let globals = require("./runtime.json")
+  let globals = require("./stdlib.json")
 
   let statement = []
   for (let token of tokenTree) {
@@ -167,14 +167,25 @@ function scanForGlobals(tokenTree) {
           globals[statement[1]] = true
         }
       }
-      if (statement[0] === "@func") {
+      if (statement[0] === "@func" || statement[0] === "@import") {
+        if (statement[0] === "@import") {
+          statement.shift()
+          statement.shift()
+        }
         if (isIdentifier(statement[1])) {
           if (globals[statement[1]]) throw `duplicate identifier "${statement[1]}"`
           let locals = []
-          for (let i = 2; i < statement.length; i++) {
-            if (isIdentifier(statement[i])) {
-              if (locals.includes(statement[i])) throw `duplicate parameter "${statement[i]}"`
-              locals.push(statement[i])
+          if (statement[0] === "@import") {
+            let params = parseInt(statement[2])
+            for (let i = 2; i < params; i++) {
+              locals.push("p" + i)
+            }
+          } else {
+            for (let i = 2; i < statement.length; i++) {
+              if (isIdentifier(statement[i])) {
+                if (locals.includes(statement[i])) throw `duplicate parameter "${statement[i]}"`
+                locals.push(statement[i])
+              }
             }
           }
           globals[statement[1]] = locals
@@ -223,6 +234,7 @@ function scanForGlobals(tokenTree) {
 
 function compileModule(c) {
   let imports = ""
+  let stdlib = fs.readFileSync("stdlib.wast")
   let runtime = fs.readFileSync("runtime.wast")
   let memory = `(memory $-memory 2)  (export "memory" (memory $-memory))\n`
   let globals = ""
@@ -247,7 +259,50 @@ function compileModule(c) {
       if (statement[0] === "@set") {
         globals += `(global $${statement[1]} (mut i32) (i32.const 0))\n`
       }
-      if (statement[0] === "@func") {
+      if (statement[0] === "@export") {
+        exports += `(func $--${statement[2]}\n`
+        for (let i = 3; i < statement.length - 1; i++) {
+          exports += `(param $${statement[i]} f64)`
+        }
+        exports += `(result f64)`
+        exports += `(call $-f64 (call $${statement[2]}`
+        for (let i = 3; i < statement.length - 1; i++) {
+          exports += `(call $-number (get_local $${statement[i]}))`
+        }
+        exports += `)))(export ${statement[1]} (func $--${statement[2]}))\n`
+        statement.shift()
+        statement[0] = "@func"
+      }
+      if (statement[0] === "@import") {
+        let name = statement[3]
+        imports += `(import ${statement[1]} ${statement[2]}  (func $--${name} `
+        let params = parseInt(statement[4])
+        let results = parseInt(statement[5])
+        for (let i = 0; i < params; i++) {
+          imports += `(param f64) `
+        }
+        for (let i = 0; i < results; i++) {
+          imports += `(result f64) `
+        }
+        imports += `))\n`
+
+        functions += `(func $${name}`
+        for (let i = 0; i < params; i++) {
+          functions += `(param $p${i} i32) `
+        }
+        functions += `(result i32)\n`
+        functions += `(call $--${name} `
+        for (let i = 0; i < params; i++) {
+          functions += `(call $-f64 (call $-toNumber (get_local $p${i}))) `
+        }
+        functions += `)`
+        if (results) {
+          functions += `(call $-number)`
+        } else {
+          functions += `(i32.const 0)`
+        }
+        functions += `)\n`
+      } else if (statement[0] === "@func") {
         functions += compileFunction(statement, c.globals) + "\n"
       } else {
         start += compileStatement(statement, c.globals, startLocals)
@@ -265,6 +320,9 @@ function compileModule(c) {
     (module
       ;; imports
       ${imports}
+
+      ;; stdlib
+      ${stdlib}
 
       ;; runtime
       ${runtime}
@@ -507,6 +565,10 @@ function compileExpression(tokenTree, globals, locals) {
   let calls = 0
   for (let token of _values) {
     values.push(token)
+    if (typeof token === "object") {
+      values.pop()
+      values.push(compileExpression(token, globals, locals))
+    }
     if (isIdentifier(token)) {
       let id = values.pop()
       if (locals.includes(token)) {
@@ -600,7 +662,7 @@ function deparens(tokens, all) {
   if (all && start === "{" && end === "}") return deparens(tokens.slice(1, tokens.length - 1), all)
   if (start === "(" && end === ")") return deparens(tokens.slice(1, tokens.length - 1), all)
   if (start === "[" && end === "]") return deparens(tokens.slice(1, tokens.length - 1), all)
-  return tokens
+  return tokens.slice()
 }
 
 function compileWast(wast) {

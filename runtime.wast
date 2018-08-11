@@ -1,18 +1,3 @@
-(import "env" "logNumber" (func $--logNumber (param f64) ))
-(import "env" "log" (func $--log (param $offset i32) (param $len i32) ))
-
-(func $logNumber (param $id i32) (result i32)
-  (call $--logNumber (call $-f64 (get_local $id)))
-  (i32.const 0)
-)
-(func $log (param $id i32) (result i32)
-  (call $--log (call $-offset (get_local $id)) (call $-len (get_local $id)))
-  (i32.const 0)
-)
-
-
-(export "init" (func $init))
-
 ;; memory management
 (func $-initruntime
   (i32.store (i32.const 0) (i32.sub (i32.mul (i32.const 65536) (current_memory)) (i32.const 8)))
