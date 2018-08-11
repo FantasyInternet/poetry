@@ -29,6 +29,8 @@ function isKeyword(token) { return typeof token === "string" && (token[0] === "@
 function isIdentifier(token) { return typeof token === "string" && (token[0].match(/[\$A-Z_a-z]/) || token.charCodeAt(0) > 127) }
 function isNumber(token) { return typeof token === "string" && (token[0].match(/[0-9]/)) }
 function isString(token) { return typeof token === "string" && (token[0].match(/["']/)) }
+function isSymbol(token) { return typeof token === "string" && (token[0].match(/[!#%&*+,\-/:;<=>?\\^|]/)) }
+function isAssigner(token) { return typeof token === "string" && (token.substr(-1) === "=") }
 
 function nextChar(c, peek) {
   let char = c.src[c.position]
@@ -144,6 +146,8 @@ function createTokenTree(c) {
   while ((token = nextToken(c)) && ("])}".includes(token) === false)) {
     if ("{([".includes(token)) {
       token = [token].concat(createTokenTree(c))
+    } else if (isSymbol(tree[tree.length - 1]) && token === "-") {
+      token = [token, nextToken(c)]
     }
     tree.push(token)
   }
@@ -224,6 +228,7 @@ function compileModule(c) {
   let globals = ""
   let functions = ""
   let start = "(call $-initruntime)\n"
+  let startLocals = []
   let exports = ""
 
   let offset = 1024 * 64
@@ -245,12 +250,15 @@ function compileModule(c) {
       if (statement[0] === "@func") {
         functions += compileFunction(statement, c.globals) + "\n"
       } else {
-        start += compileStatement(statement, c.globals, [])
+        start += compileStatement(statement, c.globals, startLocals)
       }
       statement = []
     } else {
       statement.push(token)
     }
+  }
+  for (let i = 0; i < startLocals.length; i++) {
+    start = `(local $${startLocals[i]} i32)` + start
   }
 
   return `
@@ -284,7 +292,7 @@ function compileModule(c) {
 function compileFunction(tokenTree, globals) {
   let wast = ""
   let locals = []
-  tokenTree = deparens(tokenTree)
+  tokenTree = deparens(tokenTree, true)
 
   wast += `(func $${tokenTree[1]} `
   for (let i = 2; i < tokenTree.length; i++) {
@@ -311,10 +319,10 @@ function compileFunction(tokenTree, globals) {
 
 function compileBlock(tokenTree, globals, locals) {
   let wast = "(block\n"
-  tokenTree = deparens(tokenTree)
+  tokenTree = deparens(tokenTree, true)
 
   let statement = []
-  for (let token of (tokenTree)) {
+  for (let token of tokenTree) {
     if (";}".includes(token)) {
       wast += compileStatement(statement, globals, locals) + "\n"
       statement = []
@@ -331,23 +339,38 @@ function compileBlock(tokenTree, globals, locals) {
 
 function compileStatement(tokenTree, globals, locals) {
   let wast = ""
-  tokenTree = deparens(tokenTree)
+  tokenTree = deparens(tokenTree, true)
 
   if (isIdentifier(tokenTree[0])) {
     wast += `(drop ${compileExpression(tokenTree, globals, locals)})\n`
   } else if (tokenTree[0] === "@set") {
-    if (locals.includes(tokenTree[1])) {
-      wast += `(set_local $${tokenTree[1]} ${compileExpression(tokenTree.slice(3), globals, locals)})`
-    } else if (globals[tokenTree[1]]) {
-      if (typeof globals[tokenTree[1]] === "object") {
+    tokenTree.shift()
+    let variable = []
+    while (!isAssigner(tokenTree[0])) {
+      variable.push(tokenTree.shift())
+    }
+    let assigner = tokenTree.shift()
+    let setter = ``
+    if (variable.length > 1) {
+      setter = `call $-setToObj ${compileExpression(variable.slice(0, variable.length - 1), globals, locals)} ${compileExpression(variable.slice(variable.length - 1), globals, locals)}`
+    } else if (locals.includes(variable[0])) {
+      setter = `set_local $${variable[0]}`
+    } else if (globals[variable[0]]) {
+      if (typeof globals[variable[0]] === "object") {
         throw "attempt to assign value to function"
       } else {
-        wast += `(set_global $${tokenTree[1]} (call $-reref (get_global $${tokenTree[1]}) ${compileExpression(tokenTree.slice(3), globals, locals)}))\n`
+        setter = `set_global $${variable[0]}`
       }
     } else {
-      locals.push(tokenTree[1])
-      wast += `(set_local $${tokenTree[1]} (call $-reref (get_local $${tokenTree[1]}) ${compileExpression(tokenTree.slice(3), globals, locals)}))\n`
+      locals.push(variable[0])
+      setter = `set_local $${variable[0]}`
     }
+    wast += `(${setter} (call $-reref ${compileExpression(variable, globals, locals)}`
+    if (assigner[0] !== "=") {
+      tokenTree.unshift(assigner[0])
+      tokenTree.unshift(variable)
+    }
+    wast += ` ${compileExpression(tokenTree, globals, locals)}))\n`
   } else if (tokenTree[0] === "@if") {
     wast += `(if ${compileExpression(tokenTree[1], globals, locals)} (then ${compileBlock(tokenTree[2], globals, locals)}))`
   } else if (tokenTree[0] === "@return") {
@@ -360,6 +383,7 @@ function compileStatement(tokenTree, globals, locals) {
 function compileExpression(tokenTree, globals, locals) {
   let wast = ""
   let _values, values = deparens(tokenTree)
+  if (values[0] === "{") return compileObjLit(tokenTree, globals, locals)
 
   _values = values
   values = []
@@ -377,6 +401,12 @@ function compileExpression(tokenTree, globals, locals) {
       let operand1 = values.pop()
       values.push(`(call $-div ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
     }
+    if (values[values.length - 2] === "%") {
+      let operand2 = values.pop()
+      values.pop()
+      let operand1 = values.pop()
+      values.push(`(call $-mod ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+    }
   }
   _values = values
   values = []
@@ -391,12 +421,76 @@ function compileExpression(tokenTree, globals, locals) {
     if (values[values.length - 2] === "-") {
       let operand2 = values.pop()
       values.pop()
-      let operand1 = values.pop()
+      let operand1 = values.pop() || "0"
       values.push(`(call $-sub ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
     }
   }
   _values = values
   values = []
+  for (let token of _values) {
+    values.push(token)
+    if (values[values.length - 2] === "<") {
+      let operand2 = values.pop()
+      values.pop()
+      let operand1 = values.pop()
+      values.push(`(call $-lt ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+    }
+    if (values[values.length - 2] === "<=") {
+      let operand2 = values.pop()
+      values.pop()
+      let operand1 = values.pop()
+      values.push(`(call $-le ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+    }
+    if (values[values.length - 2] === ">") {
+      let operand2 = values.pop()
+      values.pop()
+      let operand1 = values.pop()
+      values.push(`(call $-gt ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+    }
+    if (values[values.length - 2] === ">=") {
+      let operand2 = values.pop()
+      values.pop()
+      let operand1 = values.pop()
+      values.push(`(call $-ge ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+    }
+  }
+  _values = values
+  values = []
+  for (let token of _values) {
+    values.push(token)
+    if (values[values.length - 2] === "==") {
+      let operand2 = values.pop()
+      values.pop()
+      let operand1 = values.pop()
+      values.push(`(call $-equal ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+    }
+    if (values[values.length - 2] === "!=") {
+      let operand2 = values.pop()
+      values.pop()
+      let operand1 = values.pop()
+      values.push(`(call $-unequal ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+    }
+  }
+  _values = values
+  values = []
+  for (let token of _values) {
+    values.push(token)
+    if (values[values.length - 2] === "&&") {
+      let operand2 = values.pop()
+      values.pop()
+      let operand1 = values.pop()
+      values.push(`(call $-and ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+    }
+    if (values[values.length - 2] === "||") {
+      let operand2 = values.pop()
+      values.pop()
+      let operand1 = values.pop()
+      values.push(`(call $-or ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+    }
+  }
+  _values = values
+  values = []
+  let calls = 0
   for (let token of _values) {
     values.push(token)
     if (isIdentifier(token)) {
@@ -406,7 +500,7 @@ function compileExpression(tokenTree, globals, locals) {
       } else if (globals[token]) {
         if (typeof globals[token] === "object") {
           values.push(`(call $${id}`)
-          _values.push(")")
+          calls++
         } else {
           values.push(`(get_global $${id})`)
         }
@@ -435,29 +529,63 @@ function compileExpression(tokenTree, globals, locals) {
       values.push(`(i32.const ${globals["-string"].indexOf(str)})`)
     }
   }
-
-  /* if (isIdentifier(tokenTree[0])) {
-    if (typeof globals[tokenTree[0]] === "object") {
-      wast += `(call $${tokenTree[0]}`
-    } else if (globals[tokenTree[0]]) {
-      wast += `(get_global $${tokenTree[0]})`
-    } else {
-      wast += `(get_local $${tokenTree[0]})`
+  if (calls) {
+    for (let i = 0; i < calls; i++) {
+      values.push(")")
     }
-  } else if (tokenTree[0] === "(") {
-    wast += compileExpression(tokenTree[0], globals)
-  } */
+  } else if (values.length > 1) {
+    _values = values
+    values = [_values.shift()]
+    for (let token of _values) {
+      values.unshift(`(call $-getFromObj`)
+      values.push(token)
+      values.push(")")
+    }
+  }
 
   return values.join(" ")
 }
 
-function deparens(tokens) {
+function compileObjLit(tokenTree, globals, locals) {
+  let wast = ""
+  let datatype = 5
+  let index = 0
+  tokenTree = deparens(tokenTree, true)
+  tokenTree.push(";")
+
+  let name = 0
+  while (locals.includes("-obj" + name)) name++
+  locals.push(name = "-obj" + name)
+
+  let statement = []
+  for (let token of tokenTree) {
+    if (";}".includes(token)) {
+      if (statement.length > 1 && isString(statement[0])) {
+        wast += `(call $-setToObj (get_local $${name}) ${compileExpression(statement.slice(0, 1), globals, locals)} ${compileExpression(statement.slice(1), globals, locals)})\n`
+        index += 2
+      } else {
+        wast += `(call $-setToObj (get_local $${name}) (call $-number (f32.const ${index})) ${compileExpression(statement, globals, locals)})\n`
+        index++
+        datatype = 4
+      }
+      statement = []
+    } else {
+      statement.push(token)
+    }
+  }
+  wast = `(tee_local $${name} (call $-newValue (i32.const ${datatype}) (i32.const 0)))\n` + wast
+
+
+  return wast
+}
+
+function deparens(tokens, all) {
   let start = tokens[0]
   let end = tokens[tokens.length - 1]
-  if (tokens.length === 1 && typeof start === "object") return deparens(start)
-  if (start === "{" && end === "}") return deparens(tokens.slice(1, tokens.length - 1))
-  if (start === "(" && end === ")") return deparens(tokens.slice(1, tokens.length - 1))
-  if (start === "[" && end === "]") return deparens(tokens.slice(1, tokens.length - 1))
+  if (tokens.length === 1 && typeof start === "object") return deparens(start, all)
+  if (all && start === "{" && end === "}") return deparens(tokens.slice(1, tokens.length - 1), all)
+  if (start === "(" && end === ")") return deparens(tokens.slice(1, tokens.length - 1), all)
+  if (start === "[" && end === "]") return deparens(tokens.slice(1, tokens.length - 1), all)
   return tokens
 }
 

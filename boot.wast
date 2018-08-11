@@ -271,7 +271,7 @@
 )
 
 ;; make room for a new value
-(func $-newvalue (param $datatype i32) (param $len i32) (result i32)
+(func $-newValue (param $datatype i32) (param $len i32) (result i32)
   (local $offset i32)
   (local $id i32)
   (set_local $offset (call $-alloc (get_local $len)))
@@ -355,9 +355,327 @@
   ))
   (get_local $truthy)
 )
+(func $-falsy (param $id i32) (result i32)
+  (i32.eqz (call $-truthy (get_local $id)))
+)
+
+(func $-equal (param $id1 i32) (param $id2 i32) (result i32)
+  (local $success i32)
+  (local $len i32)
+  (if (i32.eq (get_local $id1) (get_local $id2))(then
+    (set_local $success (i32.const 5))
+  )(else
+    (if (i32.ne (call $-datatype (get_local $id1)) (call $-datatype (get_local $id2)))(then
+      (set_local $success (i32.const 1))
+    )(else
+      (if (i32.ne (call $-len (get_local $id1)) (call $-len (get_local $id2)))(then
+        (set_local $success (i32.const 1))
+      )(else
+        (if (i32.ge_u (call $-datatype (get_local $id1)) (i32.const 4))(then
+          (set_local $success (i32.const 1))
+        )(else
+          (set_local $len (call $-len (get_local $id1)))
+          (set_local $success (i32.const 5))
+          (block(loop
+            (br_if 1 (i32.eqz (get_local $len)))
+            (set_local $len (i32.sub (get_local $len) (i32.const 1)))
+            (if (i32.ne (call $-read8 (get_local $id1) (get_local $len)) (call $-read8 (get_local $id2) (get_local $len)))(then
+              (set_local $success (i32.const 1))
+              (set_local $len (i32.const 0))
+            ))
+            (br 0)
+          ))
+        ))
+      ))
+    ))
+  ))
+  (get_local $success)
+)
+(func $-unequal (param $id1 i32) (param $id2 i32) (result i32)
+  (i32.add (i32.mul (call $-falsy (call $-equal (get_local $id1) (get_local $id2))) (i32.const 4)) (i32.const 1))
+)
+(func $-lt (param $id1 i32) (param $id2 i32) (result i32)
+  (local $success i32)
+  (set_local $success (i32.const 1))
+  (if (f32.lt (call $-f32 (get_local $id1)) (call $-f32 (get_local $id2)))(then
+    (set_local $success (i32.const 5))
+  ))
+  (get_local $success)
+)
+(func $-le (param $id1 i32) (param $id2 i32) (result i32)
+  (local $success i32)
+  (set_local $success (i32.const 1))
+  (if (f32.le (call $-f32 (get_local $id1)) (call $-f32 (get_local $id2)))(then
+    (set_local $success (i32.const 5))
+  ))
+  (get_local $success)
+)
+(func $-gt (param $id1 i32) (param $id2 i32) (result i32)
+  (local $success i32)
+  (set_local $success (i32.const 1))
+  (if (f32.gt (call $-f32 (get_local $id1)) (call $-f32 (get_local $id2)))(then
+    (set_local $success (i32.const 5))
+  ))
+  (get_local $success)
+)
+(func $-ge (param $id1 i32) (param $id2 i32) (result i32)
+  (local $success i32)
+  (set_local $success (i32.const 1))
+  (if (f32.ge (call $-f32 (get_local $id1)) (call $-f32 (get_local $id2)))(then
+    (set_local $success (i32.const 5))
+  ))
+  (get_local $success)
+)
+(func $-and (param $id1 i32) (param $id2 i32) (result i32)
+  (local $success i32)
+  (set_local $success (i32.const 1))
+  (if (i32.and (call $-truthy (get_local $id1)) (call $-truthy (get_local $id2)))(then
+    (set_local $success (i32.const 5))
+  ))
+  (get_local $success)
+)
+(func $-or (param $id1 i32) (param $id2 i32) (result i32)
+  (local $success i32)
+  (set_local $success (i32.const 1))
+  (if (i32.or (call $-truthy (get_local $id1)) (call $-truthy (get_local $id2)))(then
+    (set_local $success (i32.const 5))
+  ))
+  (get_local $success)
+)
+
+(func $-concat (param $id1 i32) (param $id2 i32) (result i32)
+  (local $len1 i32)
+  (local $len2 i32)
+  (local $datatype i32)
+  (local $id3 i32)
+  (local $offset i32)
+  (set_local $len1 (call $-len (get_local $id1)))
+  (set_local $len2 (call $-len (get_local $id2)))
+  (set_local $datatype (call $-datatype (get_local $id1)))
+  (set_local $id3 (call $-newValue (get_local $datatype) (i32.add (i32.add (get_local $len1) (get_local $len2)) (i32.const 8))))
+  (call $-memcopy (call $-offset (get_local $id1)) (call $-offset (get_local $id3)) (get_local $len1))
+  (call $-memcopy (call $-offset (get_local $id2)) (i32.add (call $-offset (get_local $id3)) (get_local $len1)) (get_local $len2))
+  (call $-resize (get_local $id3) (i32.add (get_local $len1) (get_local $len2)))
+  ;; if array or object, reference all members
+  (if (i32.or (i32.eq (get_local $datatype) (i32.const 4)) (i32.eq (get_local $datatype) (i32.const 5)))(then
+    (set_local $offset (i32.div_u (call $-len (get_local $id3)) (i32.const 4)))
+    (block(loop
+      (br_if 1 (i32.eqz (get_local $offset)))
+      (set_local $offset (i32.sub (get_local $offset) (i32.const 1)))
+      (call $-ref (call $-read32 (get_local $id3) (i32.mul (get_local $offset) (i32.const 8))))
+      (br 0)
+    ))
+  ))
+  (get_local $id3)
+)
+
+(func $-toNumber (param $id i32) (result i32)
+  (local $datatype i32)
+  (local $id3 i32)
+  (set_local $datatype (call $-datatype (get_local $id)))
+  (set_local $id3 (i32.const 2))
+  (if (i32.eq (get_local $id) (i32.const 0))(then
+    (set_local $id3 (i32.const 2))
+  ))
+  (if (i32.eq (get_local $id) (i32.const 1))(then
+    (set_local $id3 (i32.const 2))
+  ))
+  (if (i32.eq (get_local $id) (i32.const 5))(then
+    (set_local $id3 (call $-number (f32.const 1)))
+  ))
+  (if (i32.eq (get_local $datatype) (i32.const 2))(then
+    (set_local $id3 (get_local $id))
+  ))
+  (get_local $id3)
+)
+
+(func $-toString (param $id i32) (result i32)
+  (local $datatype i32)
+  (local $id3 i32)
+  (local $digit f32)
+  (local $decimals i32)
+  (local $pos i32)
+  (set_local $datatype (call $-datatype (get_local $id)))
+  (set_local $id3 (get_local $id))
+  (if (i32.eq (get_local $id) (i32.const 0))(then
+    (set_local $id3 (call $-newValue (i32.const 3) (i32.const 4)))
+    (call $-write32 (get_local $id3) (i32.const 0) (i32.const 0x6c6c756e));;null
+  ))
+  (if (i32.eq (get_local $id) (i32.const 1))(then
+    (set_local $id3 (call $-newValue (i32.const 3) (i32.const 5)))
+    (call $-write32 (get_local $id3) (i32.const 0) (i32.const 0x736c6166));;fals
+    (call $-write8 (get_local $id3) (i32.const 4) (i32.const 0x65));;e
+  ))
+  (if (i32.eq (get_local $id) (i32.const 5))(then
+    (set_local $id3 (call $-newValue (i32.const 3) (i32.const 4)))
+    (call $-write32 (get_local $id3) (i32.const 0) (i32.const 0x65757274));;true
+  ))
+  (if (i32.eq (get_local $datatype) (i32.const 2))(then
+    (set_local $id3 (call $-newValue (i32.const 3) (i32.const 0)))
+    ;; TODO: convert number to string
+    (set_local $digit (call $-f32 (get_local $id)))
+    (if (f32.lt (get_local $digit) (f32.const 0))(then
+      (call $-write8 (get_local $id3) (get_local $pos) (i32.const 0x2d));; -
+      (set_local $pos (i32.add (get_local $pos) (i32.const 1)))
+      (set_local $digit (f32.mul (get_local $digit) (f32.const -1)))
+    ))
+    (block(loop
+      (br_if 1 (f32.lt (get_local $digit) (f32.const 10)))
+      (set_local $digit (f32.div (get_local $digit) (f32.const 10)))
+      (set_local $decimals (i32.sub (get_local $decimals) (i32.const 1)))
+      (br 0)
+    ))
+    (block(loop
+      (br_if 1 (i32.ge_s (get_local $decimals) (i32.const 10)))
+      (call $-write8 (get_local $id3) (get_local $pos) (i32.add (i32.const 0x30) (i32.trunc_s/f32 (f32.trunc (get_local $digit)))))
+      (set_local $pos (i32.add (get_local $pos) (i32.const 1)))
+      (if (i32.eq (get_local $decimals) (i32.const 0))(then
+        (set_local $digit (f32.abs (call $-f32 (get_local $id))))
+        (set_local $digit (f32.sub (get_local $digit) (f32.trunc (get_local $digit))))
+        (if (f32.gt (get_local $digit) (f32.const 0.00001))(then
+          (call $-write8 (get_local $id3) (get_local $pos) (i32.const 0x2e));; .
+          (set_local $pos (i32.add (get_local $pos) (i32.const 1)))
+        )(else
+          (set_local $decimals (i32.const 1024))
+        ))
+      ))
+      (set_local $digit (f32.sub (get_local $digit) (f32.trunc (get_local $digit))))
+      (set_local $digit (f32.mul (get_local $digit) (f32.const 10)))
+      (if (i32.gt_s (get_local $decimals) (i32.const 0))(then
+        (if (f32.le (get_local $digit) (f32.const 0.00001))(then
+          (set_local $decimals (i32.const 1024))
+        ))
+      ))
+      (set_local $decimals (i32.add (get_local $decimals) (i32.const 1)))
+      (br 0)
+    ))
+  ))
+  (if (i32.eq (get_local $datatype) (i32.const 4))(then
+    (set_local $id3 (call $-newValue (i32.const 3) (i32.const 5)))
+    (call $-write32 (get_local $id3) (i32.const 0) (i32.const 0x61727261));;arra
+    (call $-write8 (get_local $id3) (i32.const 4) (i32.const 0x79));;y
+  ))
+  (if (i32.eq (get_local $datatype) (i32.const 5))(then
+    (set_local $id3 (call $-newValue (i32.const 3) (i32.const 6)))
+    (call $-write32 (get_local $id3) (i32.const 0) (i32.const 0x656a626f));;obje
+    (call $-write16 (get_local $id3) (i32.const 4) (i32.const 0x7463));;ct
+  ))
+  (if (i32.eq (get_local $datatype) (i32.const 6))(then
+    (set_local $id3 (call $-concat (i32.const 3) (get_local $id)))
+  ))
+  (get_local $id3)
+)
 
 (func $-add (param $id1 i32) (param $id2 i32) (result i32)
-  (call $-number (f32.add (call $-f32 (get_local $id1)) (call $-f32 (get_local $id2))))
+  (local $datatype1 i32)
+  (local $datatype2 i32)
+  (local $id3 i32)
+  (set_local $datatype1 (call $-datatype (get_local $id1)))
+  (set_local $datatype2 (call $-datatype (get_local $id2)))
+  ;; numerical values
+  (if (i32.and (i32.lt_u (get_local $datatype1) (i32.const 3)) (i32.lt_u (get_local $datatype2) (i32.const 3)))(then
+    (set_local $id3
+      (call $-number
+        (f32.add
+          (call $-f32 (call $-toNumber(get_local $id1)) )
+          (call $-f32 (call $-toNumber(get_local $id2)) )
+        )
+      )
+    )
+  )(else
+    ;; is one of them a string?
+    (if (i32.or (i32.eq (get_local $datatype1) (i32.const 3)) (i32.eq (get_local $datatype2) (i32.const 3)))(then
+      (set_local $id3 (call $-concat
+        (call $-toString (get_local $id1))
+        (call $-toString (get_local $id2))
+      ))
+    )(else
+      ;; both the same datatype?
+      (if (i32.eq (get_local $datatype1) (get_local $datatype2) )(then
+        (set_local $id3 (call $-concat
+          (get_local $id1)
+          (get_local $id2)
+        ))
+      ))
+    ))
+  ))
+  (get_local $id3)
+)
+(func $-sub (param $id1 i32) (param $id2 i32) (result i32)
+  (local $datatype1 i32)
+  (local $datatype2 i32)
+  (local $id3 i32)
+  (set_local $datatype1 (call $-datatype (get_local $id1)))
+  (set_local $datatype2 (call $-datatype (get_local $id2)))
+  ;; numerical values
+  (if (i32.and (i32.lt_u (get_local $datatype1) (i32.const 3)) (i32.lt_u (get_local $datatype2) (i32.const 3)))(then
+    (set_local $id3
+      (call $-number
+        (f32.sub
+          (call $-f32 (call $-toNumber(get_local $id1)) )
+          (call $-f32 (call $-toNumber(get_local $id2)) )
+        )
+      )
+    )
+  ))
+  (get_local $id3)
+)
+(func $-mul (param $id1 i32) (param $id2 i32) (result i32)
+  (local $datatype1 i32)
+  (local $datatype2 i32)
+  (local $id3 i32)
+  (set_local $datatype1 (call $-datatype (get_local $id1)))
+  (set_local $datatype2 (call $-datatype (get_local $id2)))
+  ;; numerical values
+  (if (i32.and (i32.lt_u (get_local $datatype1) (i32.const 3)) (i32.lt_u (get_local $datatype2) (i32.const 3)))(then
+    (set_local $id3
+      (call $-number
+        (f32.mul
+          (call $-f32 (call $-toNumber(get_local $id1)) )
+          (call $-f32 (call $-toNumber(get_local $id2)) )
+        )
+      )
+    )
+  ))
+  (get_local $id3)
+)
+(func $-div (param $id1 i32) (param $id2 i32) (result i32)
+  (local $datatype1 i32)
+  (local $datatype2 i32)
+  (local $id3 i32)
+  (set_local $datatype1 (call $-datatype (get_local $id1)))
+  (set_local $datatype2 (call $-datatype (get_local $id2)))
+  ;; numerical values
+  (if (i32.and (i32.lt_u (get_local $datatype1) (i32.const 3)) (i32.lt_u (get_local $datatype2) (i32.const 3)))(then
+    (set_local $id3
+      (call $-number
+        (f32.div
+          (call $-f32 (call $-toNumber(get_local $id1)) )
+          (call $-f32 (call $-toNumber(get_local $id2)) )
+        )
+      )
+    )
+  ))
+  (get_local $id3)
+)
+(func $-mod (param $id1 i32) (param $id2 i32) (result i32)
+  (local $datatype1 i32)
+  (local $datatype2 i32)
+  (local $f1 f32)
+  (local $f2 f32)
+  (local $f3 f32)
+  (local $id3 i32)
+  (set_local $datatype1 (call $-datatype (get_local $id1)))
+  (set_local $datatype2 (call $-datatype (get_local $id2)))
+  ;; numerical values
+  (if (i32.and (i32.lt_u (get_local $datatype1) (i32.const 3)) (i32.lt_u (get_local $datatype2) (i32.const 3)))(then
+    (set_local $f1 (call $-f32 (call $-toNumber(get_local $id1)) ))
+    (set_local $f2 (f32.abs (call $-f32 (call $-toNumber(get_local $id2)) )))
+    (set_local $f3 (f32.trunc (f32.div (get_local $f1) (get_local $f2))))
+    (set_local $f1 (f32.sub (get_local $f1) (f32.mul (get_local $f2) (get_local $f3))))
+    (set_local $id3 (call $-number (get_local $f1) ) )
+  ))
+  (get_local $id3)
 )
 
 (func $-f32 (param $id i32) (result f32)
@@ -372,7 +690,7 @@
   (local $id i32)
   (set_local $id (i32.const 2))
   (if (f32.ne (get_local $val) (f32.const 0))(then
-    (set_local $id (call $-newvalue (i32.const 2) (i32.const 1)))
+    (set_local $id (call $-newValue (i32.const 2) (i32.const 1)))
     (f32.store (call $-offset (get_local $id)) (get_local $val))
   ))
   (get_local $id)
@@ -380,12 +698,55 @@
 
 (func $-string (param $offset i32) (param $len i32)
   (local $id i32)
-  (set_local $id (call $-newvalue (i32.const 3) (get_local $len)))
+  (set_local $id (call $-newValue (i32.const 3) (get_local $len)))
   (call $-memcopy (get_local $offset) (call $-offset (get_local $id)) (get_local $len))
   (call $-ref (get_local $id))
 )
 
-
+(func $-getFromObj (param $objId i32) (param $indexId i32) (result i32)
+  (local $elem i32)
+  (local $index i32)
+  (if (i32.eq (call $-datatype (get_local $indexId)) (i32.const 2))(then
+    (set_local $index (i32.trunc_u/f32 (call $-f32 (get_local $indexId))))
+    (set_local $elem (call $-read32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4))))
+  )(else
+    (set_local $elem (call $-read32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4))))
+    (block(loop
+      (br_if 1 (call $-truthy (call $-equal (get_local $elem) (get_local $indexId))))
+      (set_local $index (i32.add (get_local $index) (i32.const 2)))
+      (set_local $elem (call $-read32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4))))
+      (if (i32.eqz (get_local $elem))(then
+        (set_local $elem (get_local $indexId))
+      ))
+      (br 0)
+    ))
+    (set_local $index (i32.add (get_local $index) (i32.const 1)))
+    (set_local $elem (call $-read32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4))))
+  ))
+  (get_local $elem)
+)
+(func $-setToObj (param $objId i32) (param $indexId i32) (param $valId i32)
+  (local $elem i32)
+  (local $index i32)
+  (if (i32.eq (call $-datatype (get_local $indexId)) (i32.const 2))(then
+    (set_local $index (i32.trunc_u/f32 (call $-f32 (get_local $indexId))))
+    (call $-write32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4)) (get_local $valId))
+  )(else
+    (set_local $elem (call $-read32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4))))
+    (block(loop
+      (br_if 1 (call $-truthy (call $-equal (get_local $elem) (get_local $indexId))))
+      (set_local $index (i32.add (get_local $index) (i32.const 2)))
+      (set_local $elem (call $-read32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4))))
+      (if (i32.eqz (get_local $elem))(then
+        (call $-write32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4)) (get_local $indexId))
+        (set_local $elem (get_local $indexId))
+      ))
+      (br 0)
+    ))
+    (set_local $index (i32.add (get_local $index) (i32.const 1)))
+    (call $-write32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4)) (get_local $valId))
+  ))
+)
 
 
 
@@ -396,12 +757,17 @@
       ;; memory
       (memory $-memory 2)  (export "memory" (memory $-memory))
 (data (i32.const 65536) "Hello world! :)")
+(data (i32.const 65552) "Alice")
+(data (i32.const 65560) "Bob")
+(data (i32.const 65568) "Charlie")
+(data (i32.const 65576) "Dennis")
 
 
       ;; globals
       (global $meaning_of_life (mut i32) (i32.const 0))
 (global $meaning_of_life2 (mut i32) (i32.const 0))
 (global $name (mut i32) (i32.const 0))
+(global $friends (mut i32) (i32.const 0))
 
 
       ;; functions
@@ -413,10 +779,16 @@
 (call $-funcend)(get_local $-ret))
 
 (func $init (result i32)
-(local $-ret i32)(call $-funcstart)(block
+(local $friend i32)(local $-ret i32)(call $-funcstart)(block
 (drop (call $logNumber (call $sum (call $-number (f32.const 2)) (get_global $meaning_of_life2) ) ))
 
-(drop (call $log (get_global $name) ))
+(drop (call $log (call $-add (get_global $name) (call $-sub (call $-number (f32.const 0)) (call $-number (f32.const 32.00125)))) ))
+
+(set_local $friend (call $-reref (get_local $friend) (call $-getFromObj (get_global $friends) (call $-number (f32.const 2)) )))
+
+(drop (call $log (call $-add (get_local $friend) (call $-gt (call $-number (f32.const 3)) (call $-number (f32.const 2)))) ))
+
+(drop (call $log (call $-add (i32.const 3) (call $-sub (call $-number (f32.const 0)) (call $-mod (call $-number (f32.const 32.25)) (call $-number (f32.const 8))))) ))
 
 )
 (call $-funcend)(get_local $-ret))
@@ -425,11 +797,21 @@
 
       ;; start
       (func $-start
-      (call $-initruntime)
+      (local $-obj0 i32)(call $-initruntime)
 (call $-string (i32.const 65536) (i32.const 15))
+(call $-string (i32.const 65552) (i32.const 5))
+(call $-string (i32.const 65560) (i32.const 3))
+(call $-string (i32.const 65568) (i32.const 7))
+(call $-string (i32.const 65576) (i32.const 6))
 (set_global $meaning_of_life (call $-reref (get_global $meaning_of_life) (call $-number (f32.const 42))))
 (set_global $meaning_of_life2 (call $-reref (get_global $meaning_of_life2) (call $-number (f32.const 43))))
 (set_global $name (call $-reref (get_global $name) (i32.const 8)))
+(set_global $friends (call $-reref (get_global $friends) (tee_local $-obj0 (call $-newValue (i32.const 4) (i32.const 0)))
+(call $-setToObj (get_local $-obj0) (call $-number (f32.const 0)) (i32.const 9))
+(call $-setToObj (get_local $-obj0) (call $-number (f32.const 1)) (i32.const 10))
+(call $-setToObj (get_local $-obj0) (call $-number (f32.const 2)) (i32.const 11))
+(call $-setToObj (get_local $-obj0) (call $-number (f32.const 3)) (i32.const 12))
+))
 )
       (start $-start)
       

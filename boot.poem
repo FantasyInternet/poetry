@@ -2,9 +2,19 @@
 @set meaning_of_life2 = 43
 @set name = "Hello world! :)"
 
+@set friends =
+  "Alice"
+  "Bob"
+  "Charlie"
+  "Dennis"
+
+
 @func sum a b
   @return a + b + meaning_of_life
 
 @func init
   logNumber sum 2 meaning_of_life2
-  log name
+  log name + -32.00125
+  @set friend = friends 2
+  log friend + (3>2)
+  log "" + (-32.25 % 8)
