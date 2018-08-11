@@ -1,9 +1,10 @@
 {
   "name": "poetry",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Poetic programming language that compiles to webassembly",
   "main": "index.js",
   "scripts": {
+    "build": "node .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

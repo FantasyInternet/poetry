@@ -14,7 +14,10 @@
 
 @func init
   logNumber sum 2 meaning_of_life2
-  log name + -32.00125
+  log name + " " + -32.00125
   @set friend = friends 2
-  log friend + (3>2)
-  log "" + (-32.25 % 8)
+  @set i = 10
+  @if i > 0
+    log "yay!"
+  @else
+    log "nay..."

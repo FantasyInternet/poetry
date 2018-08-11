@@ -18,7 +18,7 @@ function compile(path) {
   let level = 0
   compilation.tokenTree = createTokenTree(compilation)
   compilation.globals = scanForGlobals(compilation.tokenTree)
-  console.log(JSON.stringify(compilation, null, 2))
+  // console.log(JSON.stringify(compilation, null, 2))
   let wast = compileModule(compilation)
   fs.writeFileSync(path.replace(".poem", ".wast"), wast)
   let wasm = compileWast(wast)
@@ -280,6 +280,7 @@ function compileModule(c) {
 
       ;; start
       (func $-start
+        (local $-success i32)
       ${start})
       (start $-start)
       
@@ -307,7 +308,7 @@ function compileFunction(tokenTree, globals) {
       for (let i = paramlength; i < locals.length; i++) {
         wast += `(local $${locals[i]} i32)`
       }
-      wast += `(local $-ret i32)(call $-funcstart)`
+      wast += `(local $-ret i32)(local $-success i32)(call $-funcstart)`
       wast += block
       wast += `(call $-funcend)(get_local $-ret)`
     }
@@ -333,7 +334,7 @@ function compileBlock(tokenTree, globals, locals) {
   if (statement.length) {
     wast += compileStatement(statement, globals, locals) + "\n"
   }
-  wast += ")\n"
+  wast += "(set_local $-success (i32.const 1)))\n"
   return wast
 }
 
@@ -372,7 +373,20 @@ function compileStatement(tokenTree, globals, locals) {
     }
     wast += ` ${compileExpression(tokenTree, globals, locals)}))\n`
   } else if (tokenTree[0] === "@if") {
-    wast += `(if ${compileExpression(tokenTree[1], globals, locals)} (then ${compileBlock(tokenTree[2], globals, locals)}))`
+    wast += `(if (call $-truthy ${compileExpression(tokenTree.slice(1, tokenTree.length - 1), globals, locals)})\n`
+    wast += `(then ${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)})`
+    wast += `(else (set_local $-success (i32.const 0))))`
+  } else if (tokenTree[0] === "@elsif") {
+    wast += `(if (i32.xor (get_local $-success) (call $-truthy ${compileExpression(tokenTree.slice(1, tokenTree.length - 1), globals, locals)}))\n`
+    wast += `(then ${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)}))`
+  } else if (tokenTree[0] === "@else") {
+    wast += `(if (i32.eqz (get_local $-success))\n`
+    wast += `(then ${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)}))`
+  } else if (tokenTree[0] === "@while") {
+    wast += `(block(loop`
+    wast += `(br_if 1 (call $-falsy ${compileExpression(tokenTree.slice(1, tokenTree.length - 1), globals, locals)}))`
+    wast += ` ${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)}`
+    wast += `(br 0)))`
   } else if (tokenTree[0] === "@return") {
     wast += `(return (tee_local $-ret ${compileExpression(tokenTree.slice(1), globals, locals)}))\n`
   }
