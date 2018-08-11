@@ -3,11 +3,11 @@
       
 
       ;; runtime
-      (import "env" "logNumber" (func $--logNumber (param f32) ))
+      (import "env" "logNumber" (func $--logNumber (param f64) ))
 (import "env" "log" (func $--log (param $offset i32) (param $len i32) ))
 
 (func $logNumber (param $id i32) (result i32)
-  (call $--logNumber (call $-f32 (get_local $id)))
+  (call $--logNumber (call $-f64 (get_local $id)))
   (i32.const 0)
 )
 (func $log (param $id i32) (result i32)
@@ -397,7 +397,7 @@
 (func $-lt (param $id1 i32) (param $id2 i32) (result i32)
   (local $success i32)
   (set_local $success (i32.const 1))
-  (if (f32.lt (call $-f32 (get_local $id1)) (call $-f32 (get_local $id2)))(then
+  (if (f64.lt (call $-f64 (get_local $id1)) (call $-f64 (get_local $id2)))(then
     (set_local $success (i32.const 5))
   ))
   (get_local $success)
@@ -405,7 +405,7 @@
 (func $-le (param $id1 i32) (param $id2 i32) (result i32)
   (local $success i32)
   (set_local $success (i32.const 1))
-  (if (f32.le (call $-f32 (get_local $id1)) (call $-f32 (get_local $id2)))(then
+  (if (f64.le (call $-f64 (get_local $id1)) (call $-f64 (get_local $id2)))(then
     (set_local $success (i32.const 5))
   ))
   (get_local $success)
@@ -413,7 +413,7 @@
 (func $-gt (param $id1 i32) (param $id2 i32) (result i32)
   (local $success i32)
   (set_local $success (i32.const 1))
-  (if (f32.gt (call $-f32 (get_local $id1)) (call $-f32 (get_local $id2)))(then
+  (if (f64.gt (call $-f64 (get_local $id1)) (call $-f64 (get_local $id2)))(then
     (set_local $success (i32.const 5))
   ))
   (get_local $success)
@@ -421,7 +421,7 @@
 (func $-ge (param $id1 i32) (param $id2 i32) (result i32)
   (local $success i32)
   (set_local $success (i32.const 1))
-  (if (f32.ge (call $-f32 (get_local $id1)) (call $-f32 (get_local $id2)))(then
+  (if (f64.ge (call $-f64 (get_local $id1)) (call $-f64 (get_local $id2)))(then
     (set_local $success (i32.const 5))
   ))
   (get_local $success)
@@ -481,7 +481,7 @@
     (set_local $id3 (i32.const 2))
   ))
   (if (i32.eq (get_local $id) (i32.const 5))(then
-    (set_local $id3 (call $-number (f32.const 1)))
+    (set_local $id3 (call $-number (f64.const 1)))
   ))
   (if (i32.eq (get_local $datatype) (i32.const 2))(then
     (set_local $id3 (get_local $id))
@@ -492,7 +492,7 @@
 (func $-toString (param $id i32) (result i32)
   (local $datatype i32)
   (local $id3 i32)
-  (local $digit f32)
+  (local $digit f64)
   (local $decimals i32)
   (local $pos i32)
   (set_local $datatype (call $-datatype (get_local $id)))
@@ -513,36 +513,36 @@
   (if (i32.eq (get_local $datatype) (i32.const 2))(then
     (set_local $id3 (call $-newValue (i32.const 3) (i32.const 0)))
     ;; TODO: convert number to string
-    (set_local $digit (call $-f32 (get_local $id)))
-    (if (f32.lt (get_local $digit) (f32.const 0))(then
+    (set_local $digit (call $-f64 (get_local $id)))
+    (if (f64.lt (get_local $digit) (f64.const 0))(then
       (call $-write8 (get_local $id3) (get_local $pos) (i32.const 0x2d));; -
       (set_local $pos (i32.add (get_local $pos) (i32.const 1)))
-      (set_local $digit (f32.mul (get_local $digit) (f32.const -1)))
+      (set_local $digit (f64.mul (get_local $digit) (f64.const -1)))
     ))
     (block(loop
-      (br_if 1 (f32.lt (get_local $digit) (f32.const 10)))
-      (set_local $digit (f32.div (get_local $digit) (f32.const 10)))
+      (br_if 1 (f64.lt (get_local $digit) (f64.const 10)))
+      (set_local $digit (f64.div (get_local $digit) (f64.const 10)))
       (set_local $decimals (i32.sub (get_local $decimals) (i32.const 1)))
       (br 0)
     ))
     (block(loop
       (br_if 1 (i32.ge_s (get_local $decimals) (i32.const 10)))
-      (call $-write8 (get_local $id3) (get_local $pos) (i32.add (i32.const 0x30) (i32.trunc_s/f32 (f32.trunc (get_local $digit)))))
+      (call $-write8 (get_local $id3) (get_local $pos) (i32.add (i32.const 0x30) (i32.trunc_s/f64 (f64.trunc (get_local $digit)))))
       (set_local $pos (i32.add (get_local $pos) (i32.const 1)))
       (if (i32.eq (get_local $decimals) (i32.const 0))(then
-        (set_local $digit (f32.abs (call $-f32 (get_local $id))))
-        (set_local $digit (f32.sub (get_local $digit) (f32.trunc (get_local $digit))))
-        (if (f32.gt (get_local $digit) (f32.const 0.00001))(then
+        (set_local $digit (f64.abs (call $-f64 (get_local $id))))
+        (set_local $digit (f64.sub (get_local $digit) (f64.trunc (get_local $digit))))
+        (if (f64.gt (get_local $digit) (f64.const 0.00001))(then
           (call $-write8 (get_local $id3) (get_local $pos) (i32.const 0x2e));; .
           (set_local $pos (i32.add (get_local $pos) (i32.const 1)))
         )(else
           (set_local $decimals (i32.const 1024))
         ))
       ))
-      (set_local $digit (f32.sub (get_local $digit) (f32.trunc (get_local $digit))))
-      (set_local $digit (f32.mul (get_local $digit) (f32.const 10)))
+      (set_local $digit (f64.sub (get_local $digit) (f64.trunc (get_local $digit))))
+      (set_local $digit (f64.mul (get_local $digit) (f64.const 10)))
       (if (i32.gt_s (get_local $decimals) (i32.const 0))(then
-        (if (f32.le (get_local $digit) (f32.const 0.00001))(then
+        (if (f64.le (get_local $digit) (f64.const 0.00001))(then
           (set_local $decimals (i32.const 1024))
         ))
       ))
@@ -576,9 +576,9 @@
   (if (i32.and (i32.lt_u (get_local $datatype1) (i32.const 3)) (i32.lt_u (get_local $datatype2) (i32.const 3)))(then
     (set_local $id3
       (call $-number
-        (f32.add
-          (call $-f32 (call $-toNumber(get_local $id1)) )
-          (call $-f32 (call $-toNumber(get_local $id2)) )
+        (f64.add
+          (call $-f64 (call $-toNumber(get_local $id1)) )
+          (call $-f64 (call $-toNumber(get_local $id2)) )
         )
       )
     )
@@ -611,9 +611,9 @@
   (if (i32.and (i32.lt_u (get_local $datatype1) (i32.const 3)) (i32.lt_u (get_local $datatype2) (i32.const 3)))(then
     (set_local $id3
       (call $-number
-        (f32.sub
-          (call $-f32 (call $-toNumber(get_local $id1)) )
-          (call $-f32 (call $-toNumber(get_local $id2)) )
+        (f64.sub
+          (call $-f64 (call $-toNumber(get_local $id1)) )
+          (call $-f64 (call $-toNumber(get_local $id2)) )
         )
       )
     )
@@ -630,9 +630,9 @@
   (if (i32.and (i32.lt_u (get_local $datatype1) (i32.const 3)) (i32.lt_u (get_local $datatype2) (i32.const 3)))(then
     (set_local $id3
       (call $-number
-        (f32.mul
-          (call $-f32 (call $-toNumber(get_local $id1)) )
-          (call $-f32 (call $-toNumber(get_local $id2)) )
+        (f64.mul
+          (call $-f64 (call $-toNumber(get_local $id1)) )
+          (call $-f64 (call $-toNumber(get_local $id2)) )
         )
       )
     )
@@ -649,9 +649,9 @@
   (if (i32.and (i32.lt_u (get_local $datatype1) (i32.const 3)) (i32.lt_u (get_local $datatype2) (i32.const 3)))(then
     (set_local $id3
       (call $-number
-        (f32.div
-          (call $-f32 (call $-toNumber(get_local $id1)) )
-          (call $-f32 (call $-toNumber(get_local $id2)) )
+        (f64.div
+          (call $-f64 (call $-toNumber(get_local $id1)) )
+          (call $-f64 (call $-toNumber(get_local $id2)) )
         )
       )
     )
@@ -661,37 +661,37 @@
 (func $-mod (param $id1 i32) (param $id2 i32) (result i32)
   (local $datatype1 i32)
   (local $datatype2 i32)
-  (local $f1 f32)
-  (local $f2 f32)
-  (local $f3 f32)
+  (local $f1 f64)
+  (local $f2 f64)
+  (local $f3 f64)
   (local $id3 i32)
   (set_local $datatype1 (call $-datatype (get_local $id1)))
   (set_local $datatype2 (call $-datatype (get_local $id2)))
   ;; numerical values
   (if (i32.and (i32.lt_u (get_local $datatype1) (i32.const 3)) (i32.lt_u (get_local $datatype2) (i32.const 3)))(then
-    (set_local $f1 (call $-f32 (call $-toNumber(get_local $id1)) ))
-    (set_local $f2 (f32.abs (call $-f32 (call $-toNumber(get_local $id2)) )))
-    (set_local $f3 (f32.trunc (f32.div (get_local $f1) (get_local $f2))))
-    (set_local $f1 (f32.sub (get_local $f1) (f32.mul (get_local $f2) (get_local $f3))))
+    (set_local $f1 (call $-f64 (call $-toNumber(get_local $id1)) ))
+    (set_local $f2 (f64.abs (call $-f64 (call $-toNumber(get_local $id2)) )))
+    (set_local $f3 (f64.trunc (f64.div (get_local $f1) (get_local $f2))))
+    (set_local $f1 (f64.sub (get_local $f1) (f64.mul (get_local $f2) (get_local $f3))))
     (set_local $id3 (call $-number (get_local $f1) ) )
   ))
   (get_local $id3)
 )
 
-(func $-f32 (param $id i32) (result f32)
-  (local $val f32)
+(func $-f64 (param $id i32) (result f64)
+  (local $val f64)
   (if (i32.gt_u (get_local $id) (i32.const 4))(then
-    (set_local $val (f32.load (call $-offset (get_local $id))))
+    (set_local $val (f64.load (call $-offset (get_local $id))))
   ))
   (get_local $val)
 )
 
-(func $-number (param $val f32) (result i32)
+(func $-number (param $val f64) (result i32)
   (local $id i32)
   (set_local $id (i32.const 2))
-  (if (f32.ne (get_local $val) (f32.const 0))(then
+  (if (f64.ne (get_local $val) (f64.const 0))(then
     (set_local $id (call $-newValue (i32.const 2) (i32.const 1)))
-    (f32.store (call $-offset (get_local $id)) (get_local $val))
+    (f64.store (call $-offset (get_local $id)) (get_local $val))
   ))
   (get_local $id)
 )
@@ -707,7 +707,7 @@
   (local $elem i32)
   (local $index i32)
   (if (i32.eq (call $-datatype (get_local $indexId)) (i32.const 2))(then
-    (set_local $index (i32.trunc_u/f32 (call $-f32 (get_local $indexId))))
+    (set_local $index (i32.trunc_u/f64 (call $-f64 (get_local $indexId))))
     (set_local $elem (call $-read32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4))))
   )(else
     (set_local $elem (call $-read32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4))))
@@ -729,7 +729,7 @@
   (local $elem i32)
   (local $index i32)
   (if (i32.eq (call $-datatype (get_local $indexId)) (i32.const 2))(then
-    (set_local $index (i32.trunc_u/f32 (call $-f32 (get_local $indexId))))
+    (set_local $index (i32.trunc_u/f64 (call $-f64 (get_local $indexId))))
     (call $-write32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4)) (get_local $valId))
   )(else
     (set_local $elem (call $-read32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4))))
@@ -780,15 +780,15 @@
 
 (func $init (result i32)
 (local $friend i32)(local $-ret i32)(call $-funcstart)(block
-(drop (call $logNumber (call $sum (call $-number (f32.const 2)) (get_global $meaning_of_life2) ) ))
+(drop (call $logNumber (call $sum (call $-number (f64.const 2)) (get_global $meaning_of_life2) ) ))
 
-(drop (call $log (call $-add (get_global $name) (call $-sub (call $-number (f32.const 0)) (call $-number (f32.const 32.00125)))) ))
+(drop (call $log (call $-add (get_global $name) (call $-sub (call $-number (f64.const 0)) (call $-number (f64.const 32.00125)))) ))
 
-(set_local $friend (call $-reref (get_local $friend) (call $-getFromObj (get_global $friends) (call $-number (f32.const 2)) )))
+(set_local $friend (call $-reref (get_local $friend) (call $-getFromObj (get_global $friends) (call $-number (f64.const 2)) )))
 
-(drop (call $log (call $-add (get_local $friend) (call $-gt (call $-number (f32.const 3)) (call $-number (f32.const 2)))) ))
+(drop (call $log (call $-add (get_local $friend) (call $-gt (call $-number (f64.const 3)) (call $-number (f64.const 2)))) ))
 
-(drop (call $log (call $-add (i32.const 3) (call $-sub (call $-number (f32.const 0)) (call $-mod (call $-number (f32.const 32.25)) (call $-number (f32.const 8))))) ))
+(drop (call $log (call $-add (i32.const 3) (call $-sub (call $-number (f64.const 0)) (call $-mod (call $-number (f64.const 32.25)) (call $-number (f64.const 8))))) ))
 
 )
 (call $-funcend)(get_local $-ret))
@@ -803,14 +803,14 @@
 (call $-string (i32.const 65560) (i32.const 3))
 (call $-string (i32.const 65568) (i32.const 7))
 (call $-string (i32.const 65576) (i32.const 6))
-(set_global $meaning_of_life (call $-reref (get_global $meaning_of_life) (call $-number (f32.const 42))))
-(set_global $meaning_of_life2 (call $-reref (get_global $meaning_of_life2) (call $-number (f32.const 43))))
+(set_global $meaning_of_life (call $-reref (get_global $meaning_of_life) (call $-number (f64.const 42))))
+(set_global $meaning_of_life2 (call $-reref (get_global $meaning_of_life2) (call $-number (f64.const 43))))
 (set_global $name (call $-reref (get_global $name) (i32.const 8)))
 (set_global $friends (call $-reref (get_global $friends) (tee_local $-obj0 (call $-newValue (i32.const 4) (i32.const 0)))
-(call $-setToObj (get_local $-obj0) (call $-number (f32.const 0)) (i32.const 9))
-(call $-setToObj (get_local $-obj0) (call $-number (f32.const 1)) (i32.const 10))
-(call $-setToObj (get_local $-obj0) (call $-number (f32.const 2)) (i32.const 11))
-(call $-setToObj (get_local $-obj0) (call $-number (f32.const 3)) (i32.const 12))
+(call $-setToObj (get_local $-obj0) (call $-number (f64.const 0)) (i32.const 9))
+(call $-setToObj (get_local $-obj0) (call $-number (f64.const 1)) (i32.const 10))
+(call $-setToObj (get_local $-obj0) (call $-number (f64.const 2)) (i32.const 11))
+(call $-setToObj (get_local $-obj0) (call $-number (f64.const 3)) (i32.const 12))
 ))
 )
       (start $-start)

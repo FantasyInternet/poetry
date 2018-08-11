@@ -522,7 +522,7 @@ function compileExpression(tokenTree, globals, locals) {
     }
     if (isNumber(token)) {
       let num = values.pop()
-      values.push(`(call $-number (f32.const ${num}))`)
+      values.push(`(call $-number (f64.const ${num}))`)
     }
     if (isString(token)) {
       let str = JSON.parse(values.pop())
@@ -564,7 +564,7 @@ function compileObjLit(tokenTree, globals, locals) {
         wast += `(call $-setToObj (get_local $${name}) ${compileExpression(statement.slice(0, 1), globals, locals)} ${compileExpression(statement.slice(1), globals, locals)})\n`
         index += 2
       } else {
-        wast += `(call $-setToObj (get_local $${name}) (call $-number (f32.const ${index})) ${compileExpression(statement, globals, locals)})\n`
+        wast += `(call $-setToObj (get_local $${name}) (call $-number (f64.const ${index})) ${compileExpression(statement, globals, locals)})\n`
         index++
         datatype = 4
       }
