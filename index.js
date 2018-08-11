@@ -237,6 +237,7 @@ function compileModule(c) {
   let stdlib = fs.readFileSync("stdlib.wast")
   let runtime = fs.readFileSync("runtime.wast")
   let memory = `(memory $-memory 2) \n`
+  let table = ""
   let globals = ""
   let functions = ""
   let start = "(call $-initruntime)\n"
@@ -252,6 +253,7 @@ function compileModule(c) {
     offset = Math.floor(offset / 8) * 8 + 8
   }
   c.globals["-string"] = c.strings
+  c.globals["-table"] = []
 
   let statement = []
   for (let token of c.tokenTree) {
@@ -307,6 +309,10 @@ function compileModule(c) {
         memory = memory.substr(memory.indexOf(")") + 1)
       } else if (statement[0] === "@export_memory") {
         exports += `(export ${statement[1]} (memory $-memory))\n`
+      } else if (statement[0] === "@import_table") {
+        table += `(import ${statement[1]} ${statement[2]} (table $-table 1 anyfunc))\n`
+      } else if (statement[0] === "@export_table") {
+        exports += `(export ${statement[1]} (table $-table))\n`
       } else if (statement[0] === "@func") {
         functions += compileFunction(statement, c.globals) + "\n"
       } else {
@@ -319,6 +325,10 @@ function compileModule(c) {
   }
   for (let i = 0; i < startLocals.length; i++) {
     start = `(local $${startLocals[i]} i32)` + start
+  }
+  if (!table) table = `(table $-table ${c.globals["-table"].length} anyfunc)\n`
+  for (let i = 0; i < c.globals["-table"].length; i++) {
+    table += `(elem (i32.const ${i}) $${c.globals["-table"][i]})\n`
   }
 
   return `
@@ -334,6 +344,9 @@ function compileModule(c) {
 
       ;; memory
       ${memory}
+
+      ;; table
+      ${table}
 
       ;; globals
       ${globals}
@@ -462,6 +475,17 @@ function compileExpression(tokenTree, globals, locals) {
   let _values, values = deparens(tokenTree)
   if (values[0] === "{") return compileObjLit(tokenTree, globals, locals)
 
+  _values = values
+  values = []
+  for (let token of _values) {
+    values.push(token)
+    if (values[values.length - 2] === "#") {
+      let operand2 = values.pop()
+      values.pop()
+      if (globals["-table"].includes(operand2)) globals["-table"].push(operand2)
+      values.push(`(call $-number (f64.const ${globals["-table"].indexOf(operand2)}))`)
+    }
+  }
   _values = values
   values = []
   for (let token of _values) {

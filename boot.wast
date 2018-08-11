@@ -769,6 +769,10 @@
 (data (i32.const 65656) "nay...")
 
 
+      ;; table
+      (table $-table 0 anyfunc)
+
+
       ;; globals
       (global $meaning_of_life (mut i32) (i32.const 0))
 (global $meaning_of_life2 (mut i32) (i32.const 0))
