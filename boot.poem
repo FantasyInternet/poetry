@@ -18,9 +18,11 @@
 
 
 @func sum a b
+  @set tableindex = (# init)
   @return a + b + meaning_of_life
 
 @export "init" init
+  @set tableindex = (# sum)
   logNumber sum 2 meaning_of_life2
   log name + " " + -32.00125
   @set friend = friends 2

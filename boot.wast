@@ -770,7 +770,9 @@
 
 
       ;; table
-      (table $-table 0 anyfunc)
+      (table $-table 2 anyfunc)
+(elem (i32.const 0) $--init)
+(elem (i32.const 1) $--sum)
 
 
       ;; globals
@@ -793,14 +795,18 @@
 (call $-funcend)(get_local $-ret))
 
 (func $sum (param $a i32) (param $b i32) (result i32)
-(local $-ret i32)(local $-success i32)(call $-funcstart)(block
+(local $tableindex i32)(local $-ret i32)(local $-success i32)(call $-funcstart)(block
+(set_local $tableindex (call $-reref (get_local $tableindex) (call $-number (f64.const 0))))
+
 (return (tee_local $-ret (call $-add (call $-add (get_local $a) (get_local $b)) (get_global $meaning_of_life))))
 
 (set_local $-success (i32.const 1)))
 (call $-funcend)(get_local $-ret))
 
 (func $init (result i32)
-(local $friend i32)(local $i i32)(local $-ret i32)(local $-success i32)(call $-funcstart)(block
+(local $tableindex i32)(local $friend i32)(local $i i32)(local $-ret i32)(local $-success i32)(call $-funcstart)(block
+(set_local $tableindex (call $-reref (get_local $tableindex) (call $-number (f64.const 1))))
+
 (drop (call $logNumber (call $sum (call $-number (f64.const 2)) (get_global $meaning_of_life2) ) ))
 
 (drop (call $log (call $-add (call $-add (get_global $name) (i32.const 19)) (call $-sub (call $-number (f64.const 0)) (call $-number (f64.const 32.00125)))) ))
@@ -860,5 +866,9 @@
       (export "memory" (memory $-memory))
 (func $--init
 (result f64)(call $-f64 (call $init)))(export "init" (func $--init))
+(func $--init
+(result f64)(call $-f64 (call $init)))
+(func $--sum
+(param $a f64)(param $b f64)(result f64)(call $-f64 (call $sum(call $-number (get_local $a))(call $-number (get_local $b)))))
 
     )

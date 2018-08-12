@@ -167,9 +167,12 @@ function scanForGlobals(tokenTree) {
           globals[statement[1]] = true
         }
       }
-      if (statement[0] === "@func" || statement[0] === "@import") {
+      if (statement[0] === "@func" || statement[0] === "@import" || statement[0] === "@export") {
         if (statement[0] === "@import") {
           statement.shift()
+          statement.shift()
+        }
+        if (statement[0] === "@export") {
           statement.shift()
         }
         if (isIdentifier(statement[1])) {
@@ -202,35 +205,7 @@ function scanForGlobals(tokenTree) {
 
   return globals
 }
-/* function scanForLocals(tokenTree, locals) {
 
-  let statement = []
-  for (let token of tokenTree) {
-    if (typeof token === "object") {
-      scanForLocals(token, locals)
-    } else if (";}".includes(token)) {
-      if (statement[0] === "@set") {
-        if (isIdentifier(statement[1])) {
-          if (locals[statement[1]]) throw `duplicate identifier "${statement[1]}"`
-          locals[statement[1]] = true
-        }
-      }
-      if (statement[0] === "@func") {
-        for (let i = 2; i < statement.length; i++) {
-          if (isIdentifier(statement[i])) {
-            if (locals[statement[i]]) throw `duplicate identifier "${statement[i]}"`
-            locals[statement[i]] = true
-          }
-        }
-      }
-      statement = []
-    } else {
-      statement.push(token)
-    }
-  }
-
-  return locals
-} */
 
 function compileModule(c) {
   let imports = ""
@@ -328,7 +303,18 @@ function compileModule(c) {
   }
   if (!table) table = `(table $-table ${c.globals["-table"].length} anyfunc)\n`
   for (let i = 0; i < c.globals["-table"].length; i++) {
-    table += `(elem (i32.const ${i}) $${c.globals["-table"][i]})\n`
+    table += `(elem (i32.const ${i}) $--${c.globals["-table"][i]})\n`
+
+    exports += `(func $--${c.globals["-table"][i]}\n`
+    for (let p = 0; p < c.globals[c.globals["-table"][i]].length; p++) {
+      exports += `(param $${c.globals[c.globals["-table"][i]][p]} f64)`
+    }
+    exports += `(result f64)`
+    exports += `(call $-f64 (call $${c.globals["-table"][i]}`
+    for (let p = 0; p < c.globals[c.globals["-table"][i]].length; p++) {
+      exports += `(call $-number (get_local $${c.globals[c.globals["-table"][i]][p]}))`
+    }
+    exports += `)))\n`
   }
 
   return `
@@ -482,7 +468,7 @@ function compileExpression(tokenTree, globals, locals) {
     if (values[values.length - 2] === "#") {
       let operand2 = values.pop()
       values.pop()
-      if (globals["-table"].includes(operand2)) globals["-table"].push(operand2)
+      if (!globals["-table"].includes(operand2)) globals["-table"].push(operand2)
       values.push(`(call $-number (f64.const ${globals["-table"].indexOf(operand2)}))`)
     }
   }
