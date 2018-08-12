@@ -147,7 +147,6 @@ function nextToken(c) {
 
   if (c.metaphors[token]) token = c.metaphors[token]
   if (isString(token)) {
-    console.log(token)
     let str = JSON.parse(token)
     if (str) {
       c.strings.push(str)
