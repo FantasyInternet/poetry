@@ -100,7 +100,7 @@ function nextToken(c) {
     }
   } else if (token.match(/[\@]/)) {
     char = nextChar(c, true)
-    while (char.match(/[a-z]/)) {
+    while (char.match(/[_a-z]/)) {
       token += nextChar(c)
       char = nextChar(c, true)
     }
@@ -156,7 +156,7 @@ function createTokenTree(c) {
 }
 
 function scanForGlobals(tokenTree) {
-  let globals = require("./runtime.json")
+  let globals = require("./stdlib.json")
 
   let statement = []
   for (let token of tokenTree) {
@@ -167,14 +167,28 @@ function scanForGlobals(tokenTree) {
           globals[statement[1]] = true
         }
       }
-      if (statement[0] === "@func") {
+      if (statement[0] === "@func" || statement[0] === "@import" || statement[0] === "@export") {
+        if (statement[0] === "@import") {
+          statement.shift()
+          statement.shift()
+        }
+        if (statement[0] === "@export") {
+          statement.shift()
+        }
         if (isIdentifier(statement[1])) {
           if (globals[statement[1]]) throw `duplicate identifier "${statement[1]}"`
           let locals = []
-          for (let i = 2; i < statement.length; i++) {
-            if (isIdentifier(statement[i])) {
-              if (locals.includes(statement[i])) throw `duplicate parameter "${statement[i]}"`
-              locals.push(statement[i])
+          if (statement[0] === "@import") {
+            let params = parseInt(statement[2])
+            for (let i = 2; i < params; i++) {
+              locals.push("p" + i)
+            }
+          } else {
+            for (let i = 2; i < statement.length; i++) {
+              if (isIdentifier(statement[i])) {
+                if (locals.includes(statement[i])) throw `duplicate parameter "${statement[i]}"`
+                locals.push(statement[i])
+              }
             }
           }
           globals[statement[1]] = locals
@@ -191,40 +205,14 @@ function scanForGlobals(tokenTree) {
 
   return globals
 }
-/* function scanForLocals(tokenTree, locals) {
 
-  let statement = []
-  for (let token of tokenTree) {
-    if (typeof token === "object") {
-      scanForLocals(token, locals)
-    } else if (";}".includes(token)) {
-      if (statement[0] === "@set") {
-        if (isIdentifier(statement[1])) {
-          if (locals[statement[1]]) throw `duplicate identifier "${statement[1]}"`
-          locals[statement[1]] = true
-        }
-      }
-      if (statement[0] === "@func") {
-        for (let i = 2; i < statement.length; i++) {
-          if (isIdentifier(statement[i])) {
-            if (locals[statement[i]]) throw `duplicate identifier "${statement[i]}"`
-            locals[statement[i]] = true
-          }
-        }
-      }
-      statement = []
-    } else {
-      statement.push(token)
-    }
-  }
-
-  return locals
-} */
 
 function compileModule(c) {
   let imports = ""
+  let stdlib = fs.readFileSync("stdlib.wast")
   let runtime = fs.readFileSync("runtime.wast")
-  let memory = `(memory $-memory 2)  (export "memory" (memory $-memory))\n`
+  let memory = `(memory $-memory 2) \n`
+  let table = ""
   let globals = ""
   let functions = ""
   let start = "(call $-initruntime)\n"
@@ -240,6 +228,7 @@ function compileModule(c) {
     offset = Math.floor(offset / 8) * 8 + 8
   }
   c.globals["-string"] = c.strings
+  c.globals["-table"] = []
 
   let statement = []
   for (let token of c.tokenTree) {
@@ -247,7 +236,59 @@ function compileModule(c) {
       if (statement[0] === "@set") {
         globals += `(global $${statement[1]} (mut i32) (i32.const 0))\n`
       }
-      if (statement[0] === "@func") {
+      if (statement[0] === "@export") {
+        exports += `(func $--${statement[2]}\n`
+        for (let i = 3; i < statement.length - 1; i++) {
+          exports += `(param $${statement[i]} f64)`
+        }
+        exports += `(result f64)`
+        exports += `(call $-f64 (call $${statement[2]}`
+        for (let i = 3; i < statement.length - 1; i++) {
+          exports += `(call $-number (get_local $${statement[i]}))`
+        }
+        exports += `)))(export ${statement[1]} (func $--${statement[2]}))\n`
+        statement.shift()
+        statement[0] = "@func"
+      }
+      if (statement[0] === "@import") {
+        let name = statement[3]
+        imports += `(import ${statement[1]} ${statement[2]}  (func $--${name} `
+        let params = parseInt(statement[4])
+        let results = parseInt(statement[5])
+        for (let i = 0; i < params; i++) {
+          imports += `(param f64) `
+        }
+        for (let i = 0; i < results; i++) {
+          imports += `(result f64) `
+        }
+        imports += `))\n`
+
+        functions += `(func $${name}`
+        for (let i = 0; i < params; i++) {
+          functions += `(param $p${i} i32) `
+        }
+        functions += `(result i32)\n`
+        functions += `(call $--${name} `
+        for (let i = 0; i < params; i++) {
+          functions += `(call $-f64 (call $-toNumber (get_local $p${i}))) `
+        }
+        functions += `)`
+        if (results) {
+          functions += `(call $-number)`
+        } else {
+          functions += `(i32.const 0)`
+        }
+        functions += `)\n`
+      } else if (statement[0] === "@import_memory") {
+        imports += `(import ${statement[1]} ${statement[2]} (memory 2))\n`
+        memory = memory.substr(memory.indexOf(")") + 1)
+      } else if (statement[0] === "@export_memory") {
+        exports += `(export ${statement[1]} (memory $-memory))\n`
+      } else if (statement[0] === "@import_table") {
+        table += `(import ${statement[1]} ${statement[2]} (table $-table 1 anyfunc))\n`
+      } else if (statement[0] === "@export_table") {
+        exports += `(export ${statement[1]} (table $-table))\n`
+      } else if (statement[0] === "@func") {
         functions += compileFunction(statement, c.globals) + "\n"
       } else {
         start += compileStatement(statement, c.globals, startLocals)
@@ -260,17 +301,38 @@ function compileModule(c) {
   for (let i = 0; i < startLocals.length; i++) {
     start = `(local $${startLocals[i]} i32)` + start
   }
+  if (!table) table = `(table $-table ${c.globals["-table"].length} anyfunc)\n`
+  for (let i = 0; i < c.globals["-table"].length; i++) {
+    table += `(elem (i32.const ${i}) $--${c.globals["-table"][i]})\n`
+
+    exports += `(func $--${c.globals["-table"][i]}\n`
+    for (let p = 0; p < c.globals[c.globals["-table"][i]].length; p++) {
+      exports += `(param $${c.globals[c.globals["-table"][i]][p]} f64)`
+    }
+    exports += `(result f64)`
+    exports += `(call $-f64 (call $${c.globals["-table"][i]}`
+    for (let p = 0; p < c.globals[c.globals["-table"][i]].length; p++) {
+      exports += `(call $-number (get_local $${c.globals[c.globals["-table"][i]][p]}))`
+    }
+    exports += `)))\n`
+  }
 
   return `
     (module
       ;; imports
       ${imports}
 
+      ;; stdlib
+      ${stdlib}
+
       ;; runtime
       ${runtime}
 
       ;; memory
       ${memory}
+
+      ;; table
+      ${table}
 
       ;; globals
       ${globals}
@@ -403,6 +465,17 @@ function compileExpression(tokenTree, globals, locals) {
   values = []
   for (let token of _values) {
     values.push(token)
+    if (values[values.length - 2] === "#") {
+      let operand2 = values.pop()
+      values.pop()
+      if (!globals["-table"].includes(operand2)) globals["-table"].push(operand2)
+      values.push(`(call $-number (f64.const ${globals["-table"].indexOf(operand2)}))`)
+    }
+  }
+  _values = values
+  values = []
+  for (let token of _values) {
+    values.push(token)
     if (values[values.length - 2] === "*") {
       let operand2 = values.pop()
       values.pop()
@@ -507,6 +580,10 @@ function compileExpression(tokenTree, globals, locals) {
   let calls = 0
   for (let token of _values) {
     values.push(token)
+    if (typeof token === "object") {
+      values.pop()
+      values.push(compileExpression(token, globals, locals))
+    }
     if (isIdentifier(token)) {
       let id = values.pop()
       if (locals.includes(token)) {
@@ -600,7 +677,7 @@ function deparens(tokens, all) {
   if (all && start === "{" && end === "}") return deparens(tokens.slice(1, tokens.length - 1), all)
   if (start === "(" && end === ")") return deparens(tokens.slice(1, tokens.length - 1), all)
   if (start === "[" && end === "]") return deparens(tokens.slice(1, tokens.length - 1), all)
-  return tokens
+  return tokens.slice()
 }
 
 function compileWast(wast) {
