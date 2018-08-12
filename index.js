@@ -60,6 +60,21 @@ function croak(c, msg) {
   throw `${msg} at ${c.path}[${c.line}:${c.col}]!`
 }
 
+function escapeStr(str) {
+  let buf = new Buffer(str)
+  str = ""
+  for (let i = 0; i < buf.length; i++) {
+    if (buf[i] === 32 || buf[i] === 33) {
+      str += String.fromCharCode(buf[i])
+    } else if (buf[i] > 34 && buf[i] < 127) {
+      str += String.fromCharCode(buf[i])
+    } else {
+      str += "\\" + buf[i].toString(16)
+    }
+  }
+  return str
+}
+
 function nextToken(c) {
   let token = " "
   let char
@@ -121,7 +136,7 @@ function nextToken(c) {
     if (token.length > 1 && token[0] === ".") token = "0" + token
   } else if (token.match(/["']/)) {
     while (char !== token[0]) {
-      if (char === "/") token += nextChar(c)
+      if (char === "\\") token += nextChar(c)
       char = nextChar(c)
       token += char
     }
@@ -222,7 +237,7 @@ function compileModule(c) {
   let offset = 1024 * 64
   for (let i = 8; i < c.strings.length; i++) {
     let len = Buffer.byteLength(c.strings[i], 'utf8')
-    memory += `(data (i32.const ${offset}) "${c.strings[i].replace(/\"/g, '\"')}")\n`
+    memory += `(data (i32.const ${offset}) "${escapeStr(c.strings[i])}")\n`
     start += `(call $-string (i32.const ${offset}) (i32.const ${len}))\n`
     offset += len
     offset = Math.floor(offset / 8) * 8 + 8
