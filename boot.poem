@@ -8,7 +8,7 @@
 
 @set meaning_of_life = 42
 @set meaning_of_life2 = 43
-@set name = "Hello world! 😇"
+@set name = "Hello \"world\"! 🤖"
 
 @set friends =
   "Alice"
