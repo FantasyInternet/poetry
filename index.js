@@ -69,7 +69,7 @@ function escapeStr(str) {
     } else if (buf[i] > 34 && buf[i] < 127) {
       str += String.fromCharCode(buf[i])
     } else {
-      str += "\\" + buf[i].toString(16)
+      str += "\\" + ("0" + buf[i].toString(16)).substr(-2)
     }
   }
   return str
@@ -148,7 +148,7 @@ function nextToken(c) {
   if (c.metaphors[token]) token = c.metaphors[token]
   if (isString(token)) {
     let str = JSON.parse(token)
-    if (str) {
+    if (str && !c.strings.includes(str)) {
       c.strings.push(str)
     }
   }
@@ -224,8 +224,6 @@ function scanForGlobals(tokenTree) {
 
 function compileModule(c) {
   let imports = ""
-  let stdlib = fs.readFileSync("stdlib.wast")
-  let runtime = fs.readFileSync("runtime.wast")
   let memory = `(memory $-memory 2) \n`
   let table = ""
   let globals = ""
@@ -233,6 +231,9 @@ function compileModule(c) {
   let start = "(call $-initruntime)\n"
   let startLocals = []
   let exports = ""
+  let runtime = fs.readFileSync("runtime.wast")
+  let stdlib = fs.readFileSync("stdlib.wast")
+  let gc = ""
 
   let offset = 1024 * 64
   for (let i = 8; i < c.strings.length; i++) {
@@ -242,6 +243,7 @@ function compileModule(c) {
     offset += len
     offset = Math.floor(offset / 8) * 8 + 8
   }
+  start += `(call $-zerorefs)\n`
   c.globals["-string"] = c.strings
   c.globals["-table"] = []
 
@@ -331,38 +333,50 @@ function compileModule(c) {
     }
     exports += `)))\n`
   }
+  gc += `(func $-traceGC\n`
+  gc += `(call $-zerorefs)\n`
+  for (let g in c.globals) {
+    if (c.globals[g] === true) {
+      gc += `(call $-reftree (get_global $${g}))\n`
+    }
+  }
+  gc += `(call $-garbagecollect)\n`
+  gc += `)\n`
 
   return `
     (module
       ;; imports
       ${imports}
-
-      ;; stdlib
-      ${stdlib}
-
-      ;; runtime
-      ${runtime}
-
+      
       ;; memory
       ${memory}
-
+      
       ;; table
       ${table}
-
+      
       ;; globals
       ${globals}
-
+      
       ;; functions
       ${functions}
-
+      
       ;; start
       (func $-start
         (local $-success i32)
-      ${start})
+        ${start})
       (start $-start)
       
       ;; exports
       ${exports}
+      
+      ;; runtime
+      ${runtime}
+      
+      ;; stdlib
+      ${stdlib}
+      
+      ;; gc
+      ${gc}
     )
   `.trim()
 }
@@ -372,6 +386,7 @@ function compileFunction(tokenTree, globals) {
   let locals = []
   tokenTree = deparens(tokenTree, true)
 
+  wast += `\n;; function $${tokenTree[1]} \n`
   wast += `(func $${tokenTree[1]} `
   for (let i = 2; i < tokenTree.length; i++) {
     if (isIdentifier(tokenTree[i])) {
@@ -443,12 +458,13 @@ function compileStatement(tokenTree, globals, locals) {
       locals.push(variable[0])
       setter = `set_local $${variable[0]}`
     }
-    wast += `(${setter} (call $-reref ${compileExpression(variable, globals, locals)}`
+    wast += `(${setter} `
     if (assigner[0] !== "=") {
+      tokenTree = [tokenTree]
       tokenTree.unshift(assigner[0])
       tokenTree.unshift(variable)
     }
-    wast += ` ${compileExpression(tokenTree, globals, locals)}))\n`
+    wast += ` ${compileExpression(tokenTree, globals, locals)})\n`
   } else if (tokenTree[0] === "@if") {
     wast += `(if (call $-truthy ${compileExpression(tokenTree.slice(1, tokenTree.length - 1), globals, locals)})\n`
     wast += `(then ${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)})`
@@ -625,6 +641,18 @@ function compileExpression(tokenTree, globals, locals) {
     if (token === "@true") {
       values.pop()
       values.push(`(i32.const 5)`)
+    }
+    if (token === "@array") {
+      values.pop()
+      values.push(`(call $-newValue (i32.const 4) (i32.const 0))`)
+    }
+    if (token === "@object") {
+      values.pop()
+      values.push(`(call $-newValue (i32.const 5) (i32.const 0))`)
+    }
+    if (token === "@binary") {
+      values.pop()
+      values.push(`(call $-newValue (i32.const 6) (i32.const 0))`)
     }
     if (isNumber(token)) {
       let num = values.pop()
