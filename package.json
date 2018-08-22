@@ -1,11 +1,14 @@
 {
   "name": "poetry",
-  "version": "0.2.5",
+  "version": "0.3",
   "description": "Poetic programming language that compiles to webassembly",
   "main": "index.js",
   "scripts": {
     "build": "node .",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "poetry": "./cli.js"
   },
   "repository": {
     "type": "git",
@@ -24,7 +27,8 @@
     "url": "https://github.com/FantasyInternet/poetry/issues"
   },
   "homepage": "https://github.com/FantasyInternet/poetry#readme",
-  "devDependencies": {
+  "dependencies": {
+    "commander": "^2.17.1",
     "wabt": "^1.0.0"
   }
 }

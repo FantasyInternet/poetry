@@ -4,5 +4,52 @@
   ],
   "size_of": [
     "val"
+  ],
+  "datatype_of": [
+    "val"
+  ],
+  "array_length": [
+    "array"
+  ],
+  "array_push": [
+    "array",
+    "value"
+  ],
+  "array_pop": [
+    "array"
+  ],
+  "array_unshift": [
+    "array",
+    "value"
+  ],
+  "array_shift": [
+    "array"
+  ],
+  "read8": [
+    "strbin",
+    "pos"
+  ],
+  "read16": [
+    "strbin",
+    "pos"
+  ],
+  "read32": [
+    "strbin",
+    "pos"
+  ],
+  "write8": [
+    "strbin",
+    "pos",
+    "data"
+  ],
+  "write16": [
+    "strbin",
+    "pos",
+    "data"
+  ],
+  "write32": [
+    "strbin",
+    "pos",
+    "data"
   ]
 }

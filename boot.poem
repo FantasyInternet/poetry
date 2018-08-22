@@ -6,11 +6,11 @@
 @func log msg
   _log (address_of msg) (size_of msg)
 
-@set meaning_of_life = 42
-@set meaning_of_life2 = 43
-@set name = "Hello world! 😇"
+@var meaning_of_life = 42
+@var meaning_of_life2 = 43
+@var name = "Hello \"world\"! 🤖"
 
-@set friends =
+@var friends =
   "Alice"
   "Bob"
   "Charlie"
@@ -18,15 +18,15 @@
 
 
 @func sum a b
-  @set tableindex = (# init)
+  @var tableindex = (# init)
   @return a + b + meaning_of_life
 
 @export "init" init
-  @set tableindex = (# sum)
+  @var tableindex = (# sum)
   logNumber sum 2 meaning_of_life2
   log name + " " + -32.00125
-  @set friend = friends 2
-  @set i = 10
+  @var friend = friends:2
+  @var i = 10
   @if i > 0
     log "yay!"
   @else
