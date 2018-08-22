@@ -2,6 +2,8 @@ Poetry
 ======
 A poetically dynamic and simple programming language that compiles to WebAssembly!
 
+*This project is still in early development! Use at your own risk!*
+
 Much features! Very hype!
 -------------------------
  - Easy to learn and use
