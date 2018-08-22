@@ -1,4 +1,5 @@
 const fs = require("fs"),
+  path = require("path"),
   wabt = require("wabt")
 
 function compile(path, options = {}) {
@@ -249,8 +250,8 @@ function compileModule(c) {
   let start = "(call $-initruntime)\n"
   let startLocals = ["-ret"]
   let exports = ""
-  let runtime = fs.readFileSync("runtime.wast")
-  let stdlib = fs.readFileSync("stdlib.wast")
+  let runtime = fs.readFileSync(path.join(__dirname, "runtime.wast"))
+  let stdlib = fs.readFileSync(path.join(__dirname, "stdlib.wast"))
   let gc = ""
 
   let offset = 1024 * 64
