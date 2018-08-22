@@ -11,7 +11,8 @@ Much features! Very hype!
  - Customizable
  - Full control of wasm imports and exports
 
----
+Example
+-------
 
     @export_memory "memory"
     @import "env" "log" _log 2 0
@@ -21,3 +22,8 @@ Much features! Very hype!
 
     @export "init" init
       log "Hello Poetry! 😇"
+
+Usage
+-----
+    $ npm i -g poetry-compiler
+    $ poetry -b my_program.poem

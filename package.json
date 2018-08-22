@@ -1,6 +1,6 @@
 {
-  "name": "poetry",
-  "version": "0.2.12",
+  "name": "poetry-compiler",
+  "version": "0.3.2",
   "description": "Poetic programming language that compiles to webassembly",
   "main": "index.js",
   "scripts": {
