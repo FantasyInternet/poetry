@@ -1,7 +1,7 @@
 const fs = require("fs"),
   wabt = require("wabt")
 
-function compile(path) {
+function compile(path, options = {}) {
   let compilation = {
     path: path,
     src: ("" + fs.readFileSync(path)).replace(/\r/g, "") + "\n~end\n;",
@@ -18,11 +18,16 @@ function compile(path) {
   let level = 0
   compilation.tokenTree = createTokenTree(compilation)
   compilation.globals = scanForGlobals(compilation.tokenTree)
-  // console.log(JSON.stringify(compilation, null, 2))
+  if (options.debug)
+    console.log(JSON.stringify(compilation, null, 2))
   let wast = compileModule(compilation)
-  fs.writeFileSync(path.replace(".poem", ".wast"), wast)
-  let wasm = compileWast(wast)
-  fs.writeFileSync(path.replace(".poem", ".wasm"), wasm)
+  if (options.wast) {
+    fs.writeFileSync(path.replace(".poem", ".wast"), wast)
+  }
+  if (options.wasm) {
+    let wasm = compileWast(wast)
+    fs.writeFileSync(path.replace(".poem", ".wasm"), wasm)
+  }
 }
 
 function isKeyword(token) { return token && typeof token === "string" && (token[0] === "@") }
@@ -459,14 +464,14 @@ function compileStatement(tokenTree, globals, locals) {
   }
   if (tokenTree[0] === "@if") {
     wast += `(if (call $-truthy ${compileExpression(tokenTree.slice(1, tokenTree.length - 1), globals, locals)})\n`
-    wast += `(then ${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)})`
+    wast += `${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)}`.replace("(block", "(then")
     wast += `(else (set_local $-success (i32.const 0))))`
   } else if (tokenTree[0] === "@elsif") {
     wast += `(if (i32.xor (get_local $-success) (call $-truthy ${compileExpression(tokenTree.slice(1, tokenTree.length - 1), globals, locals)}))\n`
-    wast += `(then ${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)}))`
+    wast += `${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)})`.replace("(block", "(then")
   } else if (tokenTree[0] === "@else") {
     wast += `(if (i32.eqz (get_local $-success))\n`
-    wast += `(then ${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)}))`
+    wast += `${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)})`.replace("(block", "(then")
   } else if (tokenTree[0] === "@while") {
     wast += `(block(loop`
     globals["-blocks"] += 2
@@ -491,6 +496,12 @@ function compileExpression(tokenTree, globals, locals) {
 
   for (let i = 0; i < values.length; i++) {
     let token = values[i]
+    if (token === "#") {
+      let operand2 = values[i + 1]
+      if (!globals["-table"].includes(operand2)) globals["-table"].push(operand2)
+      values.splice(i, 1)
+      values[i] = `(call $-number (f64.const ${globals["-table"].indexOf(operand2)}))`
+    }
     if (isIdentifier(token) && typeof globals[token] === "object" && !locals.includes(token)) {
       let a = values.slice(0, i)
       let b = values.slice(i + 1, values.length)
@@ -568,12 +579,12 @@ function compileExpression(tokenTree, globals, locals) {
       }
       values.push(`(call $-getFromObj ${obj} ${prop})`)
     }
-    if (values[values.length - 2] === "#") {
+    /* if (values[values.length - 2] === "#") {
       let operand2 = values.pop()
       values.pop()
       if (!globals["-table"].includes(operand2)) globals["-table"].push(operand2)
       values.push(`(call $-number (f64.const ${globals["-table"].indexOf(operand2)}))`)
-    }
+    } */
   }
   _values = values
   values = []
@@ -785,4 +796,4 @@ function compileWast(wast) {
   return wabt.parseWat("boot", wast).toBinary({ write_debug_names: true }).buffer
 }
 
-compile("boot.poem")
+module.exports = compile
