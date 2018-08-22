@@ -362,25 +362,29 @@
 (func $-equal (param $id1 i32) (param $id2 i32) (result i32)
   (local $success i32)
   (local $len i32)
+  ;; is it the same reference?
   (if (i32.eq (get_local $id1) (get_local $id2))(then
-    (set_local $success (i32.const 5))
+    (set_local $success (i32.const 5)) ;; true
   )(else
+    ;; are the datatypes different?
     (if (i32.ne (call $-datatype (get_local $id1)) (call $-datatype (get_local $id2)))(then
-      (set_local $success (i32.const 1))
+      (set_local $success (i32.const 1)) ;; false
     )(else
+      ;; are they different lengths?
       (if (i32.ne (call $-len (get_local $id1)) (call $-len (get_local $id2)))(then
-        (set_local $success (i32.const 1))
+        (set_local $success (i32.const 1)) ;; false
       )(else
-        (if (i32.ge_u (call $-datatype (get_local $id1)) (i32.const 4))(then
-          (set_local $success (i32.const 1))
+        ;; is the first one an array/object?
+        (if (i32.eq (i32.and (call $-datatype (get_local $id1)) (i32.const 6)) (i32.const 4))(then
+          (set_local $success (i32.const 1)) ;; false
         )(else
           (set_local $len (call $-len (get_local $id1)))
-          (set_local $success (i32.const 5))
+          (set_local $success (i32.const 5)) ;; true
           (block(loop
             (br_if 1 (i32.eqz (get_local $len)))
             (set_local $len (i32.sub (get_local $len) (i32.const 1)))
             (if (i32.ne (call $-read8 (get_local $id1) (get_local $len)) (call $-read8 (get_local $id2) (get_local $len)))(then
-              (set_local $success (i32.const 1))
+              (set_local $success (i32.const 1)) ;; false
               (set_local $len (i32.const 0))
             ))
             (br 0)

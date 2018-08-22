@@ -25,12 +25,13 @@ function compile(path) {
   fs.writeFileSync(path.replace(".poem", ".wasm"), wasm)
 }
 
-function isKeyword(token) { return typeof token === "string" && (token[0] === "@") }
-function isIdentifier(token) { return typeof token === "string" && (token[0].match(/[\$A-Z_a-z]/) || token.charCodeAt(0) > 127) }
-function isNumber(token) { return typeof token === "string" && (token[0].match(/[0-9]/)) }
-function isString(token) { return typeof token === "string" && (token[0].match(/["']/)) }
-function isSymbol(token) { return typeof token === "string" && (token[0].match(/[!#%&*+,\-/:;<=>?\\^|]/)) }
-function isAssigner(token) { return typeof token === "string" && (token.substr(-1) === "=") }
+function isKeyword(token) { return token && typeof token === "string" && (token[0] === "@") }
+function isProperty(token) { return token && typeof token === "string" && (token[0] === ":") }
+function isIdentifier(token) { return token && typeof token === "string" && (token[0].match(/[\$A-Z_a-z]/) || token.charCodeAt(0) > 127) }
+function isNumber(token) { return token && typeof token === "string" && (token[0].match(/[0-9]/)) }
+function isString(token) { return token && typeof token === "string" && (token[0].match(/["']/)) }
+function isSymbol(token) { return token && typeof token === "string" && (token[0].match(/[!#%&*+,\-/;<=>?\\^|]/)) }
+function isAssigner(token) { return token && typeof token === "string" && (token.substr(-1) === "=") }
 
 function nextChar(c, peek) {
   let char = c.src[c.position]
@@ -119,6 +120,12 @@ function nextToken(c) {
       token += nextChar(c)
       char = nextChar(c, true)
     }
+  } else if (token.match(/[\:]/)) {
+    char = nextChar(c, true)
+    while (char.match(/[\$A-Z_a-z0-9]/) || char.charCodeAt(0) > 127) {
+      token += nextChar(c)
+      char = nextChar(c, true)
+    }
   } else if (token.match(/[\$A-Z_a-z]/) || token.charCodeAt(0) > 127) {
     char = nextChar(c, true)
     while (char.match(/[\$A-Z_a-z0-9]/) || char.charCodeAt(0) > 127) {
@@ -146,6 +153,12 @@ function nextToken(c) {
   }
 
   if (c.metaphors[token]) token = c.metaphors[token]
+  if (isProperty(token)) {
+    let str = token.substr(1)
+    if (isNaN(str) && !c.strings.includes(str)) {
+      c.strings.push(str)
+    }
+  }
   if (isString(token)) {
     let str = JSON.parse(token)
     if (str && !c.strings.includes(str)) {
@@ -176,7 +189,7 @@ function scanForGlobals(tokenTree) {
   let statement = []
   for (let token of tokenTree) {
     if (";}".includes(token)) {
-      if (statement[0] === "@set") {
+      if (statement[0] === "@var") {
         if (isIdentifier(statement[1])) {
           if (globals[statement[1]]) throw `duplicate identifier "${statement[1]}"`
           globals[statement[1]] = true
@@ -229,7 +242,7 @@ function compileModule(c) {
   let globals = ""
   let functions = ""
   let start = "(call $-initruntime)\n"
-  let startLocals = []
+  let startLocals = ["-ret"]
   let exports = ""
   let runtime = fs.readFileSync("runtime.wast")
   let stdlib = fs.readFileSync("stdlib.wast")
@@ -250,8 +263,9 @@ function compileModule(c) {
   let statement = []
   for (let token of c.tokenTree) {
     if (";}".includes(token)) {
-      if (statement[0] === "@set") {
+      if (statement[0] === "@var") {
         globals += `(global $${statement[1]} (mut i32) (i32.const 0))\n`
+        statement.shift()
       }
       if (statement[0] === "@export") {
         exports += `(func $--${statement[2]}\n`
@@ -385,6 +399,7 @@ function compileFunction(tokenTree, globals) {
   let wast = ""
   let locals = []
   tokenTree = deparens(tokenTree, true)
+  globals["-blocks"] = -1
 
   wast += `\n;; function $${tokenTree[1]} \n`
   wast += `(func $${tokenTree[1]} `
@@ -412,6 +427,7 @@ function compileFunction(tokenTree, globals) {
 
 function compileBlock(tokenTree, globals, locals) {
   let wast = "(block\n"
+  globals["-blocks"]++
   tokenTree = deparens(tokenTree, true)
 
   let statement = []
@@ -427,6 +443,7 @@ function compileBlock(tokenTree, globals, locals) {
     wast += compileStatement(statement, globals, locals) + "\n"
   }
   wast += "(set_local $-success (i32.const 1)))\n"
+  globals["-blocks"]--
   return wast
 }
 
@@ -434,38 +451,13 @@ function compileStatement(tokenTree, globals, locals) {
   let wast = ""
   tokenTree = deparens(tokenTree, true)
 
-  if (isIdentifier(tokenTree[0])) {
-    wast += `(drop ${compileExpression(tokenTree, globals, locals)})\n`
-  } else if (tokenTree[0] === "@set") {
+  if (tokenTree[0] === "@var") {
     tokenTree.shift()
-    let variable = []
-    while (!isAssigner(tokenTree[0])) {
-      variable.push(tokenTree.shift())
+    if (!locals.includes(tokenTree[0])) {
+      locals.push(tokenTree[0])
     }
-    let assigner = tokenTree.shift()
-    let setter = ``
-    if (variable.length > 1) {
-      setter = `call $-setToObj ${compileExpression(variable.slice(0, variable.length - 1), globals, locals)} ${compileExpression(variable.slice(variable.length - 1), globals, locals)}`
-    } else if (locals.includes(variable[0])) {
-      setter = `set_local $${variable[0]}`
-    } else if (globals[variable[0]]) {
-      if (typeof globals[variable[0]] === "object") {
-        throw "attempt to assign value to function"
-      } else {
-        setter = `set_global $${variable[0]}`
-      }
-    } else {
-      locals.push(variable[0])
-      setter = `set_local $${variable[0]}`
-    }
-    wast += `(${setter} `
-    if (assigner[0] !== "=") {
-      tokenTree = [tokenTree]
-      tokenTree.unshift(assigner[0])
-      tokenTree.unshift(variable)
-    }
-    wast += ` ${compileExpression(tokenTree, globals, locals)})\n`
-  } else if (tokenTree[0] === "@if") {
+  }
+  if (tokenTree[0] === "@if") {
     wast += `(if (call $-truthy ${compileExpression(tokenTree.slice(1, tokenTree.length - 1), globals, locals)})\n`
     wast += `(then ${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)})`
     wast += `(else (set_local $-success (i32.const 0))))`
@@ -477,11 +469,16 @@ function compileStatement(tokenTree, globals, locals) {
     wast += `(then ${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)}))`
   } else if (tokenTree[0] === "@while") {
     wast += `(block(loop`
+    globals["-blocks"] += 2
     wast += `(br_if 1 (call $-falsy ${compileExpression(tokenTree.slice(1, tokenTree.length - 1), globals, locals)}))`
     wast += ` ${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)}`
     wast += `(br 0)))`
+    globals["-blocks"] -= 2
   } else if (tokenTree[0] === "@return") {
-    wast += `(return (tee_local $-ret ${compileExpression(tokenTree.slice(1), globals, locals)}))\n`
+    wast += `(set_local $-ret ${compileExpression(tokenTree.slice(1), globals, locals)})(br ${globals["-blocks"]})\n`
+  } else {
+    let expr = compileExpression(tokenTree, globals, locals)
+    if (expr) wast += `(drop ${expr})\n`
   }
 
   return wast
@@ -492,10 +489,85 @@ function compileExpression(tokenTree, globals, locals) {
   let _values, values = deparens(tokenTree)
   if (values[0] === "{") return compileObjLit(tokenTree, globals, locals)
 
+  for (let i = 0; i < values.length; i++) {
+    let token = values[i]
+    if (isIdentifier(token) && typeof globals[token] === "object" && !locals.includes(token)) {
+      let a = values.slice(0, i)
+      let b = values.slice(i + 1, values.length)
+      values = a
+      values.push(`(call $${token} ${compileExpression(b, globals, locals)})`)
+    }
+  }
+
   _values = values
   values = []
   for (let token of _values) {
     values.push(token)
+    if (typeof token === "object") {
+      values.pop()
+      values.push(compileExpression(token, globals, locals))
+    }
+    if (isIdentifier(token)) {
+      let id = values.pop()
+      if (locals.includes(token)) {
+        values.push(`(get_local $${id})`)
+      } else if (globals[token]) {
+        if (typeof globals[token] === "object") {
+          values.push(id)
+        } else {
+          values.push(`(get_global $${id})`)
+        }
+      } else {
+        values.push(`(i32.const 0)`)
+      }
+    }
+    if (token === "@null") {
+      values.pop()
+      values.push(`(i32.const 0)`)
+    }
+    if (token === "@false") {
+      values.pop()
+      values.push(`(i32.const 1)`)
+    }
+    if (token === "@true") {
+      values.pop()
+      values.push(`(i32.const 5)`)
+    }
+    if (token === "@array") {
+      values.pop()
+      values.push(`(call $-newValue (i32.const 4) (i32.const 0))`)
+    }
+    if (token === "@object") {
+      values.pop()
+      values.push(`(call $-newValue (i32.const 5) (i32.const 0))`)
+    }
+    if (token === "@binary") {
+      values.pop()
+      values.push(`(call $-newValue (i32.const 6) (i32.const 0))`)
+    }
+    if (isNumber(token)) {
+      let num = values.pop()
+      values.push(`(call $-number (f64.const ${num}))`)
+    }
+    if (isString(token)) {
+      let str = JSON.parse(values.pop())
+      values.push(`(i32.const ${globals["-string"].indexOf(str)})`)
+    }
+  }
+  _values = values
+  values = []
+  for (let token of _values) {
+    values.push(token)
+    if (isProperty(token)) {
+      let prop = values.pop().substr(1)
+      let obj = values.pop()
+      if (isNaN(prop)) {
+        prop = `(i32.const ${globals["-string"].indexOf(prop)})`
+      } else {
+        prop = `(call $-number (f64.const ${prop}))`
+      }
+      values.push(`(call $-getFromObj ${obj} ${prop})`)
+    }
     if (values[values.length - 2] === "#") {
       let operand2 = values.pop()
       values.pop()
@@ -608,73 +680,58 @@ function compileExpression(tokenTree, globals, locals) {
   }
   _values = values
   values = []
+  for (let token of _values) {
+    values.push(token)
+    if (isAssigner(values[values.length - 2])) {
+      let operand2 = values.pop()
+      let op = values.pop()
+      let operand1 = values.pop()
+      let setter = operand1
+      if (setter.indexOf(`(get_local `) === 0) {
+        setter = setter.replace(`(get_local `, `(set_local `)
+      } else if (setter.indexOf(`(get_global `) === 0) {
+        setter = setter.replace(`(get_global `, `(set_global `)
+      } else if (setter.indexOf(`(call $-getFromObj `) === 0) {
+        setter = setter.replace(`(call $-getFromObj `, `(call $-setToObj `)
+      } else {
+        throw `cannot assign to ${setter}`
+      }
+      if (op[0] === "+") {
+        operand2 = `(call $-add ${operand1} ${operand2})`
+      }
+      if (op[0] === "-") {
+        operand2 = `(call $-sub ${operand1} ${operand2})`
+      }
+      if (op[0] === "*") {
+        operand2 = `(call $-mul ${operand1} ${operand2})`
+      }
+      if (op[0] === "/") {
+        operand2 = `(call $-div ${operand1} ${operand2})`
+      }
+      if (op[0] === "%") {
+        operand2 = `(call $-mod ${operand1} ${operand2})`
+      }
+      setter = setter.substr(0, setter.lastIndexOf(")"))
+      operand2 += ")"
+      values.push(`${setter} ${operand2} ${operand1}\n`)
+    }
+  }
+  _values = values
+  values = []
   let calls = 0
   for (let token of _values) {
     values.push(token)
-    if (typeof token === "object") {
-      values.pop()
-      values.push(compileExpression(token, globals, locals))
-    }
     if (isIdentifier(token)) {
       let id = values.pop()
-      if (locals.includes(token)) {
-        values.push(`(get_local $${id})`)
-      } else if (globals[token]) {
-        if (typeof globals[token] === "object") {
-          values.push(`(call $${id}`)
-          calls++
-        } else {
-          values.push(`(get_global $${id})`)
-        }
-      } else {
-        values.push(`(i32.const 0)`)
+      if (typeof globals[token] === "object") {
+        values.push(`(call $${id}`)
+        calls++
       }
     }
-    if (token === "@null") {
-      values.pop()
-      values.push(`(i32.const 0)`)
-    }
-    if (token === "@false") {
-      values.pop()
-      values.push(`(i32.const 1)`)
-    }
-    if (token === "@true") {
-      values.pop()
-      values.push(`(i32.const 5)`)
-    }
-    if (token === "@array") {
-      values.pop()
-      values.push(`(call $-newValue (i32.const 4) (i32.const 0))`)
-    }
-    if (token === "@object") {
-      values.pop()
-      values.push(`(call $-newValue (i32.const 5) (i32.const 0))`)
-    }
-    if (token === "@binary") {
-      values.pop()
-      values.push(`(call $-newValue (i32.const 6) (i32.const 0))`)
-    }
-    if (isNumber(token)) {
-      let num = values.pop()
-      values.push(`(call $-number (f64.const ${num}))`)
-    }
-    if (isString(token)) {
-      let str = JSON.parse(values.pop())
-      values.push(`(i32.const ${globals["-string"].indexOf(str)})`)
-    }
   }
-  if (calls) {
-    for (let i = 0; i < calls; i++) {
-      values.push(")")
-    }
-  } else if (values.length > 1) {
-    _values = values
-    values = [_values.shift()]
-    for (let token of _values) {
-      values.unshift(`(call $-getFromObj`)
-      values.push(token)
-      values.push(")")
-    }
+
+  for (let i = 0; i < calls; i++) {
+    values.push(")")
   }
 
   return values.join(" ")
@@ -694,8 +751,9 @@ function compileObjLit(tokenTree, globals, locals) {
   let statement = []
   for (let token of tokenTree) {
     if (";}".includes(token)) {
-      if (statement.length > 1 && isString(statement[0])) {
-        wast += `(call $-setToObj (get_local $${name}) ${compileExpression(statement.slice(0, 1), globals, locals)} ${compileExpression(statement.slice(1), globals, locals)})\n`
+      if (statement.length > 1 && isProperty(statement[0])) {
+        statement.unshift(`(get_local $${name})`)
+        wast += `(drop ${compileExpression(statement, globals, locals)})\n`
         index += 2
       } else {
         wast += `(call $-setToObj (get_local $${name}) (call $-number (f64.const ${index})) ${compileExpression(statement, globals, locals)})\n`
