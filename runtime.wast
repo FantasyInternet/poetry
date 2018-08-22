@@ -29,7 +29,7 @@
   ;; how much space is here at the beginning?
   (set_local $space (i32.load (get_local $offset)))
   ;; round down to nearest multiple of 8
-  (set_local $space (i32.mul (i32.div_u (get_local $space) (i32.const 8) ) (i32.const 8) ) )
+  (set_local $space (i32.and (get_local $space) (i32.const -8) ) )
   (block(loop
     ;; is there enough space here?
     (br_if 1 (i32.gt_u (get_local $space) (i32.add (get_local $len) (i32.const 32))))
@@ -52,11 +52,11 @@
     ;; skip the data
     (set_local $offset (i32.add (i32.add (get_local $offset) (get_local $space)) (i32.const 4)))
     ;; align to next multiple of 8
-    (set_local $offset (i32.add (i32.mul (i32.div_u (get_local $offset) (i32.const 8)) (i32.const 8)) (i32.const 8)))
+    (set_local $offset (i32.add (i32.and (get_local $offset) (i32.const -8)) (i32.const 8)))
     ;; how much space is here?
     (set_local $space (i32.load (get_local $offset)))
     ;; round down to nearest multiple of 8
-    (set_local $space (i32.mul (i32.div_u (get_local $space) (i32.const 8) ) (i32.const 8) ) )
+    (set_local $space (i32.and (get_local $space) (i32.const -8) ) )
     (br 0)
   ))
   ;; claim the space
@@ -67,7 +67,7 @@
   ;; skip allocation
   (set_local $offset2 (i32.add (i32.add (get_local $offset2) (get_local $len)) (i32.const 4)))
   ;; round down to nearest multiple of 8
-  (set_local $offset2 (i32.mul (i32.div_u (get_local $offset2) (i32.const 8)) (i32.const 8)))
+  (set_local $offset2 (i32.and (get_local $offset2) (i32.const -8)))
   ;; set terminator
   (i64.store (get_local $offset2) (i64.const 0))
   (set_local $offset2 (i32.add (get_local $offset2) (i32.const 8)))
@@ -89,17 +89,17 @@
   (local $space i32)
   (local $space2 i32)
 
-  (set_local $offset (i32.sub (i32.mul (i32.div_u (get_local $offset) (i32.const 8)) (i32.const 8)) (i32.const 8)))
+  (set_local $offset (i32.sub (i32.and (get_local $offset) (i32.const -8)) (i32.const 8)))
   (set_local $space (i32.load (get_local $offset)))
-  (set_local $space (i32.mul (i32.div_u (get_local $space) (i32.const 8) ) (i32.const 8) ) )
+  (set_local $space (i32.and (get_local $space) (i32.const -8) ) )
   (set_local $offset (i32.sub (get_local $offset) (get_local $space)))
 
   (set_local $offset2 (i32.add (i32.add (get_local $offset) (get_local $space)) (i32.const 4)))
   (set_local $space2 (i32.load (get_local $offset2)))  
   (set_local $offset2 (i32.add (i32.add (get_local $offset2) (get_local $space2)) (i32.const 4)))
-  (set_local $offset2 (i32.add (i32.mul (i32.div_u (get_local $offset2) (i32.const 8)) (i32.const 8)) (i32.const 8)))
+  (set_local $offset2 (i32.add (i32.and (get_local $offset2) (i32.const -8)) (i32.const 8)))
   (set_local $space2 (i32.load (get_local $offset2)))
-  (set_local $space2 (i32.mul (i32.div_u (get_local $space2) (i32.const 8) ) (i32.const 8) ) )
+  (set_local $space2 (i32.and (get_local $space2) (i32.const -8) ) )
   (set_local $offset2 (i32.add (get_local $offset2) (get_local $space2)))
 
   (set_local $space (i32.sub (get_local $offset2) (get_local $offset)))
@@ -111,19 +111,37 @@
 (func $-memcopy (param $from i32) (param $to i32) (param $len i32)
   (local $delta i32)
   (if (i32.lt_u (get_local $from) (get_local $to))(then
+    (set_local $delta (i32.const -8))
+    (set_local $from  (i32.add (get_local $from)  (get_local $len)))
+    (set_local $to    (i32.add (get_local $to)    (get_local $len)))
+    (block(loop (br_if 1 (i32.lt_s (get_local $len) (i32.const 8)))
+      (set_local $from  (i32.add (get_local $from)  (get_local $delta)))
+      (set_local $to    (i32.add (get_local $to)    (get_local $delta)))
+      (i64.store (get_local $to) (i64.load (get_local $from)))
+      (set_local $len   (i32.sub (get_local $len)   (i32.const 8)))
+    (br 0) ))
     (set_local $delta (i32.const -1))
-    (set_local $from  (i32.add (i32.add (get_local $from)  (get_local $len)) (get_local $delta) ))
-    (set_local $to    (i32.add (i32.add (get_local $to)    (get_local $len)) (get_local $delta) ))
+    (block(loop (br_if 1 (i32.lt_s (get_local $len) (i32.const 1)))
+      (set_local $from  (i32.add (get_local $from)  (get_local $delta)))
+      (set_local $to    (i32.add (get_local $to)    (get_local $delta)))
+      (i32.store8 (get_local $to) (i32.load8_u (get_local $from)))
+      (set_local $len   (i32.sub (get_local $len)   (i32.const 1)))
+    (br 0) ))
   )(else
+    (set_local $delta (i32.const 8))
+    (block(loop (br_if 1 (i32.lt_s (get_local $len) (i32.const 8)))
+      (i64.store (get_local $to) (i64.load (get_local $from)))
+      (set_local $from  (i32.add (get_local $from)  (get_local $delta)))
+      (set_local $to    (i32.add (get_local $to)    (get_local $delta)))
+      (set_local $len   (i32.sub (get_local $len)   (i32.const 8)))
+    (br 0) ))
     (set_local $delta (i32.const 1))
-  ))
-  (block(loop
-    (br_if 1 (i32.lt_s (get_local $len) (i32.const 1)))
-    (i32.store8 (get_local $to) (i32.load8_u (get_local $from)))
-    (set_local $from  (i32.add (get_local $from)  (get_local $delta)))
-    (set_local $to    (i32.add (get_local $to)    (get_local $delta)))
-    (set_local $len   (i32.sub (get_local $len)   (i32.const 1)))
-    (br 0)
+    (block(loop (br_if 1 (i32.lt_s (get_local $len) (i32.const 1)))
+      (i32.store8 (get_local $to) (i32.load8_u (get_local $from)))
+      (set_local $from  (i32.add (get_local $from)  (get_local $delta)))
+      (set_local $to    (i32.add (get_local $to)    (get_local $delta)))
+      (set_local $len   (i32.sub (get_local $len)   (i32.const 1)))
+    (br 0) ))
   ))
 )
 
@@ -144,7 +162,7 @@
       (set_local $offset (i32.load (get_local $offset)))
     ))
   ))
-  (set_local $offset (i32.mul (i32.div_u (get_local $offset) (i32.const 8)) (i32.const 8)))
+  (set_local $offset (i32.and (get_local $offset) (i32.const -8)))
   (get_local $offset)
 )
 
@@ -178,20 +196,66 @@
 )
 
 ;; resize memory allocation
-(func $-resize (param $id i32) (param $len i32)
+(func $-resize (param $id i32) (param $newlen i32)
   (local $offset i32)
+  (local $len i32)
   (local $datatype i32)
+  (local $spaceafter i32)
   (local $newoffset i32)
   (set_local $offset (call $-offset (get_local $id)))
-  (set_local $datatype (call $-datatype (get_local $id)))
   (if (get_local $offset)(then
-    (set_local $newoffset (call $-alloc (get_local $len)))
-    (call $-memcopy (get_local $offset) (get_local $newoffset) (get_local $len))
-    (call $-dealloc (get_local $offset))
-    (if (i32.eq (get_local $id) (i32.const -1))(then
-      (set_global $-mindex (get_local $newoffset))
+    (set_local $len (i32.load (i32.sub (get_local $offset) (i32.const 4))))
+    (if (i32.eq
+      (i32.and (get_local $len) (i32.const -8))
+      (i32.and (get_local $newlen) (i32.const -8))
+    )(then
+      (i32.store (i32.sub (get_local $offset) (i32.const 4)) (get_local $newlen))
     )(else
-      (call $-write32 (i32.const -1) (i32.mul (i32.sub (get_local $id) (i32.const 8)) (i32.const 8)) (i32.add (get_local $newoffset) (get_local $datatype)))
+      (set_local $spaceafter
+        (i32.load
+          (i32.add
+            (get_local $offset)
+            (i32.add (i32.and (get_local $len) (i32.const -8)) (i32.const 8))
+          )
+        )
+      )
+      (if (i32.gt_u (get_local $spaceafter) (i32.sub (get_local $newlen) (get_local $len)))(then
+        (set_local $spaceafter (i32.add
+          (get_local $spaceafter)
+          (i32.sub
+            (i32.and (get_local $len) (i32.const -8))
+            (i32.and (get_local $newlen) (i32.const -8))
+          )
+        ))
+        (i32.store (i32.sub (get_local $offset) (i32.const 4)) (get_local $newlen))
+        (i32.store
+          (i32.add
+            (get_local $offset)
+            (i32.add (i32.and (get_local $newlen) (i32.const -8)) (i32.const 8))
+          )
+          (get_local $spaceafter)
+        )
+        (i32.store
+          (i32.add
+            (i32.add
+              (get_local $offset)
+              (i32.add (i32.and (get_local $newlen) (i32.const -8)) (i32.const 8))
+            )
+            (get_local $spaceafter)
+          )
+          (get_local $spaceafter)
+        )
+      )(else
+        (set_local $datatype (call $-datatype (get_local $id)))
+        (set_local $newoffset (call $-alloc (get_local $newlen)))
+        (call $-memcopy (get_local $offset) (get_local $newoffset) (get_local $newlen))
+        (call $-dealloc (get_local $offset))
+        (if (i32.eq (get_local $id) (i32.const -1))(then
+          (set_global $-mindex (get_local $newoffset))
+        )(else
+          (call $-write32 (i32.const -1) (i32.mul (i32.sub (get_local $id) (i32.const 8)) (i32.const 8)) (i32.add (get_local $newoffset) (get_local $datatype)))
+        ))
+      ))
     ))
   ))
 )
@@ -285,6 +349,7 @@
   ))
 )
 (global $-coreVals (mut i32) (i32.const 0))
+(global $-highId (mut i32) (i32.const 0))
 ;; clear all references in index
 (func $-zerorefs
   (local $id i32)
@@ -292,6 +357,7 @@
   (if (i32.eqz (get_global $-coreVals))(then
     (set_global $-coreVals (get_local $id))
   ))
+  (set_global $-highId (get_global $-coreVals))
   (block(loop (br_if 1 (i32.eqz (get_local $id)))
     (set_local $id (i32.sub (get_local $id) (i32.const 1)))
     (if (i32.lt_u (get_local $id) (get_global $-coreVals))(then
@@ -316,6 +382,9 @@
       (call $-write32 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 4)) (i32.const 1))
       (set_local $id (i32.add (get_local $id) (i32.const 8)))
       (set_local $datatype (call $-datatype (get_local $id)))
+      (if (i32.gt_u (get_local $id) (get_global $-highId))(then
+        (set_global $-highId (get_local $id))
+      ))
       ;; is it array/object?
       (if (i32.eq (i32.and (get_local $datatype) (i32.const 6)) (i32.const 4))(then
         (set_local $offset (call $-len (get_local $id)))
@@ -346,6 +415,7 @@
       ))
     ))
   (br 0)))
+  (call $-resize (i32.const -1) (i32.mul (i32.add (get_global $-highId) (i32.const 1)) (i32.const 8)))
 )
 
 (func $-truthy (param $id i32) (result i32)
