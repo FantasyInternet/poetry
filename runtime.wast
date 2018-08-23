@@ -444,20 +444,28 @@
       (if (i32.ne (call $-len (get_local $id1)) (call $-len (get_local $id2)))(then
         (set_local $success (i32.const 1)) ;; false
       )(else
-        ;; is the first one an array/object?
+        ;; are they arrays/objects?
         (if (i32.eq (i32.and (call $-datatype (get_local $id1)) (i32.const 6)) (i32.const 4))(then
           (set_local $success (i32.const 1)) ;; false
         )(else
-          (set_local $len (call $-len (get_local $id1)))
-          (set_local $success (i32.const 5)) ;; true
-          (block(loop
-            (br_if 1 (i32.eqz (get_local $len)))
-            (set_local $len (i32.sub (get_local $len) (i32.const 1)))
-            (if (i32.ne (call $-read8 (get_local $id1) (get_local $len)) (call $-read8 (get_local $id2) (get_local $len)))(then
+          ;; are they numbers?
+          (if (i32.eq (call $-datatype (get_local $id1)) (i32.const 2))(then
+            (if (f64.eq (call $-f64 (get_local $id1)) (call $-f64 (get_local $id2)))(then
+              (set_local $success (i32.const 5)) ;; true
+            )(else
               (set_local $success (i32.const 1)) ;; false
-              (set_local $len (i32.const 0))
             ))
-            (br 0)
+          )(else
+            ;; compare strings or binaries
+            (set_local $len (call $-len (get_local $id1)))
+            (set_local $success (i32.const 5)) ;; true
+            (block(loop (br_if 1 (i32.eqz (get_local $len)))
+              (set_local $len (i32.sub (get_local $len) (i32.const 1)))
+              (if (i32.ne (call $-read8 (get_local $id1) (get_local $len)) (call $-read8 (get_local $id2) (get_local $len)))(then
+                (set_local $success (i32.const 1)) ;; false
+                (set_local $len (i32.const 0))
+              ))
+            (br 0) ))
           ))
         ))
       ))
