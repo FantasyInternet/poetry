@@ -1,10 +1,4 @@
-@import "env" "logNumber" logNumber 1 0
-@import "env" "log" _log 2 0
-
-@export_memory "memory"
-
-@func log msg
-  _log (address_of msg) (size_of msg)
+@include "./api.poem" api\
 
 @var meaning_of_life = 42
 @var meaning_of_life2 = 43
@@ -23,11 +17,11 @@
 
 @export "init" init
   @var tableindex = (# sum)
-  logNumber sum 2 meaning_of_life2
-  log name + " " + -32.00125
+  api\logNumber sum 2 meaning_of_life2
+  api\log name + " " + -32.00125
   @var friend = friends:2
   @var i = 10
   @if i > 0
-    log "yay!"
+    api\log "yay!"
   @else
-    log "nay..."
+    api\log "nay..."
