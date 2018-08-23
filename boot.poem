@@ -19,7 +19,8 @@
   @var tableindex = (# sum)
   api\logNumber sum 2 meaning_of_life2
   api\log name + " " + -32.00125
-  @var friend = friends:2
+  @var friend = friends[1+1]
+  api\log friend
   @var i = 10
   @if i > 0
     api\log "yay!"

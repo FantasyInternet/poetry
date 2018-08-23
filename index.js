@@ -350,7 +350,6 @@ function compileModule(c) {
       } else if (statement[0] === "@include") {
         let filename = JSON.parse(statement[1])
         let ns = c.bundle.indexOf(filename)
-        console.log(filename, ns)
         if (ns >= 0) {
           c.globals["-namespaces"][statement[2]] = "ns" + ns + "\\"
         }
@@ -542,7 +541,7 @@ function compileExpression(tokenTree, globals, locals) {
   values = []
   for (let token of _values) {
     values.push(token)
-    if (typeof token === "object") {
+    if (typeof token === "object" && token[0] !== "[") {
       values.pop()
       values.push(compileExpression(token, globals, locals))
     }
@@ -605,6 +604,11 @@ function compileExpression(tokenTree, globals, locals) {
       } else {
         prop = `(call $-number (f64.const ${prop}))`
       }
+      values.push(`(call $-getFromObj ${obj} ${prop})`)
+    }
+    if (typeof token === "object" && token[0] === "[") {
+      let prop = compileExpression(values.pop())
+      let obj = values.pop()
       values.push(`(call $-getFromObj ${obj} ${prop})`)
     }
     /* if (values[values.length - 2] === "#") {
