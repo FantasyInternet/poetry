@@ -1,12 +1,12 @@
 {
   "address_of": [
-    "id"
+    "value"
   ],
   "size_of": [
-    "id"
+    "value"
   ],
   "datatype_of": [
-    "id"
+    "value"
   ],
   "binary_slice": [
     "binary",
@@ -92,32 +92,32 @@
     "array"
   ],
   "object_keys": [
-    "obj"
+    "object"
   ],
   "object_values": [
-    "obj"
+    "object"
   ],
   "abs": [
-    "num"
+    "number"
   ],
   "ceil": [
-    "num"
+    "number"
   ],
   "floor": [
-    "num"
+    "number"
   ],
   "nearest": [
-    "num"
+    "number"
   ],
   "sqrt": [
-    "num"
+    "number"
   ],
   "min": [
-    "num1",
-    "num2"
+    "number1",
+    "number2"
   ],
   "max": [
-    "num1",
-    "num2"
+    "number1",
+    "number2"
   ]
 }

@@ -327,7 +327,7 @@ function compileModule(c) {
         functions += `(result i32)\n`
         functions += `(call $--${name} `
         for (let i = 0; i < params; i++) {
-          functions += `(call $-f64 (call $-toNumber (get_local $p${i}))) `
+          functions += `(call $-f64 (call $-to_number (get_local $p${i}))) `
         }
         functions += `)`
         if (results) {
@@ -573,15 +573,15 @@ function compileExpression(tokenTree, globals, locals) {
     }
     if (token === "@array") {
       values.pop()
-      values.push(`(call $-newValue (i32.const 4) (i32.const 0))`)
+      values.push(`(call $-new_value (i32.const 4) (i32.const 0))`)
     }
     if (token === "@object") {
       values.pop()
-      values.push(`(call $-newValue (i32.const 5) (i32.const 0))`)
+      values.push(`(call $-new_value (i32.const 5) (i32.const 0))`)
     }
     if (token === "@binary") {
       values.pop()
-      values.push(`(call $-newValue (i32.const 6) (i32.const 0))`)
+      values.push(`(call $-new_value (i32.const 6) (i32.const 0))`)
     }
     if (isNumber(token)) {
       let num = values.pop()
@@ -808,7 +808,7 @@ function compileObjLit(tokenTree, globals, locals) {
       statement.push(token)
     }
   }
-  wast = `(tee_local $${name} (call $-newValue (i32.const ${datatype}) (i32.const 0)))\n` + wast
+  wast = `(tee_local $${name} (call $-new_value (i32.const ${datatype}) (i32.const 0)))\n` + wast
 
 
   return wast
