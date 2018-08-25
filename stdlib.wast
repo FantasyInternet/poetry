@@ -20,7 +20,7 @@
   (if (i32.lt_u (i32.sub (call $-len (get_local $binary)) (get_local $start)) (get_local $len))(then
     (set_local $len (i32.sub (call $-len (get_local $binary)) (get_local $start)))
   ))
-  (set_local $out (call $-new_value (i32.const 3) (call $-i32_u (get_local $len))))
+  (set_local $out (call $-new_value (i32.const 3) (get_local $len)))
   (call $-memcopy
     (i32.add (call $-offset (get_local $binary)) (get_local $start))
     (call $-offset (get_local $out))
@@ -59,6 +59,7 @@
 (func $binary_write (param $binary i32) (param $pos i32) (param $data i32) (result i32)
   (local $subbin i32)
   (local $len i32)
+  (set_local $pos (call $-i32_u (get_local $pos)))
   (if (i32.lt_u (call $-datatype (get_local $data)) (i32.const 3))(then
     (set_local $subbin (call $-new_value (i32.const 6) (i32.const 4)))
     (call $-write32 (get_local $subbin) (i32.const 0) (call $-i32_u (get_local $data)))
@@ -443,4 +444,3 @@
     (call $-f64 (get_local $number2))
   ))
 )
-
