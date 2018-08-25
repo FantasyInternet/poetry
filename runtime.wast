@@ -257,6 +257,7 @@
         ))
       ))
     ))
+    (i32.store8 (i32.add (call $-offset (get_local $id)) (get_local $newlen)) (i32.const 0))
   ))
 )
 
@@ -348,19 +349,19 @@
     (call $-write32 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 4)) (i32.add (get_local $refs) (i32.const 1)))
   ))
 )
-(global $-coreVals (mut i32) (i32.const 0))
+(global $-hardValues (mut i32) (i32.const 0))
 (global $-highId (mut i32) (i32.const 0))
 ;; clear all references in index
 (func $-zerorefs
   (local $id i32)
   (set_local $id (i32.div_u (call $-len (i32.const -1)) (i32.const 8)))
-  (if (i32.eqz (get_global $-coreVals))(then
-    (set_global $-coreVals (get_local $id))
+  (if (i32.eqz (get_global $-hardValues))(then
+    (set_global $-hardValues (get_local $id))
   ))
-  (set_global $-highId (get_global $-coreVals))
+  (set_global $-highId (get_global $-hardValues))
   (block(loop (br_if 1 (i32.eqz (get_local $id)))
     (set_local $id (i32.sub (get_local $id) (i32.const 1)))
-    (if (i32.lt_u (get_local $id) (get_global $-coreVals))(then
+    (if (i32.lt_u (get_local $id) (get_global $-hardValues))(then
       (call $-write32 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 4)) (i32.const 1))
     )(else
       (call $-write32 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 4)) (i32.const 0))
@@ -428,85 +429,110 @@
 (func $-falsy (param $id i32) (result i32)
   (i32.eqz (call $-truthy (get_local $id)))
 )
-
-(func $-equal (param $id1 i32) (param $id2 i32) (result i32)
-  (local $success i32)
+(func $-compare (param $id1 i32) (param $id2 i32) (result i32)
+  (local $res f64)
   (local $len i32)
-  ;; is it the same reference?
+  (local $pos i32)
+  ;; equal reference
   (if (i32.eq (get_local $id1) (get_local $id2))(then
-    (set_local $success (i32.const 5)) ;; true
-  )(else
-    ;; are the datatypes different?
-    (if (i32.ne (call $-datatype (get_local $id1)) (call $-datatype (get_local $id2)))(then
-      (set_local $success (i32.const 1)) ;; false
-    )(else
-      ;; are they different lengths?
-      (if (i32.ne (call $-len (get_local $id1)) (call $-len (get_local $id2)))(then
-        (set_local $success (i32.const 1)) ;; false
-      )(else
-        ;; are they arrays/objects?
-        (if (i32.eq (i32.and (call $-datatype (get_local $id1)) (i32.const 6)) (i32.const 4))(then
-          (set_local $success (i32.const 1)) ;; false
-        )(else
-          ;; are they numbers?
-          (if (i32.eq (call $-datatype (get_local $id1)) (i32.const 2))(then
-            (if (f64.eq (call $-f64 (get_local $id1)) (call $-f64 (get_local $id2)))(then
-              (set_local $success (i32.const 5)) ;; true
-            )(else
-              (set_local $success (i32.const 1)) ;; false
-            ))
-          )(else
-            ;; compare strings or binaries
-            (set_local $len (call $-len (get_local $id1)))
-            (set_local $success (i32.const 5)) ;; true
-            (block(loop (br_if 1 (i32.eqz (get_local $len)))
-              (set_local $len (i32.sub (get_local $len) (i32.const 1)))
-              (if (i32.ne (call $-read8 (get_local $id1) (get_local $len)) (call $-read8 (get_local $id2) (get_local $len)))(then
-                (set_local $success (i32.const 1)) ;; false
-                (set_local $len (i32.const 0))
-              ))
-            (br 0) ))
-          ))
-        ))
+    (return (i32.const 0))
+  ))
+  ;; equal datatype
+  (if (i32.eq (call $-datatype (get_local $id1)) (call $-datatype (get_local $id2)))(then
+    ;; array/object
+    (if (i32.eq
+      (i32.and (call $-datatype (get_local $id1)) (i32.const 6))
+      (i32.const 4)
+    )(then
+      (return (i32.sub
+        (get_local $id1)
+        (get_local $id2)
       ))
     ))
+    ;; numerical values
+    (if (i32.lt_u (call $-datatype (get_local $id1)) (i32.const 3))(then
+      (set_local $res (f64.sub
+        (call $-f64 (call $-toNumber (get_local $id1)))
+        (call $-f64 (call $-toNumber (get_local $id2)))
+      ))
+      (if (f64.eq (get_local $res) (f64.const 0))(then
+        (return (i32.const 0))
+      ))
+      (if (f64.gt (get_local $res) (f64.const 0))(then
+        (return (i32.const 1))
+      ))
+      (if (f64.lt (get_local $res) (f64.const 0))(then
+        (return (i32.const -1))
+      ))
+    )(else ;; strings/binaries
+      (set_local $pos (i32.const 0))
+      (if (i32.lt_u
+        (call $-len (get_local $id1))
+        (call $-len (get_local $id2))
+      )(then
+        (set_local $len (call $-len (get_local $id1)))
+      )(else
+        (set_local $len (call $-len (get_local $id2)))
+      ))
+      (block(loop (br_if 1 (i32.eqz (get_local $len)))
+        (if (i32.ne
+          (call $-read8 (get_local $id1) (get_local $pos))
+          (call $-read8 (get_local $id2) (get_local $pos))
+        )(then
+          (return (i32.sub
+            (call $-read8 (get_local $id1) (get_local $pos))
+            (call $-read8 (get_local $id2) (get_local $pos))
+          ))
+        ))
+        (set_local $pos (i32.add (get_local $pos) (i32.const 1)))
+        (set_local $len (i32.sub (get_local $len) (i32.const 1)))
+      (br 0)))
+      (return (i32.sub
+        (call $-len (get_local $id1))
+        (call $-len (get_local $id2))
+      ))
+    ))
+  )(else ;; unequal datatypes
+    (return (i32.sub
+      (call $-datatype (get_local $id1))
+      (call $-datatype (get_local $id2))
+    ))
   ))
-  (get_local $success)
+  (return (i32.const 0))
+)
+
+(func $-equal (param $id1 i32) (param $id2 i32) (result i32)
+  (if (call $-compare (get_local $id1) (get_local $id2)) (then
+    (return (i32.const 1))
+  ))
+  (i32.const 5)
 )
 (func $-unequal (param $id1 i32) (param $id2 i32) (result i32)
   (i32.sub (i32.const 6) (call $-equal (get_local $id1) (get_local $id2)))
 )
 (func $-lt (param $id1 i32) (param $id2 i32) (result i32)
-  (local $success i32)
-  (set_local $success (i32.const 1))
-  (if (f64.lt (call $-f64 (get_local $id1)) (call $-f64 (get_local $id2)))(then
-    (set_local $success (i32.const 5))
+  (if (i32.lt_s (call $-compare (get_local $id1) (get_local $id2)) (i32.const 0))(then
+    (return (i32.const 5))
   ))
-  (get_local $success)
+  (i32.const 1)
 )
 (func $-le (param $id1 i32) (param $id2 i32) (result i32)
-  (local $success i32)
-  (set_local $success (i32.const 1))
-  (if (f64.le (call $-f64 (get_local $id1)) (call $-f64 (get_local $id2)))(then
-    (set_local $success (i32.const 5))
+  (if (i32.le_s (call $-compare (get_local $id1) (get_local $id2)) (i32.const 0))(then
+    (return (i32.const 5))
   ))
-  (get_local $success)
+  (i32.const 1)
 )
 (func $-gt (param $id1 i32) (param $id2 i32) (result i32)
-  (local $success i32)
-  (set_local $success (i32.const 1))
-  (if (f64.gt (call $-f64 (get_local $id1)) (call $-f64 (get_local $id2)))(then
-    (set_local $success (i32.const 5))
+  (if (i32.gt_s (call $-compare (get_local $id1) (get_local $id2)) (i32.const 0))(then
+    (return (i32.const 5))
   ))
-  (get_local $success)
+  (i32.const 1)
 )
 (func $-ge (param $id1 i32) (param $id2 i32) (result i32)
-  (local $success i32)
-  (set_local $success (i32.const 1))
-  (if (f64.ge (call $-f64 (get_local $id1)) (call $-f64 (get_local $id2)))(then
-    (set_local $success (i32.const 5))
+  (if (i32.ge_s (call $-compare (get_local $id1) (get_local $id2)) (i32.const 0))(then
+    (return (i32.const 5))
   ))
-  (get_local $success)
+  (i32.const 1)
 )
 (func $-and (param $id1 i32) (param $id2 i32) (result i32)
   (local $success i32)
@@ -757,6 +783,12 @@
   ))
   (get_local $val)
 )
+(func $-i32_s (param $id i32) (result i32)
+  (i32.trunc_s/f64 (call $-f64 (get_local $id)))
+)
+(func $-i32_u (param $id i32) (result i32)
+  (i32.trunc_u/f64 (call $-f64 (get_local $id)))
+)
 
 (func $-number (param $val f64) (result i32)
   (local $id i32)
@@ -767,6 +799,12 @@
   ))
   (get_local $id)
 )
+(func $-integer_s (param $val i32) (result i32)
+  (call $-number (f64.convert_s/i32 (get_local $val)))
+)
+(func $-integer_u (param $val i32) (result i32)
+  (call $-number (f64.convert_u/i32 (get_local $val)))
+)
 
 (func $-string (param $offset i32) (param $len i32)
   (local $id i32)
@@ -774,12 +812,67 @@
   (call $-memcopy (get_local $offset) (call $-offset (get_local $id)) (get_local $len))
   (call $-ref (get_local $id))
 )
+(func $-charSize (param $byte i32) (result i32)
+  (local $size i32)
+  (if (i32.ge_u (get_local $byte) (i32.const 0x01))(then
+    (set_local $size (i32.add (get_local $size) (i32.const 1)))
+  ))
+  (if (i32.ge_u (get_local $byte) (i32.const 0xc0))(then
+    (set_local $size (i32.add (get_local $size) (i32.const 1)))
+  ))
+  (if (i32.ge_u (get_local $byte) (i32.const 0xe0))(then
+    (set_local $size (i32.add (get_local $size) (i32.const 1)))
+  ))
+  (if (i32.ge_u (get_local $byte) (i32.const 0xf0))(then
+    (set_local $size (i32.add (get_local $size) (i32.const 1)))
+  ))
+  (if (i32.ge_u (get_local $byte) (i32.const 0xf8))(then
+    (set_local $size (i32.add (get_local $size) (i32.const 1)))
+  ))
+  (if (i32.ge_u (get_local $byte) (i32.const 0xfc))(then
+    (set_local $size (i32.add (get_local $size) (i32.const 1)))
+  ))
+  (if (i32.ge_u (get_local $byte) (i32.const 0xfe))(then
+    (set_local $size (i32.add (get_local $size) (i32.const 1)))
+  ))
+  (if (i32.ge_u (get_local $byte) (i32.const 0xff))(then
+    (set_local $size (i32.add (get_local $size) (i32.const 1)))
+  ))
+  (get_local $size)
+)
+(func $-countChars (param $str i32) (result i32)
+  (local $pos i32)
+  (local $len i32)
+  (local $byte i32)
+  (local $chars i32)
+  (set_local $pos (call $-offset (get_local $str)))
+  (set_local $len (call $-len (get_local $str)))
+  (block(loop (br_if 1 (i32.le_s (get_local $len) (i32.const 0)))
+    (set_local $byte (i32.load8_u (get_local $pos)))
+    (set_local $len (i32.sub (get_local $len) (call $-charSize (get_local $byte))))
+    (set_local $pos (i32.add (get_local $pos) (call $-charSize (get_local $byte))))
+    (set_local $chars (i32.add (get_local $chars) (i32.const 1)))
+  (br 0) ))
+  (get_local $chars)
+)
+(func $-chars2bytes (param $start i32) (param $chars i32) (result i32)
+  (local $pos i32)
+  (local $byte i32)
+  (set_local $pos (get_local $start))
+  (block(loop (br_if 1 (i32.le_s (get_local $chars) (i32.const 0)))
+    (set_local $byte (i32.load8_u (get_local $pos)))
+    (set_local $pos (i32.add (get_local $pos) (call $-charSize (get_local $byte))))
+    (set_local $chars (i32.sub (get_local $chars) (i32.const 1)))
+  (br 0) ))
+  (i32.sub (get_local $pos) (get_local $start))
+)
+
 
 (func $-getFromObj (param $objId i32) (param $indexId i32) (result i32)
   (local $elem i32)
   (local $index i32)
   (if (i32.eq (call $-datatype (get_local $indexId)) (i32.const 2))(then
-    (set_local $index (i32.trunc_u/f64 (call $-f64 (get_local $indexId))))
+    (set_local $index (call $-i32_u (get_local $indexId)))
     (set_local $elem (call $-read32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4))))
   )(else
     (set_local $elem (call $-read32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4))))
@@ -800,7 +893,7 @@
   (local $elem i32)
   (local $index i32)
   (if (i32.eq (call $-datatype (get_local $indexId)) (i32.const 2))(then
-    (set_local $index (i32.trunc_u/f64 (call $-f64 (get_local $indexId))))
+    (set_local $index (call $-i32_u (get_local $indexId)))
     (call $-write32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4)) (get_local $valId))
   )(else
     (set_local $elem (call $-read32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4))))

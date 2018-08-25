@@ -26,3 +26,11 @@
     api\log "yay!"
   @else
     api\log "nay..."
+  api\log array_unshift friends array_pop friends
+  api\log array_unshift friends array_pop friends
+  api\log array_unshift friends string_upper array_pop friends
+  api\log array_unshift friends array_pop friends
+  api\log array_unshift friends string_lower array_pop friends
+  api\log array_unshift friends array_pop friends
+  api\log array_unshift friends array_pop friends
+  api\log array_unshift friends array_pop friends
