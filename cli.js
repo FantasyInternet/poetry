@@ -4,8 +4,8 @@ const compile = require("./index"),
 
 program
   .arguments('<file>')
-  .option('-b, --wasm', 'Compile to wasm binary')
-  .option('-t, --wast', 'Compile to wast text file')
+  .option('-b, --wasm <file>', 'Compile to wasm binary')
+  .option('-t, --wast <file>', 'Compile to wast text file')
   .option('--debug', '(spit out some debugging stuff)')
   .action(function (file) {
     compile(file, program)

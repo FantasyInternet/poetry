@@ -27,11 +27,11 @@ function compile(filename, options = {}) {
   }
   let wast = compileModule(compilation)
   if (options.wast) {
-    fs.writeFileSync(filename.replace(".poem", ".wast"), wast)
+    fs.writeFileSync(options.wast, wast)
   }
   if (options.wasm) {
     let wasm = compileWast(wast)
-    fs.writeFileSync(filename.replace(".poem", ".wasm"), wasm)
+    fs.writeFileSync(options.wasm, wasm)
   }
 }
 
@@ -172,7 +172,7 @@ function nextToken(c) {
   if (c.lastToken === "@import") {
   } else if (c.lastToken === "@export") {
   } else if (c.lastToken === "@include") {
-    let filename = require.resolve(JSON.parse(token), { paths: path.dirname(c.path) })
+    let filename = require.resolve(JSON.parse(token), { paths: [path.dirname(c.path)] })
     if (!c.bundle.includes(filename)) {
       c.bundle.push(filename)
     }
