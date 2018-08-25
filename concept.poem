@@ -28,6 +28,10 @@ print "Hello! my name is $name"
 @func double n
   @return n * 2
 
+@include "./graphics.poem" gfx\
+
+gfx\create_image 320 200
+
 
 @class Person
   @set string first_name be "John"

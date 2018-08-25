@@ -1,15 +1,62 @@
 {
   "address_of": [
-    "val"
+    "value"
   ],
   "size_of": [
-    "val"
+    "value"
   ],
   "datatype_of": [
-    "val"
+    "value"
+  ],
+  "binary_slice": [
+    "binary",
+    "start",
+    "len"
+  ],
+  "binary_search": [
+    "binary",
+    "subbin",
+    "start"
+  ],
+  "binary_read": [
+    "binary",
+    "pos"
+  ],
+  "binary_write": [
+    "binary",
+    "pos",
+    "data"
+  ],
+  "string_length": [
+    "str"
+  ],
+  "string_slice": [
+    "string",
+    "start",
+    "len"
+  ],
+  "string_search": [
+    "string",
+    "substr",
+    "start"
+  ],
+  "string_lower": [
+    "string"
+  ],
+  "string_upper": [
+    "string"
   ],
   "array_length": [
     "array"
+  ],
+  "array_insert": [
+    "array",
+    "index",
+    "value"
+  ],
+  "array_remove": [
+    "array",
+    "index"
   ],
   "array_push": [
     "array",
@@ -25,31 +72,52 @@
   "array_shift": [
     "array"
   ],
-  "read8": [
-    "strbin",
-    "pos"
+  "array_search": [
+    "array",
+    "value",
+    "start"
   ],
-  "read16": [
-    "strbin",
-    "pos"
+  "array_slice": [
+    "array",
+    "start",
+    "len"
   ],
-  "read32": [
-    "strbin",
-    "pos"
+  "array_splice": [
+    "array",
+    "start",
+    "delete",
+    "replace"
   ],
-  "write8": [
-    "strbin",
-    "pos",
-    "data"
+  "array_sort": [
+    "array"
   ],
-  "write16": [
-    "strbin",
-    "pos",
-    "data"
+  "object_keys": [
+    "object"
   ],
-  "write32": [
-    "strbin",
-    "pos",
-    "data"
+  "object_values": [
+    "object"
+  ],
+  "abs": [
+    "number"
+  ],
+  "ceil": [
+    "number"
+  ],
+  "floor": [
+    "number"
+  ],
+  "nearest": [
+    "number"
+  ],
+  "sqrt": [
+    "number"
+  ],
+  "min": [
+    "number1",
+    "number2"
+  ],
+  "max": [
+    "number1",
+    "number2"
   ]
 }

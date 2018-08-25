@@ -2,32 +2,36 @@ const fs = require("fs"),
   path = require("path"),
   wabt = require("wabt")
 
-function compile(path, options = {}) {
+function compile(filename, options = {}) {
   let compilation = {
-    path: path,
-    src: ("" + fs.readFileSync(path)).replace(/\r/g, "") + "\n~end\n;",
-    position: 0,
-    line: 1,
-    col: 1,
-    indents: [0],
-    lastNl: 0,
-    metaphors: {},
-    strings: [null, false, 0, "", null, true, true, true]
+    tokenTree: [],
+    strings: [null, false, 0, "", null, true, true, true],
+    bundle: []
   }
-  let token
-  let line = ""
-  let level = 0
-  compilation.tokenTree = createTokenTree(compilation)
-  compilation.globals = scanForGlobals(compilation.tokenTree)
-  if (options.debug)
+  compilation.bundle.push(require.resolve(filename, { paths: [path.dirname(filename)] }))
+  compilation.ns = 0
+  while (compilation.bundle[compilation.ns]) {
+    compilation.path = compilation.bundle[compilation.ns]
+    compilation.src = ("\n" + fs.readFileSync(compilation.path)).replace(/\r/g, "") + "\n~end\n;"
+    compilation.metaphors = {}
+
+    rewind(compilation)
+    compilation.tokenTree = compilation.tokenTree.concat(createTokenTree(compilation))
+    compilation.ns++
+  }
+
+  compilation.globals = { ...require("./stdlib.json"), ...scanForGlobals(compilation.tokenTree) }
+  compilation.globals["-namespaces"] = {}
+  if (options.debug) {
     console.log(JSON.stringify(compilation, null, 2))
+  }
   let wast = compileModule(compilation)
   if (options.wast) {
-    fs.writeFileSync(path.replace(".poem", ".wast"), wast)
+    fs.writeFileSync(filename.replace(".poem", ".wast"), wast)
   }
   if (options.wasm) {
     let wasm = compileWast(wast)
-    fs.writeFileSync(path.replace(".poem", ".wasm"), wasm)
+    fs.writeFileSync(filename.replace(".poem", ".wasm"), wasm)
   }
 }
 
@@ -128,13 +132,13 @@ function nextToken(c) {
     }
   } else if (token.match(/[\:]/)) {
     char = nextChar(c, true)
-    while (char.match(/[\$A-Z_a-z0-9]/) || char.charCodeAt(0) > 127) {
+    while (char.match(/[\$A-Z_a-z0-9.\\]/) || char.charCodeAt(0) > 127) {
       token += nextChar(c)
       char = nextChar(c, true)
     }
   } else if (token.match(/[\$A-Z_a-z]/) || token.charCodeAt(0) > 127) {
     char = nextChar(c, true)
-    while (char.match(/[\$A-Z_a-z0-9]/) || char.charCodeAt(0) > 127) {
+    while (char.match(/[\$A-Z_a-z0-9.\\]/) || char.charCodeAt(0) > 127) {
       token += nextChar(c)
       char = nextChar(c, true)
     }
@@ -165,11 +169,27 @@ function nextToken(c) {
       c.strings.push(str)
     }
   }
-  if (isString(token)) {
+  if (c.lastToken === "@import") {
+  } else if (c.lastToken === "@export") {
+  } else if (c.lastToken === "@include") {
+    let filename = require.resolve(JSON.parse(token), { paths: path.dirname(c.path) })
+    if (!c.bundle.includes(filename)) {
+      c.bundle.push(filename)
+    }
+    token = JSON.stringify(filename)
+  } else if (isString(token)) {
     let str = JSON.parse(token)
     if (str && !c.strings.includes(str)) {
       c.strings.push(str)
     }
+  }
+  if (isIdentifier(token)) {
+    token = "ns" + c.ns + "\\" + token
+  }
+  if (c.lastToken === "@import") {
+    c.lastToken = "@export"
+  } else {
+    c.lastToken = token
   }
   return token
 }
@@ -190,7 +210,7 @@ function createTokenTree(c) {
 }
 
 function scanForGlobals(tokenTree) {
-  let globals = require("./stdlib.json")
+  let globals = []
 
   let statement = []
   for (let token of tokenTree) {
@@ -307,7 +327,7 @@ function compileModule(c) {
         functions += `(result i32)\n`
         functions += `(call $--${name} `
         for (let i = 0; i < params; i++) {
-          functions += `(call $-f64 (call $-toNumber (get_local $p${i}))) `
+          functions += `(call $-f64 (call $-to_number (get_local $p${i}))) `
         }
         functions += `)`
         if (results) {
@@ -327,6 +347,12 @@ function compileModule(c) {
         exports += `(export ${statement[1]} (table $-table))\n`
       } else if (statement[0] === "@func") {
         functions += compileFunction(statement, c.globals) + "\n"
+      } else if (statement[0] === "@include") {
+        let filename = JSON.parse(statement[1])
+        let ns = c.bundle.indexOf(filename)
+        if (ns >= 0) {
+          c.globals["-namespaces"][statement[2]] = "ns" + ns + "\\"
+        }
       } else {
         start += compileStatement(statement, c.globals, startLocals)
       }
@@ -503,11 +529,11 @@ function compileExpression(tokenTree, globals, locals) {
       values.splice(i, 1)
       values[i] = `(call $-number (f64.const ${globals["-table"].indexOf(operand2)}))`
     }
-    if (isIdentifier(token) && typeof globals[token] === "object" && !locals.includes(token)) {
+    if (isIdentifier(token) && typeof globals[resolveIdentifier(token, globals)] === "object" && !locals.includes(token)) {
       let a = values.slice(0, i)
       let b = values.slice(i + 1, values.length)
       values = a
-      values.push(`(call $${token} ${compileExpression(b, globals, locals)})`)
+      values.push(`(call $${resolveIdentifier(token, globals)} ${compileExpression(b, globals, locals)})`)
     }
   }
 
@@ -515,16 +541,16 @@ function compileExpression(tokenTree, globals, locals) {
   values = []
   for (let token of _values) {
     values.push(token)
-    if (typeof token === "object") {
+    if (typeof token === "object" && token[0] !== "[") {
       values.pop()
       values.push(compileExpression(token, globals, locals))
     }
     if (isIdentifier(token)) {
-      let id = values.pop()
+      let id = resolveIdentifier(values.pop(), globals)
       if (locals.includes(token)) {
-        values.push(`(get_local $${id})`)
-      } else if (globals[token]) {
-        if (typeof globals[token] === "object") {
+        values.push(`(get_local $${token})`)
+      } else if (globals[id]) {
+        if (typeof globals[id] === "object") {
           values.push(id)
         } else {
           values.push(`(get_global $${id})`)
@@ -547,15 +573,15 @@ function compileExpression(tokenTree, globals, locals) {
     }
     if (token === "@array") {
       values.pop()
-      values.push(`(call $-newValue (i32.const 4) (i32.const 0))`)
+      values.push(`(call $-new_value (i32.const 4) (i32.const 0))`)
     }
     if (token === "@object") {
       values.pop()
-      values.push(`(call $-newValue (i32.const 5) (i32.const 0))`)
+      values.push(`(call $-new_value (i32.const 5) (i32.const 0))`)
     }
     if (token === "@binary") {
       values.pop()
-      values.push(`(call $-newValue (i32.const 6) (i32.const 0))`)
+      values.push(`(call $-new_value (i32.const 6) (i32.const 0))`)
     }
     if (isNumber(token)) {
       let num = values.pop()
@@ -578,6 +604,11 @@ function compileExpression(tokenTree, globals, locals) {
       } else {
         prop = `(call $-number (f64.const ${prop}))`
       }
+      values.push(`(call $-getFromObj ${obj} ${prop})`)
+    }
+    if (typeof token === "object" && token[0] === "[") {
+      let prop = compileExpression(values.pop())
+      let obj = values.pop()
       values.push(`(call $-getFromObj ${obj} ${prop})`)
     }
     /* if (values[values.length - 2] === "#") {
@@ -728,23 +759,23 @@ function compileExpression(tokenTree, globals, locals) {
       values.push(`${setter} ${operand2} ${operand1}\n`)
     }
   }
-  _values = values
-  values = []
-  let calls = 0
-  for (let token of _values) {
-    values.push(token)
-    if (isIdentifier(token)) {
-      let id = values.pop()
-      if (typeof globals[token] === "object") {
-        values.push(`(call $${id}`)
-        calls++
-      }
-    }
-  }
-
-  for (let i = 0; i < calls; i++) {
-    values.push(")")
-  }
+  /*  _values = values
+   values = []
+   let calls = 0
+   for (let token of _values) {
+     values.push(token)
+     if (isIdentifier(token)) {
+       let id = values.pop()
+       if (typeof globals[token] === "object") {
+         values.push(`(call $${id}`)
+         calls++
+       }
+     }
+   }
+ 
+   for (let i = 0; i < calls; i++) {
+     values.push(")")
+   } */
 
   return values.join(" ")
 }
@@ -777,7 +808,7 @@ function compileObjLit(tokenTree, globals, locals) {
       statement.push(token)
     }
   }
-  wast = `(tee_local $${name} (call $-newValue (i32.const ${datatype}) (i32.const 0)))\n` + wast
+  wast = `(tee_local $${name} (call $-new_value (i32.const ${datatype}) (i32.const 0)))\n` + wast
 
 
   return wast
@@ -795,6 +826,22 @@ function deparens(tokens, all) {
 
 function compileWast(wast) {
   return wabt.parseWat("boot", wast).toBinary({ write_debug_names: true }).buffer
+}
+
+function resolveIdentifier(identifier, globals) {
+  let stdlib = require("./stdlib.json")
+  let ns = identifier.substr(0, identifier.indexOf("\\") + 1)
+  let name = identifier.substr(identifier.indexOf("\\") + 1)
+  if (stdlib[name]) {
+    return name
+  } else {
+    for (let prefix in globals["-namespaces"]) {
+      if (identifier.substr(0, prefix.length) === prefix) {
+        identifier = identifier.replace(prefix, globals["-namespaces"][prefix])
+      }
+    }
+  }
+  return identifier
 }
 
 module.exports = compile

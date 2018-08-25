@@ -1,0 +1,7 @@
+@import "env" "logNumber" logNumber 1 0
+@import "env" "log" _log 2 0
+
+@export_memory "memory"
+
+@func log msg
+  _log (address_of msg) (size_of msg)
