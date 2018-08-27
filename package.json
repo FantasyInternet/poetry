@@ -1,10 +1,10 @@
 {
   "name": "poetry-compiler",
-  "version": "0.5.1",
+  "version": "0.6.1",
   "description": "Poetic programming language that compiles to webassembly",
   "main": "index.js",
   "scripts": {
-    "build": "node cli.js -b boot.wasm -t boot.wast --debug boot.poem",
+    "build": "node cli.js boot.poem -t boot.wast -b boot.wasm --debug",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {

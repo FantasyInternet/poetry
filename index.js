@@ -13,7 +13,8 @@ function compile(filename, options = {}) {
   while (compilation.bundle[compilation.ns]) {
     compilation.path = compilation.bundle[compilation.ns]
     compilation.src = ("\n" + fs.readFileSync(compilation.path)).replace(/\r/g, "") + "\n~end\n;"
-    compilation.metaphors = {}
+    compilation.config = findConfig(compilation.path)
+    compilation.metaphors = compilation.config.metaphors
 
     rewind(compilation)
     compilation.tokenTree = compilation.tokenTree.concat(createTokenTree(compilation))
@@ -35,12 +36,27 @@ function compile(filename, options = {}) {
   }
 }
 
+function findConfig(dir) {
+  let config
+  while (!config) {
+    try {
+      config = require(path.join(dir, "poetry.json"))
+    } catch (error) { }
+    if (dir !== path.dirname(dir)) {
+      dir = path.dirname(dir)
+    } else {
+      dir = __dirname
+    }
+  }
+  return config
+}
+
 function isKeyword(token) { return token && typeof token === "string" && (token[0] === "@") }
 function isProperty(token) { return token && typeof token === "string" && (token[0] === ":") }
 function isIdentifier(token) { return token && typeof token === "string" && (token[0].match(/[\$A-Z_a-z]/) || token.charCodeAt(0) > 127) }
 function isNumber(token) { return token && typeof token === "string" && (token[0].match(/[0-9]/)) }
 function isString(token) { return token && typeof token === "string" && (token[0].match(/["']/)) }
-function isSymbol(token) { return token && typeof token === "string" && (token[0].match(/[!#%&*+,\-/;<=>?\\^|]/)) }
+function isSymbol(token) { return token && typeof token === "string" && (token[0].match(/[!#%&*+,\-/;<=>?^|]/)) }
 function isAssigner(token) { return token && typeof token === "string" && (token.substr(-1) === "=") }
 
 function nextChar(c, peek) {
@@ -89,11 +105,14 @@ function escapeStr(str) {
 function nextToken(c) {
   let token = " "
   let char
-  while (" \t".includes(token)) {
+  while (" \t`".includes(token)) {
     token = nextChar(c)
     if (!token) return
     if (token === "~") {
-      while (token !== "\n") {
+      let end = "\n"
+      token = nextChar(c)
+      if (token === "`") end = token
+      while (token !== end) {
         token = nextChar(c)
       }
     }
@@ -157,6 +176,7 @@ function nextToken(c) {
       char = nextChar(c)
       token += char
     }
+    token = '"' + token.substr(1, token.length - 2).replace(/(^|[^\\])"/g, '$1\\"') + '"'
   } else if (token.match(/[\{\(\[\;\]\)\}]/)) {
   } else while (token.substr(-1) === nextChar(c, true) || nextChar(c, true) === "=") {
     token += nextChar(c)

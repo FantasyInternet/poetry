@@ -3,46 +3,46 @@ print "some string"
 pset 100 100 red
 parse ( stringify obj )
 
-@if age >= 18
+if age >= 18
   print "Get a job!"
 
-@set meaning_of_life = 42
-@set pi = 3.14
-@set name = "John"
-@set married = false
-@set friends =
+var meaning_of_life = 42
+var pi = 3.14
+var name = "John"
+var married = false
+var friends =
   "Alice"
   "Bob"
   "Carol"
   "Daniel"
 
 print "Hello! my name is $name"
-@for friend @in friends
+for friend in friends
   print "My friend is $friend!"
 
-@if name == "John"
+if name == "John"
   print "You are my best friend!"
-@else
+else
   print "Go away!"
 
-@func double n
-  @return n * 2
+func double n
+  return n * 2
 
-@include "./graphics.poem" gfx\
+include "./graphics.poem" gfx\
 
 gfx\create_image 320 200
 
 
-@class Person
-  @set string first_name be "John"
-  @set string last_name be "Doe"
+class Person
+  var string first_name be "John"
+  var string last_name be "Doe"
 
-  @init name
+  init name
     let string[] names
       be (split name " ")
     let first_name be names[0]
     let last_name
       be names[1]
   
-  @func full_name
+  func full_name
     return "$first_name $last_name"

@@ -10,20 +10,21 @@ Much features! Very hype!
  - Minimalistic syntax
  - Customizable
  - Full control of wasm imports and exports
+ - Bundle multiple source files
 
 Example
 -------
 
-    @export_memory "memory"
-    @import "env" "log" _log 2 0
+    export_memory "memory"
+    import "env" "log" _log 2 0
 
-    @func log message
+    func log message
       _log (address_of message) (size_of message)
 
-    @export "init" init
+    export "init" init
       log "Hello Poetry! 😇"
 
 Usage
 -----
     $ npm i -g poetry-compiler
-    $ poetry -b my_program.poem
+    $ poetry my_program.poem -b my_program.wasm
