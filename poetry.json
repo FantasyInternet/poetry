@@ -1,0 +1,24 @@
+{
+  "metaphors": {
+    "array": "@array",
+    "binary": "@binary",
+    "else": "@else",
+    "elsif": "@elsif",
+    "export": "@export",
+    "export_memory": "@export_memory",
+    "export_table": "@export_table",
+    "false": "@false",
+    "func": "@func",
+    "if": "@if",
+    "import": "@import",
+    "import_memory": "@import_memory",
+    "import_table": "@import_table",
+    "include": "@include",
+    "var": "@var",
+    "null": "@null",
+    "object": "@object",
+    "return": "@return",
+    "true": "@true",
+    "while": "@while"
+  }
+}
