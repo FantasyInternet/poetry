@@ -2,12 +2,12 @@ include "./api.poem" api.
 
 var meaning_of_life = 42.5
 var meaning_of_life2 = false
-var name = "Hello \"world\"! 🤖"
+var name = '"Hello \"world"! 🤖'
 
 var friends =
   "Alice"
   'Bob'
-  "Charlie"
+  'Charlie'
   "Dennis"
 
 func sum a b
@@ -25,7 +25,7 @@ export "init" init
     api.log "yay!"
   else
     api.log "nay..."
-  api.log array_unshift friends array_pop friends
+  api.log (array_unshift (friends) (array_pop (friends)))
   api.log array_unshift friends array_pop friends
   api.log array_unshift friends string_upper array_pop friends
   api.log array_unshift friends array_pop friends

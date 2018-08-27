@@ -176,6 +176,7 @@ function nextToken(c) {
       char = nextChar(c)
       token += char
     }
+    token = '"' + token.substr(1, token.length - 2).replace(/(^|[^\\])"/g, '$1\\"') + '"'
   } else if (token.match(/[\{\(\[\;\]\)\}]/)) {
   } else while (token.substr(-1) === nextChar(c, true) || nextChar(c, true) === "=") {
     token += nextChar(c)
