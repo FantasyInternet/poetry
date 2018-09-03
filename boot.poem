@@ -26,7 +26,7 @@ export "init" init
   else
     log "nay..."
   log (array_unshift (friends) (array_pop (friends)))
-  log (array_unshift friends) (array_pop friends)
+  log (array_unshift friends (array_pop friends))
   log array_unshift friends string_upper array_pop friends
   log array_unshift friends array_pop friends
   log array_unshift friends string_lower array_pop friends
