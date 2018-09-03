@@ -2,19 +2,21 @@ Poetry
 ======
 A poetically dynamic and simple programming language that compiles to WebAssembly!
 
-*This project is still in early development! Use at your own risk!*
-
 Much features! Very hype!
 -------------------------
  - Easy to learn and use
  - Minimalistic syntax
  - Customizable
  - Full control of wasm imports and exports
- - Bundle multiple source files
+ - Bundle multiple source files (including `.wa(s)t`-files!)
+
+Usage
+-----
+    $ npm i -g poetry-compiler
+    $ poetry my_program.poem -b my_program.wasm
 
 Example
 -------
-
     export_memory "memory"
     import "env" "log" _log 2 0
 
@@ -24,7 +26,4 @@ Example
     export "init" init
       log "Hello Poetry! 😇"
 
-Usage
------
-    $ npm i -g poetry-compiler
-    $ poetry my_program.poem -b my_program.wasm
+Check the [wiki for documentation](https://github.com/FantasyInternet/poetry/wiki)!

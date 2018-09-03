@@ -1,4 +1,7 @@
 {
+  "includes": [
+    "./stdlib.wast"
+  ],
   "metaphors": {
     "array": "@array",
     "binary": "@binary",

@@ -1,4 +1,4 @@
-include "./api.poem" api.
+include "./api.poem"
 
 var meaning_of_life = 42.5
 var meaning_of_life2 = false
@@ -11,25 +11,25 @@ var friends =
   "Dennis"
 
 func sum a b
-  ~ var tableindex = (# init)
+  var tableindex = #init
   return a + b + meaning_of_life
 
 export "init" init
   var tableindex = #sum
-  ~ api.logNumber sum 2 meaning_of_life2
-  api.log name + " " + -32.00125
-  var friend = friends[1 + 1 ]
-  api.log friend
+  logNumber sum tableindex meaning_of_life2
+  log name + " " + -32.00125
+  var friend = friends[1 + 1]
+  log friend
   var i = 10
   if i > 0
-    api.log "yay!"
+    log "yay!"
   else
-    api.log "nay..."
-  api.log (array_unshift (friends) (array_pop (friends)))
-  api.log array_unshift friends array_pop friends
-  api.log array_unshift friends string_upper array_pop friends
-  api.log array_unshift friends array_pop friends
-  api.log array_unshift friends string_lower array_pop friends
-  api.log array_unshift friends array_pop friends
-  api.log array_unshift friends array_pop friends
-  api.log array_unshift friends array_pop friends
+    log "nay..."
+  log (array_unshift (friends) (array_pop (friends)))
+  log (array_unshift friends) (array_pop friends)
+  log array_unshift friends string_upper array_pop friends
+  log array_unshift friends array_pop friends
+  log array_unshift friends string_lower array_pop friends
+  log array_unshift friends array_pop friends
+  log array_unshift friends array_pop friends
+  log array_unshift friends array_pop friends

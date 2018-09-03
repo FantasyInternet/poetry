@@ -537,16 +537,20 @@
 (func $-and (param $id1 i32) (param $id2 i32) (result i32)
   (local $success i32)
   (set_local $success (i32.const 1))
-  (if (i32.and (call $-truthy (get_local $id1)) (call $-truthy (get_local $id2)))(then
-    (set_local $success (i32.const 5))
+  (if (call $-truthy (get_local $id1))(then
+    (set_local $success (get_local $id2))
+  )(else
+    (set_local $success (get_local $id1))
   ))
   (get_local $success)
 )
 (func $-or (param $id1 i32) (param $id2 i32) (result i32)
   (local $success i32)
   (set_local $success (i32.const 1))
-  (if (i32.or (call $-truthy (get_local $id1)) (call $-truthy (get_local $id2)))(then
-    (set_local $success (i32.const 5))
+  (if (call $-truthy (get_local $id1))(then
+    (set_local $success (get_local $id1))
+  )(else
+    (set_local $success (get_local $id2))
   ))
   (get_local $success)
 )
