@@ -10,25 +10,41 @@ function compile(filename, options = {}) {
   }
   compilation.bundle.push(require.resolve(filename, { paths: [path.dirname(filename)] }))
   compilation.ns = 0
+  compilation.namespaces = { "": [] }
   while (compilation.bundle[compilation.ns]) {
     compilation.path = compilation.bundle[compilation.ns]
-    compilation.src = ("\n" + fs.readFileSync(compilation.path)).replace(/\r/g, "") + "\n~end\n;"
+    compilation.src = ("\n" + fs.readFileSync(compilation.path)).replace(/\r/g, "") + "\n;;~end`\n;"
     compilation.config = findConfig(compilation.path)
     compilation.metaphors = compilation.config.metaphors
+    if (compilation.config.includes) {
+      for (let include of compilation.config.includes) {
+        if (!compilation.bundle.includes(include)) {
+          compilation.namespaces[""].push("ns" + compilation.bundle.length + "\\")
+          compilation.bundle.push(include)
+        }
+      }
+    }
 
     rewind(compilation)
-    compilation.tokenTree = compilation.tokenTree.concat(createTokenTree(compilation))
+    if (compilation.path.match(/.+\.was?t$/)) {
+      compilation.tokenTree = compilation.tokenTree.concat(createWastTokenTree(compilation))
+    } else {
+      compilation.tokenTree = compilation.tokenTree.concat(createTokenTree(compilation))
+    }
     compilation.ns++
   }
 
-  compilation.globals = { ...require("./stdlib.json"), ...scanForGlobals(compilation.tokenTree) }
-  compilation.globals["-namespaces"] = {}
+  compilation.globals = scanForGlobals(compilation.tokenTree)
   if (options.debug) {
-    console.log(JSON.stringify(compilation, null, 2))
+    fs.writeFileSync(options.debug, JSON.stringify(compilation, null, 2))
   }
+  compilation.globals["-namespaces"] = compilation.namespaces
   let wast = compileModule(compilation)
   if (options.wast) {
     fs.writeFileSync(options.wast, wast)
+  }
+  if (options.debug) {
+    fs.writeFileSync(options.debug, JSON.stringify(compilation, null, 2))
   }
   if (options.wasm) {
     let wasm = compileWast(wast)
@@ -37,10 +53,15 @@ function compile(filename, options = {}) {
 }
 
 function findConfig(dir) {
-  let config
-  while (!config) {
+  let config = {}
+  while (dir !== path.dirname(__dirname)) {
     try {
-      config = require(path.join(dir, "poetry.json"))
+      config = { ...require(path.join(dir, "poetry.json")), ...config }
+      if (config.includes) {
+        for (let i = 0; i < config.includes.length; i++) {
+          config.includes[i] = require.resolve(config.includes[i], { paths: [dir] })
+        }
+      }
     } catch (error) { }
     if (dir !== path.dirname(dir)) {
       dir = path.dirname(dir)
@@ -58,6 +79,7 @@ function isNumber(token) { return token && typeof token === "string" && (token[0
 function isString(token) { return token && typeof token === "string" && (token[0].match(/["']/)) }
 function isSymbol(token) { return token && typeof token === "string" && (token[0].match(/[!#%&*+,\-/;<=>?^|]/)) }
 function isAssigner(token) { return token && typeof token === "string" && (token.substr(-1) === "=") }
+function isWast(token) { return token && typeof token === "object" && ["import", "global", "func", "export"].includes(token[0]) }
 
 function nextChar(c, peek) {
   let char = c.src[c.position]
@@ -213,6 +235,58 @@ function nextToken(c) {
   }
   return token
 }
+function nextWastToken(c) {
+  let token = " "
+  let char
+  while (token.charCodeAt(0) <= 32) {
+    token = nextChar(c)
+    if (!token) return
+    if (token === ";" && nextChar(c, true) === ";") {
+      token = nextChar(c)
+      while (token !== "\n") {
+        token = nextChar(c)
+      }
+    }
+  }
+
+  if (token.match(/[\w]/)) {
+    char = nextChar(c, true)
+    while (char.match(/[^\(\)\s]/)) {
+      token += nextChar(c)
+      char = nextChar(c, true)
+    }
+  } else if (token.match(/[\$]/)) {
+    char = nextChar(c, true)
+    while (char.match(/[^\(\)\s]/)) {
+      token += nextChar(c)
+      char = nextChar(c, true)
+    }
+  } else if (token.match(/[0-9.]/)) {
+    let dot = token === "."
+    char = nextChar(c, true)
+    while (char.match(/[0-9x]/) || (char === "." && !dot)) {
+      if (char === ".") dot = true
+      token += nextChar(c)
+      char = nextChar(c, true)
+    }
+    if (token.length > 1 && token[0] === ".") token = "0" + token
+  } else if (token.match(/["']/)) {
+    while (char !== token[0]) {
+      if (char === "\\") token += nextChar(c)
+      char = nextChar(c)
+      token += char
+    }
+    token = '"' + token.substr(1, token.length - 2).replace(/(^|[^\\])"/g, '$1\\"') + '"'
+  }/*  else if (token.match(/[\{\(\[\;\]\)\}]/)) {
+  } else while (token.substr(-1) === nextChar(c, true) || nextChar(c, true) === "=") {
+    token += nextChar(c)
+  } */
+
+  if (token[0] === "$" && isIdentifier(token.substr(1))) {
+    token = "$ns" + c.ns + "\\" + token.substr(1)
+  }
+  return token
+}
 
 function createTokenTree(c) {
   let token
@@ -228,13 +302,47 @@ function createTokenTree(c) {
   tree.push(token)
   return tree
 }
+function createWastTokenTree(c) {
+  let token
+  let tree = []
+  while ((token = nextWastToken(c)) && (token !== ")")) {
+    if (token === "(") {
+      token = createWastTokenTree(c)
+    }
+    tree.push(token)
+  }
+  return tree
+}
 
 function scanForGlobals(tokenTree) {
   let globals = []
 
   let statement = []
   for (let token of tokenTree) {
-    if (";}".includes(token)) {
+    if (isWast(token)) {
+      if (token[0] === "global") {
+        if (isIdentifier(token[1].substr(1))) {
+          if (globals[token[1].substr(1)]) throw `duplicate identifier "${token[1].substr(1)}"`
+          globals[token[1].substr(1)] = true
+        }
+      }
+      if (token[0] === "import") {
+        token = token[3]
+      }
+      if (token[0] === "func") {
+        if (isIdentifier(token[1].substr(1))) {
+          if (globals[token[1].substr(1)]) throw `duplicate identifier "${token[1].substr(1)}"`
+          let locals = []
+          for (let i = 2; (typeof token === "object") && (token[i][0] === "param"); i++) {
+            if (isIdentifier(token[i][1].substr(1))) {
+              if (locals.includes(token[i][1].substr(1))) throw `duplicate parameter "${token[i][1].substr(1)}"`
+              locals.push(token[i][1].substr(1))
+            }
+          }
+          globals[token[1].substr(1)] = locals
+        }
+      }
+    } else if (";}".includes(token)) {
       if (statement[0] === "@var") {
         if (isIdentifier(statement[1])) {
           if (globals[statement[1]]) throw `duplicate identifier "${statement[1]}"`
@@ -291,7 +399,6 @@ function compileModule(c) {
   let startLocals = ["-ret"]
   let exports = ""
   let runtime = fs.readFileSync(path.join(__dirname, "runtime.wast"))
-  let stdlib = fs.readFileSync(path.join(__dirname, "stdlib.wast"))
   let gc = ""
 
   let offset = 1024 * 64
@@ -308,7 +415,12 @@ function compileModule(c) {
 
   let statement = []
   for (let token of c.tokenTree) {
-    if (";}".includes(token)) {
+    if (isWast(token)) {
+      if (token[0] === "import") imports += compileWastTokens(token)
+      if (token[0] === "global") globals += compileWastTokens(token)
+      if (token[0] === "func") functions += compileWastTokens(token)
+      if (token[0] === "export") exports += compileWastTokens(token)
+    } else if (";}".includes(token)) {
       if (statement[0] === "@var") {
         globals += `(global $${statement[1]} (mut i32) (i32.const 0))\n`
         statement.shift()
@@ -369,9 +481,11 @@ function compileModule(c) {
         functions += compileFunction(statement, c.globals) + "\n"
       } else if (statement[0] === "@include") {
         let filename = JSON.parse(statement[1])
+        let prefix = statement[2] || ""
         let ns = c.bundle.indexOf(filename)
         if (ns >= 0) {
-          c.globals["-namespaces"][statement[2]] = "ns" + ns + "\\"
+          c.globals["-namespaces"][prefix] = c.globals["-namespaces"][prefix] || []
+          c.globals["-namespaces"][prefix].push("ns" + ns + "\\")
         }
       } else {
         start += compileStatement(statement, c.globals, startLocals)
@@ -437,9 +551,6 @@ function compileModule(c) {
       
       ;; runtime
       ${runtime}
-      
-      ;; stdlib
-      ${stdlib}
       
       ;; gc
       ${gc}
@@ -834,6 +945,18 @@ function compileObjLit(tokenTree, globals, locals) {
   return wast
 }
 
+function compileWastTokens(tokens, indent = "\n") {
+  wast = ""
+  for (let token of tokens) {
+    if (typeof token === "object") {
+      wast += compileWastTokens(token, indent + "  ")
+    } else {
+      wast += token + " "
+    }
+  }
+  return `${indent}(${wast})`
+}
+
 function deparens(tokens, all) {
   let start = tokens[0]
   let end = tokens[tokens.length - 1]
@@ -849,15 +972,19 @@ function compileWast(wast) {
 }
 
 function resolveIdentifier(identifier, globals) {
-  let stdlib = require("./stdlib.json")
   let ns = identifier.substr(0, identifier.indexOf("\\") + 1)
   let name = identifier.substr(identifier.indexOf("\\") + 1)
-  if (stdlib[name]) {
-    return name
+  if (globals[identifier]) {
+    return identifier
   } else {
     for (let prefix in globals["-namespaces"]) {
-      if (identifier.substr(0, prefix.length) === prefix) {
-        identifier = identifier.replace(prefix, globals["-namespaces"][prefix])
+      let namespaces = globals["-namespaces"][prefix]
+      prefix = prefix || ns
+      for (let namespace of namespaces) {
+        if (identifier.substr(0, prefix.length) === prefix &&
+          globals[identifier.replace(prefix, namespace)]) {
+          return identifier.replace(prefix, namespace)
+        }
       }
     }
   }
