@@ -351,18 +351,17 @@ function scanForGlobals(tokenTree) {
       }
       if (statement[0] === "@func" || statement[0] === "@import" || statement[0] === "@export") {
         if (statement[0] === "@import") {
-          statement.shift()
-          statement.shift()
+          statement.splice(1, 2)
         }
         if (statement[0] === "@export") {
-          statement.shift()
+          statement.splice(1, 1)
         }
         if (isIdentifier(statement[1])) {
           if (globals[statement[1]]) throw `duplicate identifier "${statement[1]}"`
           let locals = []
           if (statement[0] === "@import") {
             let params = parseInt(statement[2])
-            for (let i = 2; i < params; i++) {
+            for (let i = 0; i < params; i++) {
               locals.push("p" + i)
             }
           } else {
@@ -374,9 +373,6 @@ function scanForGlobals(tokenTree) {
             }
           }
           globals[statement[1]] = locals
-          /* for (let local in globals[statement[1]]) {
-            if (globals[local]) globals[statement[1]][local] = false
-          } */
         }
       }
       statement = []
@@ -662,7 +658,7 @@ function compileStatement(tokenTree, globals, locals) {
   return wast
 }
 
-function compileExpression(tokenTree, globals, locals) {
+function compileExpression(tokenTree, globals, locals, list) {
   let wast = ""
   let _values, values = deparens(tokenTree)
   if (values[0] === "{") return compileObjLit(tokenTree, globals, locals)
@@ -676,10 +672,15 @@ function compileExpression(tokenTree, globals, locals) {
       values[i] = `(call $-number (f64.const ${globals["-table"].indexOf(operand2)}))`
     }
     if (isIdentifier(token) && typeof globals[resolveIdentifier(token, globals)] === "object" && !locals.includes(token)) {
+      let name = resolveIdentifier(token, globals)
       let a = values.slice(0, i)
       let b = values.slice(i + 1, values.length)
       values = a
-      values.push(`(call $${resolveIdentifier(token, globals)} ${compileExpression(b, globals, locals)})`)
+      let args = compileExpression(b, globals, locals, true)
+
+      while (args.length > globals[name].length) args.pop()
+      while (args.length < globals[name].length) args.push("(i32.const 0)")
+      values.push(`(call $${name} ${args.join(" ")})`)
     }
   }
 
@@ -757,12 +758,6 @@ function compileExpression(tokenTree, globals, locals) {
       let obj = values.pop()
       values.push(`(call $-getFromObj ${obj} ${prop})`)
     }
-    /* if (values[values.length - 2] === "#") {
-      let operand2 = values.pop()
-      values.pop()
-      if (!globals["-table"].includes(operand2)) globals["-table"].push(operand2)
-      values.push(`(call $-number (f64.const ${globals["-table"].indexOf(operand2)}))`)
-    } */
   }
   _values = values
   values = []
@@ -905,24 +900,8 @@ function compileExpression(tokenTree, globals, locals) {
       values.push(`${setter} ${operand2} ${operand1}\n`)
     }
   }
-  /*  _values = values
-   values = []
-   let calls = 0
-   for (let token of _values) {
-     values.push(token)
-     if (isIdentifier(token)) {
-       let id = values.pop()
-       if (typeof globals[token] === "object") {
-         values.push(`(call $${id}`)
-         calls++
-       }
-     }
-   }
- 
-   for (let i = 0; i < calls; i++) {
-     values.push(")")
-   } */
 
+  if (list) return values
   return values.join(" ")
 }
 
