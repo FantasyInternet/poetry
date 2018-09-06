@@ -614,11 +614,11 @@ function compileStatement(tokenTree, globals, locals) {
   let wast = ""
   tokenTree = deparens(tokenTree, true)
 
-  if (tokenTree[0] === "@var") {
-    tokenTree.shift()
-    if (!locals.includes(tokenTree[0])) {
-      locals.push(tokenTree[0])
+  if (tokenTree[0] === "@var" || tokenTree[0] === "@for") {
+    if (!locals.includes(tokenTree[1])) {
+      locals.push(tokenTree[1])
     }
+    if (tokenTree[0] === "@var") tokenTree.shift()
   }
   if (tokenTree[0] === "@if") {
     wast += `(if (call $-truthy ${compileExpression(tokenTree.slice(1, tokenTree.length - 1), globals, locals)})\n`
@@ -636,6 +636,21 @@ function compileStatement(tokenTree, globals, locals) {
     wast += `(br_if 1 (call $-falsy ${compileExpression(tokenTree.slice(1, tokenTree.length - 1), globals, locals)}))`
     wast += ` ${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)}`
     wast += `(br 0)))`
+    globals["-blocks"] -= 2
+  } else if (tokenTree[0] === "@for") {
+    let fori = allocVar(locals, "-fori")
+    let forl = allocVar(locals, "-forl")
+    let fora = allocVar(locals, "-fora")
+    let item = tokenTree[1]
+    let array = tokenTree.slice(3, tokenTree.length - 1)
+    wast += `(set_local $${fora} ${compileExpression(array, globals, locals)} )`
+    wast += `(set_local $${forl} (i32.div_u (call $-len (get_local $${fora}) ) (i32.const 4)) )`
+    wast += `(block(loop`
+    globals["-blocks"] += 2
+    wast += `(br_if 1 (i32.ge_u (get_local $${fori}) (get_local $${forl}) ) )`
+    wast += `(set_local $${item} (call $-getFromObj (get_local $${fora}) (call $-integer_u (get_local $${fori}) )))`
+    wast += ` ${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)}`
+    wast += `(set_local $${fori} (i32.add (get_local $${fori}) (i32.const 1)))(br 0)))`
     globals["-blocks"] -= 2
   } else if (tokenTree[0] === "@return") {
     wast += `(set_local $-ret ${compileExpression(tokenTree.slice(1), globals, locals)})(br ${globals["-blocks"]})\n`
@@ -989,6 +1004,13 @@ function resolveIdentifier(identifier, globals) {
     }
   }
   return identifier
+}
+
+function allocVar(pool, prefix) {
+  let i = 0
+  while (pool.includes(prefix + i)) i++
+  pool.push(prefix + i)
+  return prefix + i
 }
 
 module.exports = compile
