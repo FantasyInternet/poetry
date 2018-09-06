@@ -1,9 +1,11 @@
 Poetry
 ======
+<img src="./images/Poetree_256.png" align="right"/>
+
 A poetically dynamic and simple programming language that compiles to WebAssembly!
 
 Much features! Very hype!
--------------------------
+------------------------
  - Easy to learn and use
  - Minimalistic syntax
  - Customizable
@@ -24,6 +26,6 @@ Example
       _log (address_of message) (size_of message)
 
     export "init" init
-      log "Hello Poetry! 😇"
+      log "Hello Poetry! 🌳"
 
 Check the [wiki for documentation](https://github.com/FantasyInternet/poetry/wiki)!
