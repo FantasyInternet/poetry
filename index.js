@@ -277,10 +277,7 @@ function nextWastToken(c) {
       token += char
     }
     token = '"' + token.substr(1, token.length - 2).replace(/(^|[^\\])"/g, '$1\\"') + '"'
-  }/*  else if (token.match(/[\{\(\[\;\]\)\}]/)) {
-  } else while (token.substr(-1) === nextChar(c, true) || nextChar(c, true) === "=") {
-    token += nextChar(c)
-  } */
+  }
 
   if (token[0] === "$" && isIdentifier(token.substr(1))) {
     token = "$ns" + c.ns + "\\" + token.substr(1)
@@ -767,19 +764,19 @@ function compileExpression(tokenTree, globals, locals, list) {
       let operand2 = values.pop()
       values.pop()
       let operand1 = values.pop()
-      values.push(`(call $-mul ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+      values.push(`(call $-mul ${operand1} ${operand2})`)
     }
     if (values[values.length - 2] === "/") {
       let operand2 = values.pop()
       values.pop()
       let operand1 = values.pop()
-      values.push(`(call $-div ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+      values.push(`(call $-div ${operand1} ${operand2})`)
     }
     if (values[values.length - 2] === "%") {
       let operand2 = values.pop()
       values.pop()
       let operand1 = values.pop()
-      values.push(`(call $-mod ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+      values.push(`(call $-mod ${operand1} ${operand2})`)
     }
   }
   _values = values
@@ -790,13 +787,13 @@ function compileExpression(tokenTree, globals, locals, list) {
       let operand2 = values.pop()
       values.pop()
       let operand1 = values.pop()
-      values.push(`(call $-add ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+      values.push(`(call $-add ${operand1} ${operand2})`)
     }
     if (values[values.length - 2] === "-") {
       let operand2 = values.pop()
       values.pop()
-      let operand1 = values.pop() || "0"
-      values.push(`(call $-sub ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+      let operand1 = values.pop() || "(i32.const 2)"
+      values.push(`(call $-sub ${operand1} ${operand2})`)
     }
   }
   _values = values
@@ -807,25 +804,25 @@ function compileExpression(tokenTree, globals, locals, list) {
       let operand2 = values.pop()
       values.pop()
       let operand1 = values.pop()
-      values.push(`(call $-lt ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+      values.push(`(call $-lt ${operand1} ${operand2})`)
     }
     if (values[values.length - 2] === "<=") {
       let operand2 = values.pop()
       values.pop()
       let operand1 = values.pop()
-      values.push(`(call $-le ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+      values.push(`(call $-le ${operand1} ${operand2})`)
     }
     if (values[values.length - 2] === ">") {
       let operand2 = values.pop()
       values.pop()
       let operand1 = values.pop()
-      values.push(`(call $-gt ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+      values.push(`(call $-gt ${operand1} ${operand2})`)
     }
     if (values[values.length - 2] === ">=") {
       let operand2 = values.pop()
       values.pop()
       let operand1 = values.pop()
-      values.push(`(call $-ge ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+      values.push(`(call $-ge ${operand1} ${operand2})`)
     }
   }
   _values = values
@@ -836,13 +833,13 @@ function compileExpression(tokenTree, globals, locals, list) {
       let operand2 = values.pop()
       values.pop()
       let operand1 = values.pop()
-      values.push(`(call $-equal ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+      values.push(`(call $-equal ${operand1} ${operand2})`)
     }
     if (values[values.length - 2] === "!=") {
       let operand2 = values.pop()
       values.pop()
       let operand1 = values.pop()
-      values.push(`(call $-unequal ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+      values.push(`(call $-unequal ${operand1} ${operand2})`)
     }
   }
   _values = values
@@ -853,13 +850,13 @@ function compileExpression(tokenTree, globals, locals, list) {
       let operand2 = values.pop()
       values.pop()
       let operand1 = values.pop()
-      values.push(`(call $-and ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+      values.push(`(call $-and ${operand1} ${operand2})`)
     }
     if (values[values.length - 2] === "||") {
       let operand2 = values.pop()
       values.pop()
       let operand1 = values.pop()
-      values.push(`(call $-or ${compileExpression([operand1], globals, locals)} ${compileExpression([operand2], globals, locals)})`)
+      values.push(`(call $-or ${operand1} ${operand2})`)
     }
   }
   _values = values
