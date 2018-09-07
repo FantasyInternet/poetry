@@ -25,6 +25,9 @@ export "init" init
     log "yay!"
   else
     log "nay..."
+  log "Greetings to all of my friends!"
+  for frend in friends
+    log "Hello " + frend + "! How are you!"
   log (array_unshift (friends) (array_pop (friends)))
   log (array_unshift friends (array_pop friends))
   log array_unshift friends string_upper array_pop friends
