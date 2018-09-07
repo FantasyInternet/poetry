@@ -783,6 +783,21 @@ function compileExpression(tokenTree, globals, locals, list) {
   values = []
   for (let token of _values) {
     values.push(token)
+    if (values[values.length - 1] === "++") {
+      values.pop()
+      values.push(`+=`)
+      values.push(`(call $-integer_s (i32.const 1))`)
+    }
+    if (values[values.length - 1] === "--") {
+      values.pop()
+      values.push(`-=`)
+      values.push(`(call $-integer_s (i32.const 1))`)
+    }
+  }
+  _values = values
+  values = []
+  for (let token of _values) {
+    values.push(token)
     if (values[values.length - 2] === "+") {
       let operand2 = values.pop()
       values.pop()
