@@ -491,9 +491,10 @@ function compileModule(c) {
   for (let i = 0; i < startLocals.length; i++) {
     start = `(local $${startLocals[i]} i32)` + start
   }
-  if (!table) table = `(table $-table ${c.globals["-table"].length} anyfunc)\n`
+  if (!table) table = `(table $-table ${c.globals["-table"].length * 2} anyfunc)\n`
   for (let i = 0; i < c.globals["-table"].length; i++) {
-    table += `(elem (i32.const ${i}) $--${c.globals["-table"][i]})\n`
+    table += `(elem (i32.const ${i * 2}) $--${c.globals["-table"][i]})\n`
+    table += `(elem (i32.const ${i * 2 + 1}) $${c.globals["-table"][i]})\n`
 
     exports += `(func $--${c.globals["-table"][i]}\n`
     for (let p = 0; p < c.globals[c.globals["-table"][i]].length; p++) {
@@ -663,10 +664,28 @@ function compileExpression(tokenTree, globals, locals, list) {
   for (let i = 0; i < values.length; i++) {
     let token = values[i]
     if (token === "#") {
-      let operand2 = values[i + 1]
-      if (!globals["-table"].includes(operand2)) globals["-table"].push(operand2)
-      values.splice(i, 1)
-      values[i] = `(call $-number (f64.const ${globals["-table"].indexOf(operand2)}))`
+      let operand = values[i + 1]
+      if (isIdentifier(operand) && typeof globals[resolveIdentifier(operand, globals)] === "object" && !locals.includes(operand)) {
+        let name = resolveIdentifier(operand, globals)
+        if (!globals["-table"].includes(name)) globals["-table"].push(name)
+        values.splice(i, 1)
+        values[i] = `(call $-integer_u (i32.const ${globals["-table"].indexOf(name) * 2}))`
+      } else {
+        let index = compileExpression([operand], globals, locals)
+        let a = values.slice(0, i)
+        let b = values.slice(i + 2, values.length)
+        values = a
+        let args = compileExpression(b, globals, locals, true)
+        let wast = `(call_indirect `
+        for (let i = 0; i < args.length; i++) {
+          wast += `(param i32) `
+        }
+        wast += `(result i32)\n`
+        wast += args.join(" ")
+        wast += `(i32.add (i32.const 1) (call $-i32_u ${index})))`
+
+        values.push(wast)
+      }
     }
     if (isIdentifier(token) && typeof globals[resolveIdentifier(token, globals)] === "object" && !locals.includes(token)) {
       let name = resolveIdentifier(token, globals)
