@@ -896,6 +896,7 @@
 (func $-setToObj (param $objId i32) (param $indexId i32) (param $valId i32)
   (local $elem i32)
   (local $index i32)
+  (local $len i32)
   (if (i32.eq (call $-datatype (get_local $indexId)) (i32.const 2))(then
     (set_local $index (call $-i32_u (get_local $indexId)))
     (call $-write32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4)) (get_local $valId))
@@ -912,6 +913,16 @@
     (br 0)))
     (set_local $index (i32.add (get_local $index) (i32.const 1)))
     (call $-write32 (get_local $objId) (i32.mul (get_local $index) (i32.const 4)) (get_local $valId))
+    (if (i32.eqz (get_local $valId))(then
+      (set_local $len (call $-len (get_local $objId)))
+      (set_local $len (i32.sub (get_local $len) (i32.mul (get_local $index) (i32.const 4))))
+      (call $-memcopy
+        (i32.add (call $-offset (get_local $objId)) (i32.mul (i32.add (get_local $index) (i32.const 1)) (i32.const 4)))
+        (i32.add (call $-offset (get_local $objId)) (i32.mul (i32.sub (get_local $index) (i32.const 1)) (i32.const 4)))
+        (get_local $len)
+      )
+      (call $-resize (get_local $objId) (i32.sub (call $-len (get_local $objId)) (i32.const 8)))
+    ))
   ))
 )
 
