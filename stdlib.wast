@@ -10,6 +10,9 @@
 )
 
 ;; binary functions
+(func $binary_string (param $len i32) (result i32)
+  (call $-new_value (i32.const 6) (call $-i32_u (get_local $len)))
+)
 (func $binary_slice (param $binary i32) (param $start i32) (param $len i32) (result i32)
   (local $out i32)
   (set_local $start (call $-i32_u (get_local $start)))
