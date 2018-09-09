@@ -1,12 +1,12 @@
 ;; general value functions
 (func $address_of (param $value i32) (result i32)
-  (call $-number (f64.convert_u/i32 (call $-offset (get_local $value))))
+  (call $-integer_u (call $-offset (get_local $value)))
 )
 (func $size_of (param $value i32) (result i32)
-  (call $-number (f64.convert_u/i32 (call $-len (get_local $value))))
+  (call $-integer_u (call $-len (get_local $value)))
 )
 (func $datatype_of (param $value i32) (result i32)
-  (call $-number (f64.convert_u/i32 (call $-datatype (get_local $value))))
+  (call $-integer_u (call $-datatype (get_local $value)))
 )
 
 ;; binary functions
@@ -20,7 +20,7 @@
   (if (i32.lt_u (i32.sub (call $-len (get_local $binary)) (get_local $start)) (get_local $len))(then
     (set_local $len (i32.sub (call $-len (get_local $binary)) (get_local $start)))
   ))
-  (set_local $out (call $-new_value (i32.const 3) (get_local $len)))
+  (set_local $out (call $-new_value (i32.const 6) (get_local $len)))
   (call $-memcopy
     (i32.add (call $-offset (get_local $binary)) (get_local $start))
     (call $-offset (get_local $out))
@@ -102,11 +102,11 @@
     (i32.add (call $-offset (get_local $string)) (get_local $start))
     (call $-i32_u (get_local $len))
   ))
-  (call $binary_slice
+  (call $-set_datatype (call $binary_slice
     (get_local $string)
     (call $-integer_u (get_local $start))
     (call $-integer_u (get_local $len))
-  )
+  ) (i32.const 3))
 )
 (func $string_search (param $string i32) (param $substr i32) (param $start i32) (result i32)
   (set_local $start (call $-chars2bytes

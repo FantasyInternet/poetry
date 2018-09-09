@@ -184,7 +184,7 @@
   (get_local $offset)
 )
 
-;; type of memory allocation
+;; datatype of memory allocation
 (func $-datatype (param $id i32) (result i32)
   (local $datatype i32)
   (if (i32.eq (get_local $id) (i32.const -1))(then
@@ -299,6 +299,24 @@
     ))
     (i32.store8 (i32.add (call $-offset (get_local $id)) (get_local $newlen)) (i32.const 0))
   ))
+)
+
+;; set datatype of memory allocation
+(func $-set_datatype (param $id i32) (param $datatype i32) (result i32)
+  (local $offset i32)
+  (if (i32.eq (get_local $id) (i32.const -1))(then
+    (set_local $datatype (i32.const 7))
+  )(else
+    (if (i32.lt_u (get_local $id) (i32.const 8))(then
+      (set_local $datatype (i32.and (get_local $id) (i32.const 3)))
+    )(else
+      (set_local $offset (i32.sub (get_global $-mindex) (i32.const 64)))
+      (set_local $offset (i32.add (get_local $offset) (i32.mul (i32.const 8) (get_local $id))))
+      (set_local $datatype (i32.add (get_local $datatype) (i32.and (i32.load (get_local $offset)) (i32.const -8))))
+      (i32.store (get_local $offset) (get_local $datatype))
+    ))
+  ))
+  (get_local $id)
 )
 
 
