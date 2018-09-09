@@ -4,8 +4,11 @@
 /node_modules/
 /src/
 /deploy.json
+*.log
 /Jakefile.*
 /.jshintrc
 Thumbs.db
 *~
 *.kra-autosave.kra
+boot.wa*
+boot.debug.*
