@@ -10,5 +10,5 @@
 Thumbs.db
 *~
 *.kra-autosave.kra
-boot.wa*
-boot.debug.*
+boot.*
+api.*
