@@ -78,8 +78,12 @@
   (set_local $offset2 (i32.add (get_local $offset2) (get_local $space2)))
   (i32.store (get_local $offset2) (get_local $space2))
 
+  ;; zerofill allocation
+  (set_local $offset (i32.add (i32.const 8) (get_local $offset)))
+  (call $-memzero (get_local $offset) (get_local $len))
+
   ;; return offset where the data is supposed to begin
-  (return (i32.add (i32.const 8) (get_local $offset)))
+  (return (get_local $offset))
 )
 
 ;; deallocate memory
@@ -105,6 +109,20 @@
   (set_local $space (i32.sub (get_local $offset2) (get_local $offset)))
   (i32.store (get_local $offset) (get_local $space))
   (i32.store (get_local $offset2) (get_local $space))
+)
+
+;; zerofill memory
+(func $-memzero (param $offset i32) (param $len i32)
+  (block(loop (br_if 1 (i32.lt_u (get_local $len) (i32.const 8)))
+    (i64.store (get_local $offset) (i64.const 0))
+    (set_local $offset (i32.add (get_local $offset) (i32.const 8)))
+    (set_local $len (i32.sub (get_local $len) (i32.const 8)))
+  (br 0)))
+  (block(loop (br_if 1 (i32.eqz (get_local $len)))
+    (i32.store8 (get_local $offset) (i32.const 0))
+    (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
+    (set_local $len (i32.sub (get_local $len) (i32.const 1)))
+  (br 0)))
 )
 
 ;; copy memory
@@ -210,6 +228,17 @@
       (i32.and (get_local $newlen) (i32.const -8))
     )(then
       (i32.store (i32.sub (get_local $offset) (i32.const 4)) (get_local $newlen))
+      (if (i32.gt_u (get_local $len) (get_local $newlen))(then
+        (call $-memzero
+          (i32.add (get_local $offset) (get_local $newlen))
+          (i32.sub (get_local $len) (get_local $newlen))
+        )
+      )(else
+        (call $-memzero
+          (i32.add (get_local $offset) (get_local $len))
+          (i32.sub (get_local $newlen) (get_local $len))
+        )
+      ))
     )(else
       (set_local $spaceafter
         (i32.load
@@ -245,6 +274,17 @@
           )
           (get_local $spaceafter)
         )
+        (if (i32.gt_u (get_local $len) (get_local $newlen))(then
+          (call $-memzero
+            (i32.add (get_local $offset) (get_local $newlen))
+            (i32.sub (get_local $len) (get_local $newlen))
+          )
+        )(else
+          (call $-memzero
+            (i32.add (get_local $offset) (get_local $len))
+            (i32.sub (get_local $newlen) (get_local $len))
+          )
+        ))
       )(else
         (set_local $datatype (call $-datatype (get_local $id)))
         (set_local $newoffset (call $-alloc (get_local $newlen)))
