@@ -54,7 +54,8 @@ function compile(filename, options = {}) {
 
 function findConfig(dir) {
   let config = {}
-  while (dir !== path.dirname(__dirname)) {
+  let tries = dir.split(path.sep).length + 1
+  while (tries--) {
     try {
       config = { ...require(path.join(dir, "poetry.json")), ...config }
       if (config.includes) {
