@@ -782,7 +782,7 @@ function compileExpression(tokenTree, globals, locals, list) {
       values.push(`(call $-getFromObj ${obj} ${prop})`)
     }
     if (typeof token === "object" && token[0] === "[") {
-      let prop = compileExpression(values.pop())
+      let prop = compileExpression(values.pop(), globals, locals)
       let obj = values.pop()
       values.push(`(call $-getFromObj ${obj} ${prop})`)
     }
