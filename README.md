@@ -1,7 +1,6 @@
+<img src="./images/Poetree_256.png" align="right"/>
 Poetry
 ======
-<img src="./images/Poetree_256.png" align="right"/>
-
 A poetically dynamic and simple programming language that compiles to WebAssembly!
 
 Much features! Very hype!

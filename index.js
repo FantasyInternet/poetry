@@ -396,12 +396,13 @@ function compileModule(c) {
   let gc = ""
 
   let offset = 1024 * 64
+  start += `(call $-resize (i32.const -1) (i32.const ${8 * c.strings.length}))`
   for (let i = 8; i < c.strings.length; i++) {
     let len = Buffer.byteLength(c.strings[i], 'utf8')
     memory += `(data (i32.const ${offset}) "${escapeStr(c.strings[i])}")\n`
     start += `(call $-string (i32.const ${offset}) (i32.const ${len}))\n`
     offset += len
-    offset = Math.floor(offset / 8) * 8 + 8
+    offset = Math.floor(offset / 8) * 8 + 16
   }
   start += `(call $-zerorefs)\n`
   c.globals["-string"] = c.strings
@@ -424,12 +425,12 @@ function compileModule(c) {
         for (let i = 3; i < statement.length - 1; i++) {
           exports += `(param $${statement[i]} f64)`
         }
-        exports += `(result f64)`
+        exports += `(result f64)(call $-funcstart)`
         exports += `(call $-f64 (call $${statement[2]}`
         for (let i = 3; i < statement.length - 1; i++) {
           exports += `(call $-number (get_local $${statement[i]}))`
         }
-        exports += `)))(export ${statement[1]} (func $--${statement[2]}))\n`
+        exports += `))(call $-funcend))(export ${statement[1]} (func $--${statement[2]}))\n`
         statement.shift()
         statement[0] = "@func"
       }
@@ -501,12 +502,12 @@ function compileModule(c) {
     for (let p = 0; p < c.globals[c.globals["-table"][i]].length; p++) {
       exports += `(param $${c.globals[c.globals["-table"][i]][p]} f64)`
     }
-    exports += `(result f64)`
+    exports += `(result f64)(call $-funcstart)`
     exports += `(call $-f64 (call $${c.globals["-table"][i]}`
     for (let p = 0; p < c.globals[c.globals["-table"][i]].length; p++) {
       exports += `(call $-number (get_local $${c.globals[c.globals["-table"][i]][p]}))`
     }
-    exports += `)))\n`
+    exports += `))(call $-funcend))\n`
   }
   gc += `(func $-traceGC\n`
   gc += `(call $-zerorefs)\n`
@@ -573,9 +574,9 @@ function compileFunction(tokenTree, globals) {
       for (let i = paramlength; i < locals.length; i++) {
         wast += `(local $${locals[i]} i32)`
       }
-      wast += `(local $-ret i32)(local $-success i32)(call $-funcstart)`
+      wast += `(local $-ret i32)(local $-success i32)`
       wast += block
-      wast += `(call $-funcend)(get_local $-ret)`
+      wast += `(get_local $-ret)`
     }
   }
   wast += `)\n`
