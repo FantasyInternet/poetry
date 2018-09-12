@@ -134,7 +134,10 @@ function nextToken(c) {
     if (token === "~") {
       let end = "\n"
       token = nextChar(c)
-      if (token === "`") end = token
+      if (token === "`") {
+        end = token
+        token = " "
+      }
       while (token !== end) {
         token = nextChar(c)
       }
@@ -150,7 +153,14 @@ function nextToken(c) {
       if (char === "\n") i = 0
       char = nextChar(c, true)
       if (char === "~") {
-        while (char !== "\n") {
+        let end = "\n"
+        nextChar(c)
+        char = nextChar(c)
+        if (char === "`") {
+          end = char
+          char = " "
+        }
+        while (char !== end) {
           nextChar(c)
           char = nextChar(c, true)
         }
