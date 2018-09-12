@@ -396,12 +396,13 @@ function compileModule(c) {
   let gc = ""
 
   let offset = 1024 * 64
+  start += `(call $-resize (i32.const -1) (i32.const ${8 * c.strings.length}))`
   for (let i = 8; i < c.strings.length; i++) {
     let len = Buffer.byteLength(c.strings[i], 'utf8')
     memory += `(data (i32.const ${offset}) "${escapeStr(c.strings[i])}")\n`
     start += `(call $-string (i32.const ${offset}) (i32.const ${len}))\n`
     offset += len
-    offset = Math.floor(offset / 8) * 8 + 8
+    offset = Math.floor(offset / 8) * 8 + 16
   }
   start += `(call $-zerorefs)\n`
   c.globals["-string"] = c.strings
