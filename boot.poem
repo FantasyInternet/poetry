@@ -1,3 +1,4 @@
+include "./debug.wast"
 include "./api.poem"
 
 var meaning_of_life = 42.5
@@ -17,7 +18,7 @@ func sum a b
 export "init" init
   var tableindex = #sum
   logNumber #tableindex tableindex meaning_of_life2
-  logNumber sum tableindex meaning_of_life2
+  logNumber echo sum tableindex meaning_of_life2
   log name + " " + -32.00125
   var friend = friends[1 + 1]
   log friend
@@ -37,3 +38,7 @@ export "init" init
   log array_unshift friends array_pop friends
   log array_unshift friends array_pop friends
   log array_unshift friends array_pop friends
+
+export "echo" echo num
+  ~ logNumber num
+  return num
