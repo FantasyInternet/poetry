@@ -3,6 +3,7 @@
 # Example .gitignore files: https://github.com/github/gitignore
 /node_modules/
 /src/
+/images/
 /deploy.json
 *.log
 /Jakefile.*

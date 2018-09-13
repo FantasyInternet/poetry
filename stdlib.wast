@@ -94,14 +94,14 @@
 
 ;; string functions
 (func $string_length (param $str i32) (result i32)
-  (call $-integer_u (call $-countChars (get_local $str)))
+  (call $-integer_u (call $-count_chars (get_local $str)))
 )
 (func $string_slice (param $string i32) (param $start i32) (param $len i32) (result i32)
-  (set_local $start (call $-chars2bytes
+  (set_local $start (call $-chars_to_bytes
     (call $-offset (get_local $string))
     (call $-i32_u (get_local $start))
   ))
-  (set_local $len (call $-chars2bytes
+  (set_local $len (call $-chars_to_bytes
     (i32.add (call $-offset (get_local $string)) (get_local $start))
     (call $-i32_u (get_local $len))
   ))
@@ -112,7 +112,7 @@
   ) (i32.const 3))
 )
 (func $string_search (param $string i32) (param $substr i32) (param $start i32) (result i32)
-  (set_local $start (call $-chars2bytes
+  (set_local $start (call $-chars_to_bytes
     (call $-offset (get_local $string))
     (call $-i32_u (get_local $start))
   ))
