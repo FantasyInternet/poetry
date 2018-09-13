@@ -21,7 +21,7 @@
 )
 
 ;; allocate memory
-(global $-lastAlloc (mut i32) (i32.const 0))
+(global $-last_alloc (mut i32) (i32.const 0))
 (func $-alloc (param $len i32) (result i32)
   (local $offset i32)
   (local $offset2 i32)
@@ -30,8 +30,8 @@
   (local $totmem i32)
   (local $allowgrow i32)
 
-  (if (get_global $-lastAlloc)(then
-    (set_local $offset (i32.sub (get_global $-lastAlloc) (i32.const 8)))
+  (if (get_global $-last_alloc)(then
+    (set_local $offset (i32.sub (get_global $-last_alloc) (i32.const 8)))
     (set_local $offset (i32.sub (get_local $offset) (i32.load (get_local $offset))))
   )(else
     (set_local $allowgrow (i32.const 1))
@@ -104,7 +104,7 @@
   (call $-memzero (get_local $offset) (get_local $len))
 
   ;; return offset where the data is supposed to begin
-  (set_global $-lastAlloc (get_local $offset))
+  (set_global $-last_alloc (get_local $offset))
   (return (get_local $offset))
 )
 
@@ -115,8 +115,8 @@
   (local $space i32)
   (local $space2 i32)
 
-  (if (i32.eq (get_local $offset) (get_global $-lastAlloc))(then
-    (set_global $-lastAlloc (i32.const 0))
+  (if (i32.eq (get_local $offset) (get_global $-last_alloc))(then
+    (set_global $-last_alloc (i32.const 0))
   ))
   (set_local $offset (i32.sub (i32.and (get_local $offset) (i32.const -8)) (i32.const 8)))
   (set_local $space (i32.load (get_local $offset)))
@@ -405,11 +405,11 @@
 )
 
 ;; make room for a new value
-(global $-nextId (mut i32) (i32.const 0))
+(global $-next_id (mut i32) (i32.const 0))
 (func $-new_value (param $datatype i32) (param $len i32) (result i32)
   (local $offset i32)
   (local $id i32)
-  (set_local $id (get_global $-nextId))
+  (set_local $id (get_global $-next_id))
   (set_local $offset (call $-alloc (get_local $len)))
   (block(loop
     (br_if 1 (i32.eqz (call $-read32 (i32.const -1) (i32.mul (get_local $id) (i32.const 8)))))
@@ -419,7 +419,7 @@
   (call $-write32 (i32.const -1) (i32.mul (get_local $id) (i32.const 8)) (get_local $offset))
   (call $-write32 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 4)) (i32.const 0))
   (call $-write8  (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 6)) (get_local $datatype))
-  (set_global $-nextId (i32.add (get_local $id) (i32.const 1)))
+  (set_global $-next_id (i32.add (get_local $id) (i32.const 1)))
   (i32.add (get_local $id) (i32.const 8))
 )
 
@@ -437,7 +437,7 @@
 (func $-zerorefs
   (local $id i32)
   (if (i32.eqz (get_global $-hard_value))(then
-    (set_global $-hard_value (get_global $-nextId))
+    (set_global $-hard_value (get_global $-next_id))
   ))
   (set_local $id (i32.div_u (call $-len (i32.const -1)) (i32.const 8)))
   ;; (set_global $-high_id (get_global $-hard_value))
@@ -499,8 +499,8 @@
       ))
     ))
   (br 0)))
-  (set_global $-lastAlloc (i32.const 0))
-  (set_global $-nextId (i32.const 0))
+  (set_global $-last_alloc (i32.const 0))
+  (set_global $-next_id (i32.const 0))
   ;; (call $-resize (i32.const -1) (i32.mul (i32.add (get_global $-high_id) (i32.const 1)) (i32.const 8)))
 )
 
@@ -897,7 +897,7 @@
   (call $-memcopy (get_local $offset) (call $-offset (get_local $id)) (get_local $len))
   (call $-ref (get_local $id))
 )
-(func $-charSize (param $byte i32) (result i32)
+(func $-char_size (param $byte i32) (result i32)
   (local $size i32)
   (if (i32.ge_u (get_local $byte) (i32.const 0x01))(then
     (set_local $size (i32.add (get_local $size) (i32.const 1)))
@@ -925,7 +925,7 @@
   ))
   (get_local $size)
 )
-(func $-countChars (param $str i32) (result i32)
+(func $-count_chars (param $str i32) (result i32)
   (local $pos i32)
   (local $len i32)
   (local $byte i32)
@@ -934,26 +934,26 @@
   (set_local $len (call $-len (get_local $str)))
   (block(loop (br_if 1 (i32.le_s (get_local $len) (i32.const 0)))
     (set_local $byte (i32.load8_u (get_local $pos)))
-    (set_local $len (i32.sub (get_local $len) (call $-charSize (get_local $byte))))
-    (set_local $pos (i32.add (get_local $pos) (call $-charSize (get_local $byte))))
+    (set_local $len (i32.sub (get_local $len) (call $-char_size (get_local $byte))))
+    (set_local $pos (i32.add (get_local $pos) (call $-char_size (get_local $byte))))
     (set_local $chars (i32.add (get_local $chars) (i32.const 1)))
   (br 0) ))
   (get_local $chars)
 )
-(func $-chars2bytes (param $start i32) (param $chars i32) (result i32)
+(func $-chars_to_bytes (param $start i32) (param $chars i32) (result i32)
   (local $pos i32)
   (local $byte i32)
   (set_local $pos (get_local $start))
   (block(loop (br_if 1 (i32.le_s (get_local $chars) (i32.const 0)))
     (set_local $byte (i32.load8_u (get_local $pos)))
-    (set_local $pos (i32.add (get_local $pos) (call $-charSize (get_local $byte))))
+    (set_local $pos (i32.add (get_local $pos) (call $-char_size (get_local $byte))))
     (set_local $chars (i32.sub (get_local $chars) (i32.const 1)))
   (br 0) ))
   (i32.sub (get_local $pos) (get_local $start))
 )
 
 
-(func $-getFromObj (param $objId i32) (param $indexId i32) (result i32)
+(func $-get_from_obj (param $objId i32) (param $indexId i32) (result i32)
   (local $elem i32)
   (local $index i32)
   (if (i32.eq (call $-datatype (get_local $indexId)) (i32.const 2))(then
@@ -974,7 +974,7 @@
   ))
   (get_local $elem)
 )
-(func $-setToObj (param $objId i32) (param $indexId i32) (param $valId i32)
+(func $-set_to_obj (param $objId i32) (param $indexId i32) (param $valId i32)
   (local $elem i32)
   (local $index i32)
   (local $len i32)
@@ -1006,8 +1006,3 @@
     ))
   ))
 )
-
-
-
-
-

@@ -654,7 +654,7 @@ function compileStatement(tokenTree, globals, locals) {
     wast += `(block(loop`
     globals["-blocks"] += 2
     wast += `(br_if 1 (i32.ge_u (get_local $${fori}) (get_local $${forl}) ) )`
-    wast += `(set_local $${item} (call $-getFromObj (get_local $${fora}) (call $-integer_u (get_local $${fori}) )))`
+    wast += `(set_local $${item} (call $-get_from_obj (get_local $${fora}) (call $-integer_u (get_local $${fori}) )))`
     wast += ` ${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)}`
     wast += `(set_local $${fori} (i32.add (get_local $${fori}) (i32.const 1)))(br 0)))`
     globals["-blocks"] -= 2
@@ -779,12 +779,12 @@ function compileExpression(tokenTree, globals, locals, list) {
       } else {
         prop = `(call $-number (f64.const ${prop}))`
       }
-      values.push(`(call $-getFromObj ${obj} ${prop})`)
+      values.push(`(call $-get_from_obj ${obj} ${prop})`)
     }
     if (typeof token === "object" && token[0] === "[") {
       let prop = compileExpression(values.pop(), globals, locals)
       let obj = values.pop()
-      values.push(`(call $-getFromObj ${obj} ${prop})`)
+      values.push(`(call $-get_from_obj ${obj} ${prop})`)
     }
   }
   _values = values
@@ -918,8 +918,8 @@ function compileExpression(tokenTree, globals, locals, list) {
         setter = setter.replace(`(get_local `, `(set_local `)
       } else if (setter.indexOf(`(get_global `) === 0) {
         setter = setter.replace(`(get_global `, `(set_global `)
-      } else if (setter.indexOf(`(call $-getFromObj `) === 0) {
-        setter = setter.replace(`(call $-getFromObj `, `(call $-setToObj `)
+      } else if (setter.indexOf(`(call $-get_from_obj `) === 0) {
+        setter = setter.replace(`(call $-get_from_obj `, `(call $-set_to_obj `)
       } else {
         throw `cannot assign to ${setter}`
       }
@@ -967,7 +967,7 @@ function compileObjLit(tokenTree, globals, locals) {
         wast += `(drop ${compileExpression(statement, globals, locals)})\n`
         index += 2
       } else {
-        wast += `(call $-setToObj (get_local $${name}) (call $-number (f64.const ${index})) ${compileExpression(statement, globals, locals)})\n`
+        wast += `(call $-set_to_obj (get_local $${name}) (call $-number (f64.const ${index})) ${compileExpression(statement, globals, locals)})\n`
         index++
         datatype = 4
       }
