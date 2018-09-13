@@ -47,7 +47,7 @@ function compile(filename, options = {}) {
     fs.writeFileSync(options.debug, JSON.stringify(compilation, null, 2))
   }
   if (options.wasm) {
-    let wasm = compileWast(wast)
+    let wasm = compileWast(wast, { write_debug_names: !!(options.wast || options.debug) })
     fs.writeFileSync(options.wasm, wasm)
   }
 }
@@ -1004,8 +1004,8 @@ function deparens(tokens, all) {
   return tokens.slice()
 }
 
-function compileWast(wast) {
-  return wabt.parseWat("boot", wast).toBinary({ write_debug_names: true }).buffer
+function compileWast(wast, options) {
+  return wabt.parseWat("boot", wast).toBinary(options).buffer
 }
 
 function resolveIdentifier(identifier, globals) {
