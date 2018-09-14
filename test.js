@@ -22,6 +22,9 @@ fetch('boot.wasm').then(response =>
   WebAssembly.instantiate(bytes, importObject)
 ).then(obj => {
   window.wasm = obj.instance.exports
+  wasm.init()
+  wasm.init()
+  wasm.init()
 }
 )
 
@@ -98,4 +101,28 @@ function getValue(id) {
     default:
       return undefined
   }
+}
+
+function validateAlloc() {
+  let mem = new Int32Array(wasm.memory.buffer)
+  let allocs = []
+  let offset = 0
+  let space = mem[offset / 4]
+  while (offset < mem.length - 1) {
+    let alloc = {}
+    allocs.push(alloc)
+    alloc.free = space
+    offset += space
+    if (space !== mem[offset / 4]) console.error("memory error at", offset)
+    offset += 4
+    space = mem[offset / 4]
+
+    alloc.offset = offset + 4
+    alloc.used = space
+    offset += space + 4
+    offset = Math.floor(offset / 8) * 8 + 8
+    space = mem[offset / 4]
+    space = Math.floor(space / 8) * 8
+  }
+  console.table(allocs)
 }
