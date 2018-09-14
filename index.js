@@ -237,7 +237,7 @@ function nextToken(c) {
     }
   }
   if (isIdentifier(token)) {
-    token = "ns" + c.ns + "\\" + token
+    token = "ns" + c.ns + "\\" + token.toLowerCase()
   }
   if (c.lastToken === "@import") {
     c.lastToken = "@export"
@@ -291,7 +291,7 @@ function nextWastToken(c) {
   }
 
   if (token[0] === "$" && isIdentifier(token.substr(1))) {
-    token = "$ns" + c.ns + "\\" + token.substr(1)
+    token = "$ns" + c.ns + "\\" + token.substr(1).toLowerCase()
   }
   return token
 }

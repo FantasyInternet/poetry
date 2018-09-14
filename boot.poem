@@ -17,8 +17,8 @@ func sum a b
 
 export "init" init
   var tableindex = #sum
-  logNumber #tableindex tableindex meaning_of_life2
-  logNumber echo sum tableindex meaning_of_life2
+  log_number #tableindex tableindex meaning_of_life2
+  log_number echo sum tableindex meaning_of_life2
   log name + " " + -32.00125
   var friend = friends[1 + 1]
   log friend
@@ -40,5 +40,5 @@ export "init" init
   log array_unshift friends array_pop friends
 
 export "echo" echo num
-  ~ logNumber num
+  ~ log_number num
   return num
