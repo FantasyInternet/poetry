@@ -178,10 +178,11 @@ function nextToken(c) {
     }
   } else if (token.match(/[\@]/)) {
     char = nextChar(c, true)
-    while (char.match(/[_a-z]/)) {
+    while (char.match(/[A-Z_a-z]/)) {
       token += nextChar(c)
       char = nextChar(c, true)
     }
+    token = token.toLowerCase()
   } else if (token.match(/[\:]/)) {
     char = nextChar(c, true)
     while (char.match(/[\$A-Z_a-z0-9.\\]/) || char.charCodeAt(0) > 127) {
@@ -194,6 +195,7 @@ function nextToken(c) {
       token += nextChar(c)
       char = nextChar(c, true)
     }
+    token = token.toLowerCase()
   } else if (token.match(/[0-9.]/)) {
     let dot = token === "."
     char = nextChar(c, true)
@@ -223,7 +225,11 @@ function nextToken(c) {
     }
   }
   if (c.lastToken === "@import") {
+  } else if (c.lastToken === "@import_memory") {
+  } else if (c.lastToken === "@import_table") {
   } else if (c.lastToken === "@export") {
+  } else if (c.lastToken === "@export_memory") {
+  } else if (c.lastToken === "@export_table") {
   } else if (c.lastToken === "@include") {
     let filename = require.resolve(JSON.parse(token), { paths: [path.dirname(c.path)] })
     if (!c.bundle.includes(filename)) {
@@ -272,7 +278,7 @@ function nextWastToken(c) {
       token += nextChar(c)
       char = nextChar(c, true)
     }
-  } else if (token.match(/[0-9.]/)) {
+  } else if (token.match(/[\-0-9.]/)) {
     let dot = token === "."
     char = nextChar(c, true)
     while (char.match(/[0-9x]/) || (char === "." && !dot)) {
@@ -290,7 +296,7 @@ function nextWastToken(c) {
     token = '"' + token.substr(1, token.length - 2).replace(/(^|[^\\])"/g, '$1\\"') + '"'
   }
 
-  if (token[0] === "$" && isIdentifier(token.substr(1))) {
+  if (token[0] === "$" && token[1] !== "-") {
     token = "$ns" + c.ns + "\\" + token.substr(1).toLowerCase()
   }
   return token
