@@ -380,6 +380,48 @@
   (br 0)))
   (get_local $out)
 )
+(func $range (param $start i32) (param $end i32) (param $step i32) (result i32)
+  (local $_start f64)
+  (local $_end f64)
+  (local $_step f64)
+  (local $out i32)
+  (local $offset i32)
+  (local $len i32)
+  (set_local $_start (call $-f64 (get_local $start)))
+  (set_local $_end (call $-f64 (get_local $end)))
+  (set_local $_step (call $-f64 (get_local $step)))
+  (if (f64.eq (get_local $_step) (f64.const 0))(then
+    (if (f64.gt (get_local $_start) (get_local $_end))(then
+      (set_local $_step (f64.const -1))
+    )(else
+      (set_local $_step (f64.const 1))
+    ))
+  ))
+  (set_local $out (call $-new_value (i32.const 4) (i32.trunc_u/f64 
+     (f64.mul
+      (f64.add
+        (f64.floor (f64.div
+          (f64.sub
+            (get_local $_end)
+            (get_local $_start)
+          )
+          (get_local $_step)
+        ))
+        (f64.const 1)
+      )
+      (f64.const 4)
+    )
+  )))
+  (set_local $offset (call $-offset (get_local $out)))
+  (set_local $len (call $-len (get_local $out)))
+  (block(loop (br_if 1 (i32.eqz (get_local $len)))
+    (i32.store (get_local $offset) (call $-number (get_local $_start)))
+    (set_local $_start  (f64.add (get_local $_start)  (get_local $_step)))
+    (set_local $offset  (i32.add (get_local $offset)  (i32.const 4)))
+    (set_local $len     (i32.sub (get_local $len)     (i32.const 4)))
+  (br 0)))
+  (get_local $out)
+)
 
 ;; object functions
 (func $object_keys (param $object i32) (result i32)
