@@ -399,16 +399,13 @@
   ))
   (set_local $out (call $-new_value (i32.const 4) (i32.trunc_u/f64 
      (f64.mul
-      (f64.add
-        (f64.floor (f64.div
-          (f64.sub
-            (get_local $_end)
-            (get_local $_start)
-          )
-          (get_local $_step)
-        ))
-        (f64.const 1)
-      )
+      (f64.floor (f64.div
+        (f64.sub
+          (get_local $_end)
+          (get_local $_start)
+        )
+        (get_local $_step)
+      ))
       (f64.const 4)
     )
   )))
