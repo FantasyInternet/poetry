@@ -1,6 +1,7 @@
 const fs = require("fs"),
   path = require("path"),
-  wabt = require("wabt")
+  wabt = require("wabt"),
+  pretty_wast = require("./prettify_wast.js")
 
 function compile(filename, options = {}) {
   let compilation = {
@@ -41,6 +42,7 @@ function compile(filename, options = {}) {
   compilation.globals["-namespaces"] = compilation.namespaces
   let wast = compileModule(compilation)
   if (options.wast) {
+    wast = pretty_wast(wast)
     fs.writeFileSync(options.wast, wast)
   }
   if (options.debug) {
