@@ -1,6 +1,7 @@
 const fs = require("fs"),
   path = require("path"),
-  wabt = require("wabt")
+  wabt = require("wabt"),
+  pretty_wast = require("./prettify_wast.js")
 
 function compile(filename, options = {}) {
   let compilation = {
@@ -41,6 +42,7 @@ function compile(filename, options = {}) {
   compilation.globals["-namespaces"] = compilation.namespaces
   let wast = compileModule(compilation)
   if (options.wast) {
+    wast = pretty_wast(wast)
     fs.writeFileSync(options.wast, wast)
   }
   if (options.debug) {
@@ -637,7 +639,7 @@ function compileStatement(tokenTree, globals, locals) {
     wast += `${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)}`.replace("(block", "(then")
     wast += `(else (set_local $-success (i32.const 0))))`
   } else if (tokenTree[0] === "@elsif") {
-    wast += `(if (i32.xor (get_local $-success) (call $-truthy ${compileExpression(tokenTree.slice(1, tokenTree.length - 1), globals, locals)}))\n`
+    wast += `(if (i32.and (i32.eqz(get_local $-success)) (call $-truthy ${compileExpression(tokenTree.slice(1, tokenTree.length - 1), globals, locals)}))\n`
     wast += `${compileBlock(tokenTree[tokenTree.length - 1], globals, locals)})`.replace("(block", "(then")
   } else if (tokenTree[0] === "@else") {
     wast += `(if (i32.eqz (get_local $-success))\n`
@@ -655,6 +657,7 @@ function compileStatement(tokenTree, globals, locals) {
     let fora = allocVar(locals, "-fora")
     let item = tokenTree[1]
     let array = tokenTree.slice(3, tokenTree.length - 1)
+    wast += `(set_local $${fori} (i32.const 0) )`
     wast += `(set_local $${fora} ${compileExpression(array, globals, locals)} )`
     wast += `(set_local $${forl} (i32.div_u (call $-len (get_local $${fora}) ) (i32.const 4)) )`
     wast += `(block(loop`

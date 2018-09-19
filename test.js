@@ -23,8 +23,8 @@ fetch('boot.wasm').then(response =>
 ).then(obj => {
   window.wasm = obj.instance.exports
   wasm.init()
-  wasm.init()
-  wasm.init()
+  // wasm.init()
+  // wasm.init()
 }
 )
 

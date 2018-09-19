@@ -16,6 +16,15 @@ func sum a b
   return a + b + meaning_of_life
 
 export "init" init
+  if false
+    log "one"
+  elsif false
+    log "two"
+  elsif false
+    log "three"
+  else
+    log "four"
+  introduce
   var tableindex = #sum
   log_number #tableindex tableindex meaning_of_life2
   log_number echo sum tableindex meaning_of_life2
@@ -38,10 +47,16 @@ export "init" init
   log array_unshift friends array_pop friends
   log array_unshift friends array_pop friends
   log array_unshift friends array_pop friends
-  for i in range 10 30 10
-    log_number i
-  for i in range 3 1
-    log_number i
+  var h = range 1 3
+  var w = range 1 3
+  for y in h
+    for x in h
+      log x+", "+y
+
+func introduce
+  for friend1 in friends
+    for friend2 in friends
+      log friend1+", meet "+friend2+"!"
 
 export "echo" echo num
   ~ log_number num
