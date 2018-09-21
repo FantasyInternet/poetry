@@ -1,6 +1,6 @@
 const fs = require("fs"),
   path = require("path"),
-  wabt = require("wabt"),
+  wabt = require("wabt")(),
   pretty_wast = require("./prettify_wast.js")
 
 function compile(filename, options = {}) {
