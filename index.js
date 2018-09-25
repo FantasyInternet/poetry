@@ -130,19 +130,20 @@ function escapeStr(str) {
 function nextToken(c) {
   let token = " "
   let char
-  while (" \t`".includes(token)) {
+  while (" \t".includes(token)) {
     token = nextChar(c)
     if (!token) return
     if (token === "~") {
-      let end = "\n"
-      token = nextChar(c)
-      if (token === "`") {
-        end = token
-        token = " "
-      }
-      while (token !== end) {
+      while (token !== "\n") {
         token = nextChar(c)
       }
+    }
+    if (token === "`") {
+      token = nextChar(c)
+      while (token !== "`") {
+        token = nextChar(c)
+      }
+      token = nextChar(c)
     }
   }
 
@@ -155,17 +156,16 @@ function nextToken(c) {
       if (char === "\n") i = 0
       char = nextChar(c, true)
       if (char === "~") {
-        let end = "\n"
-        nextChar(c)
+        while (char !== "\n") {
+          char = nextChar(c)
+        }
+      }
+      if (char === "`") {
         char = nextChar(c)
-        if (char === "`") {
-          end = char
-          char = " "
+        while (char !== "`") {
+          char = nextChar(c)
         }
-        while (char !== end) {
-          nextChar(c)
-          char = nextChar(c, true)
-        }
+        char = nextChar(c)
       }
     }
     if (i > c.indents[c.indents.length - 1]) {
@@ -670,8 +670,10 @@ function compileStatement(tokenTree, globals, locals) {
   } else if (tokenTree[0] === "@return") {
     wast += `(set_local $-ret ${compileExpression(tokenTree.slice(1), globals, locals)})(br ${globals["-blocks"]})\n`
   } else {
-    let expr = compileExpression(tokenTree, globals, locals)
-    if (expr) wast += `(drop ${expr})\n`
+    let exprs = compileExpression(tokenTree, globals, locals, true)
+    for (let expr of exprs) {
+      if (expr) wast += `(drop ${expr})\n`
+    }
   }
 
   return wast

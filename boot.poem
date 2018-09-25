@@ -42,7 +42,7 @@ export "init" init
   log (array_unshift (friends) (array_pop (friends)))
   log (array_unshift friends (array_pop friends))
   log array_unshift friends string_upper array_pop friends
-  log array_unshift friends array_pop friends
+  log array_unshift friends `to` array_pop friends
   log array_unshift friends string_lower array_pop friends
   log array_unshift friends array_pop friends
   log array_unshift friends array_pop friends
