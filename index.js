@@ -157,8 +157,7 @@ function nextToken(c) {
       char = nextChar(c, true)
       if (char === "~") {
         while (char !== "\n") {
-          nextChar(c)
-          char = nextChar(c, true)
+          char = nextChar(c)
         }
       }
       if (char === "`") {
