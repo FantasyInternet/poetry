@@ -282,7 +282,7 @@
         )
         (i32.const 4 ) 
       )))
-      (br 1)
+      (br 2)
     ))
     (set_local $pos (i32.add (get_local $pos) (i32.const 4)))
     (set_local $len (i32.sub (get_local $len) (i32.const 4)))
