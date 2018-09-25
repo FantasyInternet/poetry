@@ -162,10 +162,11 @@ function nextToken(c) {
       }
       if (char === "`") {
         char = nextChar(c)
+        char = nextChar(c)
         while (char !== "`") {
           char = nextChar(c)
         }
-        char = nextChar(c)
+        char = nextChar(c, true)
       }
     }
     if (i > c.indents[c.indents.length - 1]) {
