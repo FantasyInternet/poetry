@@ -157,15 +157,17 @@ function nextToken(c) {
       char = nextChar(c, true)
       if (char === "~") {
         while (char !== "\n") {
-          char = nextChar(c)
+          nextChar(c)
+          char = nextChar(c, true)
         }
       }
       if (char === "`") {
         char = nextChar(c)
+        char = nextChar(c)
         while (char !== "`") {
           char = nextChar(c)
         }
-        char = nextChar(c)
+        char = nextChar(c, true)
       }
     }
     if (i > c.indents[c.indents.length - 1]) {
