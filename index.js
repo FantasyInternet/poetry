@@ -116,12 +116,10 @@ function escapeStr(str) {
   let buf = new Buffer(str)
   str = ""
   for (let i = 0; i < buf.length; i++) {
-    if (buf[i] === 32 || buf[i] === 33) {
-      str += String.fromCharCode(buf[i])
-    } else if (buf[i] > 34 && buf[i] < 127) {
-      str += String.fromCharCode(buf[i])
-    } else {
+    if (buf[i] < 32 || buf[i] >= 127 || buf[i] === 34 || buf[i] === 92) {
       str += "\\" + ("0" + buf[i].toString(16)).substr(-2)
+    } else {
+      str += String.fromCharCode(buf[i])
     }
   }
   return str
