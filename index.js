@@ -670,8 +670,10 @@ function compileStatement(tokenTree, globals, locals) {
   } else if (tokenTree[0] === "@return") {
     wast += `(set_local $-ret ${compileExpression(tokenTree.slice(1), globals, locals)})(br ${globals["-blocks"]})\n`
   } else {
-    let expr = compileExpression(tokenTree, globals, locals)
-    if (expr) wast += `(drop ${expr})\n`
+    let exprs = compileExpression(tokenTree, globals, locals, true)
+    for (let expr of exprs) {
+      if (expr) wast += `(drop ${expr})\n`
+    }
   }
 
   return wast
