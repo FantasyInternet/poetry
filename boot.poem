@@ -25,6 +25,7 @@ export "init" init
   else
     log "four"
   introduce
+  log "Charlie is my " + (array_search friends "Charlie") + "th friend!"
   var tableindex = #sum
   log_number #tableindex tableindex meaning_of_life2
   log_number echo sum tableindex meaning_of_life2
