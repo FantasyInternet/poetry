@@ -16,6 +16,9 @@ func sum a b
   return a + b + meaning_of_life
 
 export "init" init
+  var danish = "æøå$¢€𐍈💩"
+  for i in range 0 string_length danish
+    log (char (char_code danish i))
   if false
     log "one"
   elsif false
