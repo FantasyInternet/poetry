@@ -16,9 +16,15 @@ func sum a b
   return a + b + meaning_of_life
 
 export "init" init
+  test_split
+
+
+func test_unicode
   var danish = "æøå$¢€𐍈💩"
-  for i in range 0 string_length danish
+  for i in range 0 (string_length danish)
     log (char (char_code danish i))
+
+func test_if
   if false
     log "one"
   elsif false
@@ -27,11 +33,32 @@ export "init" init
     log "three"
   else
     log "four"
-  introduce
+
+func test_search
   log "Charlie is my " + (array_search friends "Charlie") + "th friend!"
+  var friend = "Chøarlie"
+  var sub = "lie"
+  log friend + " has '"+sub+"' at " + (string_search friend sub 0 )
+
+func test_split
+  var list = ",one,two,,three,four,"
+  var arr = string_split list ","
+  for item in arr
+    log item
+  log array_join arr ";"
+  arr = array
+  log array_join arr ";"
+  array_push arr
+  log array_join arr ";"
+  array_push arr
+  log array_join arr ";"
+
+func test_tableindex
   var tableindex = #sum
   log_number #tableindex tableindex meaning_of_life2
   log_number echo sum tableindex meaning_of_life2
+
+func test_whatever
   log name + " " + -32.00125
   var friend = friends[1 + 1]
   log friend
@@ -43,6 +70,8 @@ export "init" init
   log "Greetings to all of my friends!"
   for frend in friends
     log "Hello " + frend + "! How are you!"
+
+func test_shifting
   log (array_unshift (friends) (array_pop (friends)))
   log (array_unshift friends (array_pop friends))
   log array_unshift friends string_upper array_pop friends
@@ -51,11 +80,6 @@ export "init" init
   log array_unshift friends array_pop friends
   log array_unshift friends array_pop friends
   log array_unshift friends array_pop friends
-  var h = range 1 3
-  var w = range 1 3
-  for y in h
-    for x in h
-      log x+", "+y
 
 func introduce
   for friend1 in friends

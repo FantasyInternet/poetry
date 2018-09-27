@@ -37,15 +37,15 @@
     (return (i32.const 0))
   ))
   (set_local $start (call $-i32_u (get_local $start)))
-  (set_local $sub (call $-new_value (i32.const 3) (call $-len (get_local $subbin))))
+  (set_local $sub (call $-new_value (call $-datatype (get_local $subbin)) (call $-len (get_local $subbin))))
   (block(loop
-    (br_if 1 (i32.ge_u (get_local $start) (i32.sub (call $-len (get_local $binary)) (call $-len (get_local $subbin)))))
+    (br_if 1 (i32.gt_u (get_local $start) (i32.sub (call $-len (get_local $binary)) (call $-len (get_local $subbin)))))
     (call $-memcopy
       (i32.add (call $-offset (get_local $binary)) (get_local $start))
       (call $-offset (get_local $sub))
       (call $-len (get_local $sub))
     )
-    (if (call $-equal (get_local $sub) (get_local $subbin)) (then
+    (if (i32.eqz (call $-compare (get_local $sub) (get_local $subbin))) (then
       (return (call $-integer_u (get_local $start)))
     ))
     (set_local $start (i32.add (get_local $start) (i32.const 1)))
@@ -94,7 +94,7 @@
 
 ;; string functions
 (func $string_length (param $str i32) (result i32)
-  (call $-integer_u (call $-count_chars (get_local $str)))
+  (call $-integer_u (call $-bytes_to_chars (call $-offset (get_local $str)) (call $-len (get_local $str))))
 )
 (func $string_slice (param $string i32) (param $start i32) (param $len i32) (result i32)
   (set_local $start (call $-chars_to_bytes
@@ -112,15 +112,23 @@
   ) (i32.const 3))
 )
 (func $string_search (param $string i32) (param $substr i32) (param $start i32) (result i32)
+  (local $res i32)
   (set_local $start (call $-chars_to_bytes
     (call $-offset (get_local $string))
     (call $-i32_u (get_local $start))
   ))
-  (call $binary_search
+  (set_local $res (call $binary_search
     (get_local $string)
     (get_local $substr)
     (call $-integer_u (get_local $start))
-  )
+  ))
+  (if (get_local $res)(then
+    (set_local $res (call $-integer_u (call $-bytes_to_chars
+      (call $-offset (get_local $string))
+      (call $-i32_u (get_local $res))
+    )))
+  ))
+  (get_local $res)
 )
 (func $string_lower (param $string i32) (result i32)
   (local $out i32)
@@ -195,6 +203,64 @@
     ))
   (br 0)))
   (get_local $out)
+)
+(func $string_split (param $string i32) (param $seperator i32) (result i32)
+  (local $parts i32)
+  (local $sub i32)
+  (local $start i32)
+  (local $pos i32)
+  (if (i32.lt_u (call $-len (get_local $string)) (call $-len (get_local $seperator))) (then
+    (return (i32.const 0))
+  ))
+  (set_local $parts (call $-new_value (i32.const 4) (i32.const 0)))
+  (set_local $sub (call $-new_value (call $-datatype (get_local $seperator)) (call $-len (get_local $seperator))))
+  (block(loop
+    (br_if 1 (i32.gt_u (get_local $pos) (i32.sub (call $-len (get_local $string)) (call $-len (get_local $seperator)))))
+    (call $-memcopy
+      (i32.add (call $-offset (get_local $string)) (get_local $pos))
+      (call $-offset (get_local $sub))
+      (call $-len (get_local $sub))
+    )
+    (if (i32.eqz (call $-compare (get_local $sub) (get_local $seperator))) (then
+      (call $-write32
+        (get_local $parts)
+        (call $-len (get_local $parts))
+        (call $-string 
+          (i32.add
+            (call $-offset (get_local $string))
+            (get_local $start)
+          )
+          (i32.sub
+            (get_local $pos)
+            (get_local $start)
+          )
+        )
+      )
+      (set_local $start (i32.add
+        (get_local $pos)
+        (call $-len (get_local $seperator))
+      ))
+      (set_local $pos (get_local $start))
+    )(else
+      (set_local $pos (i32.add (get_local $pos) (i32.const 1)))
+    ))
+    (br 0)
+  ))
+  (call $-write32
+    (get_local $parts)
+    (call $-len (get_local $parts))
+    (call $-string 
+      (i32.add
+        (call $-offset (get_local $string))
+        (get_local $start)
+      )
+      (i32.sub
+        (call $-len (get_local $string))
+        (get_local $start)
+      )
+    )
+  )
+  (get_local $parts)
 )
 (func $char (param $code i32) (result i32)
   (set_local $code (call $-i32_u (get_local $code)))
@@ -393,6 +459,64 @@
     (set_local $len (i32.sub (get_local $len) (i32.const 1)))
   (br 0)))
   (get_local $out)
+)
+(func $array_join (param $array i32) (param $glue i32) (result i32)
+  (local $string i32)
+  (local $strlen i32)
+  (local $part i32)
+  (local $pos i32)
+  (local $len i32)
+  (set_local $string (call $-new_value (i32.const 3) (get_local $strlen)))
+  (set_local $len (call $-len (get_local $array)))
+  (if (get_local $len)(then
+    (set_local $part (call $-to_string (call $-read32 (get_local $array) (get_local $pos))))
+    (call $-resize (get_local $string) (i32.add
+      (get_local $strlen)
+      (call $-len (get_local $part))
+    ))
+    (call $-memcopy
+      (call $-offset (get_local $part))
+      (i32.add
+        (call $-offset (get_local $string))
+        (get_local $strlen)
+      )
+      (call $-len (get_local $part))
+    )
+    (set_local $strlen (i32.add (get_local $strlen) (call $-len (get_local $part))))
+    (set_local $pos (i32.add (get_local $pos) (i32.const 4)))
+    (set_local $len (i32.sub (get_local $len) (i32.const 4)))
+  ))
+  (block(loop (br_if 1 (i32.eqz (get_local $len)))
+    (set_local $part (call $-to_string (call $-read32 (get_local $array) (get_local $pos))))
+    (call $-resize (get_local $string) (i32.add
+      (get_local $strlen)
+      (i32.add
+        (call $-len (get_local $glue))
+        (call $-len (get_local $part))
+      )
+    ))
+    (call $-memcopy
+      (call $-offset (get_local $glue))
+      (i32.add
+        (call $-offset (get_local $string))
+        (get_local $strlen)
+      )
+      (call $-len (get_local $glue))
+    )
+    (set_local $strlen (i32.add (get_local $strlen) (call $-len (get_local $glue))))
+    (call $-memcopy
+      (call $-offset (get_local $part))
+      (i32.add
+        (call $-offset (get_local $string))
+        (get_local $strlen)
+      )
+      (call $-len (get_local $part))
+    )
+    (set_local $strlen (i32.add (get_local $strlen) (call $-len (get_local $part))))
+    (set_local $pos (i32.add (get_local $pos) (i32.const 4)))
+    (set_local $len (i32.sub (get_local $len) (i32.const 4)))
+  (br 0)))
+  (get_local $string)
 )
 (func $range (param $start i32) (param $end i32) (param $step i32) (result i32)
   (local $_start f64)

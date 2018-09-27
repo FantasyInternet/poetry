@@ -418,7 +418,7 @@ function compileModule(c) {
   for (let i = 8; i < c.strings.length; i++) {
     let len = Buffer.byteLength(c.strings[i], 'utf8')
     memory += `(data (i32.const ${offset}) "${escapeStr(c.strings[i])}")\n`
-    start += `(call $-string (i32.const ${offset}) (i32.const ${len}))\n`
+    start += `(drop (call $-string (i32.const ${offset}) (i32.const ${len})))\n`
     offset += len
     offset = Math.floor(offset / 8) * 8 + 16
   }

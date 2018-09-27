@@ -22,9 +22,15 @@ fetch('boot.wasm').then(response =>
   WebAssembly.instantiate(bytes, importObject)
 ).then(obj => {
   window.wasm = obj.instance.exports
+  console.groupCollapsed()
   wasm.init()
+  console.groupEnd()
+  console.groupCollapsed()
   wasm.init()
+  console.groupEnd()
+  console.group()
   wasm.init()
+  console.groupEnd()
 }
 )
 
