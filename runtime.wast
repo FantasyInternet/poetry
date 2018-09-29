@@ -200,9 +200,11 @@
     (if (i32.lt_u (get_local $id) (i32.const 8))(then
       (set_local $offset (i32.const 0))
     )(else
-      (set_local $offset (i32.sub (get_global $-mindex) (i32.const 64)))
-      (set_local $offset (i32.add (get_local $offset) (i32.mul (i32.const 8) (get_local $id))))
-      (set_local $offset (i32.load (get_local $offset)))
+      (set_local $id (i32.sub (get_local $id) (i32.const 8)))
+      (if (i32.gt_u (call $-len (i32.const -1)) (i32.mul (i32.const 8) (get_local $id)))(then
+        (set_local $offset (i32.add (get_global $-mindex) (i32.mul (i32.const 8) (get_local $id))))
+        (set_local $offset (i32.load (get_local $offset)))
+      ))
     ))
   ))
   (set_local $offset (i32.and (get_local $offset) (i32.const -8)))
