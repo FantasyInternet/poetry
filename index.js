@@ -742,7 +742,8 @@ function compileExpression(tokenTree, globals, locals, list) {
           values.push(`(get_global $${id})`)
         }
       } else {
-        values.push(`(i32.const 0)`)
+        throw `undeclared identifier '${id}'`
+        // values.push(`(i32.const 0)`)
       }
     }
     if (token === "@null") {
