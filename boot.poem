@@ -17,6 +17,7 @@ func sum a b
 
 export "init" init
   test_split
+  ~ make_a_cup_of tea
 
 
 func test_unicode
