@@ -530,7 +530,7 @@ function compileModule(c) {
   gc += `(func $-traceGC\n`
   gc += `(call $-zerorefs)\n`
   for (let g in c.globals) {
-    if (c.globals[g] === true) {
+    if (c.globals[g] === true && !g.includes("~")) {
       gc += `(call $-reftree (get_global $${g}))\n`
     }
   }
