@@ -1,5 +1,5 @@
-@import "env" "logNumber" log_number 1 0
-@import "env" "log" _log 2 0
+@import "env" "logNumber" log_number 1
+@import "env" "log" _log 2
 
 @export_memory "memory"
 
