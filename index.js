@@ -456,7 +456,7 @@ function compileModule(c) {
         let name = statement[3]
         imports += `(import ${statement[1]} ${statement[2]}  (func $--${name} `
         let params = parseInt(statement[4])
-        let results = parseInt(statement[5])
+        let results = parseInt(statement[5]) || 1
         for (let i = 0; i < params; i++) {
           imports += `(param f64) `
         }
