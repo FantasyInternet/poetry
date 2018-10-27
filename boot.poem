@@ -5,6 +5,19 @@ var meaning_of_life = 42.5
 var meaning_of_life2 = false
 var name = '"Hello \"world"! 🤖'
 
+var my_pet =
+  :name = "Fido"
+  :species = "dog"
+  :age = 3
+  :male = true
+  :nutered = false
+  :mother =
+    :name = "Rita"
+    :age = 10
+    :male = false
+  :father = null
+
+
 var friends =
   "Alice"
   'Bob'
@@ -16,9 +29,22 @@ func sum a b
   return a + b + meaning_of_life
 
 export "init" init
-  test_split
+  test_json
   ~ make_a_cup_of tea
 
+func test_json
+  var val = "Små søde\njordbær!🍓"
+  log val
+  log json_encode val
+  val = "\"\\\/\b\f\n\r\t\u0000"
+  log val
+  log json_encode val
+  log json_encode friends
+  log json_encode my_pet
+  log "" + json_decode "-42.50E-1"
+  log json_decode '"Sm\\u00e5 s\\u00f8de\\njordb\\u00e6r!\\ud83c\\udf53"'
+  log json_encode (json_decode (json_encode friends))
+  log json_encode (json_decode (json_encode my_pet))
 
 func test_unicode
   var danish = "æøå$¢€𐍈💩"

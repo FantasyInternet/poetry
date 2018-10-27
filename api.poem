@@ -4,4 +4,5 @@
 @export_memory "memory"
 
 @func log msg
+  msg += ""
   _log (address_of msg) (size_of msg)
