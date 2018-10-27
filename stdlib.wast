@@ -624,3 +624,377 @@
     (call $-f64 (get_local $number2))
   ))
 )
+
+;; JSON
+(func $json_encode (param $value i32) (result i32)
+  (local $datatype i32)
+  (local $len i32)
+  (local $json_string i32)
+  (local $char i32)
+  (local $done i32)
+  (local $ipos i32)
+  (local $opos i32)
+  (set_local $datatype (call $-datatype (get_local $value)))
+  (set_local $len (call $-len (get_local $value)))
+  (if (i32.lt_u (get_local $datatype) (i32.const 3))(then
+    (set_local $json_string (call $-to_string (get_local $value)))
+  ))
+  (if (i32.eq (get_local $datatype) (i32.const 3))(then ;; string
+    (set_local $json_string (call $-new_value (i32.const 3) (call $-len (get_local $value))))
+    (call $-write8 (get_local $json_string) (get_local $opos) (i32.const 0x22)) ;; "
+    (set_local $opos (i32.add (get_local $opos) (i32.const 1)))
+    (block(loop (br_if 1 (i32.ge_u (get_local $ipos) (get_local $len)))
+      (set_local $done (i32.const 0))
+      (set_local $char (call $-read8 (get_local $value) (get_local $ipos)))
+      (if (i32.eq (get_local $char) (i32.const 0x08))(then
+        (call $-write16 (get_local $json_string) (get_local $opos) (i32.const 0x625c)) ;; \b
+        (set_local $opos (i32.add (get_local $opos) (i32.const 2)))
+        (set_local $done (i32.const 1))
+      ))
+      (if (i32.eq (get_local $char) (i32.const 0x09))(then
+        (call $-write16 (get_local $json_string) (get_local $opos) (i32.const 0x745c)) ;; \t
+        (set_local $opos (i32.add (get_local $opos) (i32.const 2)))
+        (set_local $done (i32.const 1))
+      ))
+      (if (i32.eq (get_local $char) (i32.const 0x0a))(then
+        (call $-write16 (get_local $json_string) (get_local $opos) (i32.const 0x6e5c)) ;; \n
+        (set_local $opos (i32.add (get_local $opos) (i32.const 2)))
+        (set_local $done (i32.const 1))
+      ))
+      (if (i32.eq (get_local $char) (i32.const 0x0c))(then
+        (call $-write16 (get_local $json_string) (get_local $opos) (i32.const 0x665c)) ;; \f
+        (set_local $opos (i32.add (get_local $opos) (i32.const 2)))
+        (set_local $done (i32.const 1))
+      ))
+      (if (i32.eq (get_local $char) (i32.const 0x0d))(then
+        (call $-write16 (get_local $json_string) (get_local $opos) (i32.const 0x725c)) ;; \r
+        (set_local $opos (i32.add (get_local $opos) (i32.const 2)))
+        (set_local $done (i32.const 1))
+      ))
+      (if (i32.eq (get_local $char) (i32.const 0x22))(then
+        (call $-write16 (get_local $json_string) (get_local $opos) (i32.const 0x225c)) ;; \"
+        (set_local $opos (i32.add (get_local $opos) (i32.const 2)))
+        (set_local $done (i32.const 1))
+      ))
+      (if (i32.eq (get_local $char) (i32.const 0x5c))(then
+        (call $-write16 (get_local $json_string) (get_local $opos) (i32.const 0x5c5c)) ;; \\
+        (set_local $opos (i32.add (get_local $opos) (i32.const 2)))
+        (set_local $done (i32.const 1))
+      ))
+      (if (i32.eq (get_local $char) (i32.const 0x7f))(then
+        (call $-write16 (get_local $json_string) (get_local $opos) (i32.const 0x755c)) ;; \u
+        (set_local $opos (i32.add (get_local $opos) (i32.const 2)))
+        (call $-write32 (get_local $json_string) (get_local $opos) (i32.const 0x66373030)) ;; 007f
+        (set_local $opos (i32.add (get_local $opos) (i32.const 4)))
+        (set_local $done (i32.const 1))
+      ))
+      (if (i32.eqz (get_local $done))(then
+        (if (i32.lt_u (get_local $char) (i32.const 0x20))(then
+          (call $-write16 (get_local $json_string) (get_local $opos) (i32.const 0x755c)) ;; \u
+          (set_local $opos (i32.add (get_local $opos) (i32.const 2)))
+          (set_local $done (call $-to_hex (get_local $char) (i32.const 4)))
+          (call $-write32 (get_local $json_string) (get_local $opos) (call $-read32 (get_local $done) (i32.const 0)))
+          (set_local $opos (i32.add (get_local $opos) (i32.const 4)))
+        )(else
+          (call $-write8 (get_local $json_string) (get_local $opos) (get_local $char))
+          (set_local $opos (i32.add (get_local $opos) (i32.const 1)))
+        ))
+      ))
+      (set_local $ipos (i32.add (get_local $ipos) (i32.const 1)))
+    (br 0)))
+    (call $-write8 (get_local $json_string) (get_local $opos) (i32.const 0x22)) ;; "
+  ))
+  (if (i32.eq (get_local $datatype) (i32.const 4))(then ;; array
+    (set_local $json_string (call $-new_value (i32.const 3) (i32.const 0)))
+    (call $-write8 (get_local $json_string) (get_local $opos) (i32.const 0x5b)) ;; [
+    (set_local $opos (i32.add (get_local $opos) (i32.const 1)))
+    (block(loop (br_if 1 (i32.ge_u (get_local $ipos) (get_local $len)))
+      (set_local $char (call $-read32 (get_local $value) (get_local $ipos)))
+      (set_local $ipos (i32.add (get_local $ipos) (i32.const 4)))
+      (set_local $opos (call $-len (get_local $json_string)))
+      (call $-write_to (get_local $json_string) (get_local $opos) (call $json_encode (get_local $char)))
+      (set_local $opos (call $-len (get_local $json_string)))
+      (call $-write8 (get_local $json_string) (get_local $opos) (i32.const 0x2c)) ;; ,
+    (br 0)))
+    (call $-write8 (get_local $json_string) (get_local $opos) (i32.const 0x5d)) ;; ]
+  ))
+  (if (i32.eq (get_local $datatype) (i32.const 5))(then ;; object
+    (set_local $json_string (call $-new_value (i32.const 3) (i32.const 0)))
+    (call $-write8 (get_local $json_string) (get_local $opos) (i32.const 0x7b)) ;; {
+    (set_local $opos (i32.add (get_local $opos) (i32.const 1)))
+    (block(loop (br_if 1 (i32.ge_u (get_local $ipos) (get_local $len)))
+      (set_local $char (call $-read32 (get_local $value) (get_local $ipos)))
+      (set_local $ipos (i32.add (get_local $ipos) (i32.const 4)))
+      (set_local $opos (call $-len (get_local $json_string)))
+      (call $-write_to (get_local $json_string) (get_local $opos) (call $json_encode (get_local $char)))
+      (set_local $opos (call $-len (get_local $json_string)))
+      (call $-write8 (get_local $json_string) (get_local $opos) (i32.const 0x3a)) ;; :
+      (set_local $char (call $-read32 (get_local $value) (get_local $ipos)))
+      (set_local $ipos (i32.add (get_local $ipos) (i32.const 4)))
+      (set_local $opos (call $-len (get_local $json_string)))
+      (call $-write_to (get_local $json_string) (get_local $opos) (call $json_encode (get_local $char)))
+      (set_local $opos (call $-len (get_local $json_string)))
+      (call $-write8 (get_local $json_string) (get_local $opos) (i32.const 0x2c)) ;; ,
+    (br 0)))
+    (call $-write8 (get_local $json_string) (get_local $opos) (i32.const 0x7d)) ;; }
+  ))
+  (get_local $json_string)
+)
+(func $json_decode (param $json_string i32) (result i32)
+  (local $datatype i32)
+  (local $value i32)
+  (set_local $datatype (call $-datatype (get_local $json_string)))
+  (set_local $value (get_local $json_string))
+  (set_global $~pos (call $-offset (get_local $json_string)))
+  (if (i32.eq (get_local $datatype) (i32.const 3))(then
+    (set_local $value (call $~json_decode))
+  ))
+  (if (i32.eq (get_local $datatype) (i32.const 6))(then
+    (set_local $value (call $~json_decode))
+  ))
+  (get_local $value)
+)
+(global $~pos (mut i32) (i32.const 0))
+(func $~json_decode (result i32)
+  (local $value i32)
+  (local $err i32)
+  (local $char i32)
+  (local $pos i32)
+  (local $hex i32)
+  (local $num f64)
+  (local $neg f64)
+  (local $exp f64)
+  (local $eneg f64)
+  (set_local $err (i32.eqz (call $~skip_whitespace)))
+  (set_local $char (i32.load8_u (get_global $~pos)))
+  (set_global $~pos (i32.add (get_global $~pos) (i32.const 1)))
+  (if (i32.eq (get_local $char) (i32.const 0x6e))(then ;; n
+    (set_global $~pos (i32.sub (get_global $~pos) (i32.const 1)))
+    (set_local $char (i32.load (get_global $~pos)))
+    (set_global $~pos (i32.add (get_global $~pos) (i32.const 4)))
+    (if (i32.eq (get_local $char) (i32.const 0x6c6c756e))(then ;; null
+      (set_local $value (i32.const 0))
+    )(else
+      (set_local $char (i32.const 0))
+      (set_local $err (i32.const 1))
+    ))
+  ))
+  (if (i32.eq (get_local $char) (i32.const 0x66))(then ;; f
+    (set_local $char (i32.load (get_global $~pos)))
+    (set_global $~pos (i32.add (get_global $~pos) (i32.const 4)))
+    (if (i32.eq (get_local $char) (i32.const 0x65736c61))(then ;; alse
+      (set_local $value (i32.const 1))
+    )(else
+      (set_local $char (i32.const 0))
+      (set_local $err (i32.const 1))
+    ))
+  ))
+  (if (i32.eq (get_local $char) (i32.const 0x74))(then ;; t
+    (set_global $~pos (i32.sub (get_global $~pos) (i32.const 1)))
+    (set_local $char (i32.load (get_global $~pos)))
+    (set_global $~pos (i32.add (get_global $~pos) (i32.const 4)))
+    (if (i32.eq (get_local $char) (i32.const 0x65757274))(then ;; true
+      (set_local $value (i32.const 5))
+    )(else
+      (set_local $char (i32.const 0))
+      (set_local $err (i32.const 1))
+    ))
+  ))
+  (if (i32.or
+        (i32.eq (get_local $char) (i32.const 0x2d)) ;; -
+        (i32.and
+          (i32.ge_u (get_local $char) (i32.const 0x30)) ;; 0
+          (i32.le_u (get_local $char) (i32.const 0x39)) ;; 9
+        )) (then
+    (set_local $num (f64.const 0))
+    (set_local $exp (f64.const 0))
+    (if (i32.eq (get_local $char) (i32.const 0x2d))(then ;; -
+      (set_local $neg (f64.const -1))
+      (set_local $char (i32.load8_u (get_global $~pos)))
+      (set_global $~pos (i32.add (get_global $~pos) (i32.const 1)))
+    )(else
+      (set_local $neg (f64.const 1))
+    ))
+    (block(loop
+      (br_if 1 
+        (i32.or
+          (i32.lt_u (get_local $char) (i32.const 0x30)) ;; 0
+          (i32.gt_u (get_local $char) (i32.const 0x39)) ;; 9
+      ))
+      (set_local $num (f64.mul (get_local $num) (f64.const 10)))
+      (set_local $num (f64.add (get_local $num) (f64.convert_u/i32(i32.sub
+        (get_local $char)
+        (i32.const 0x30)
+      ))))
+      (set_local $char (i32.load8_u (get_global $~pos)))
+      (set_global $~pos (i32.add (get_global $~pos) (i32.const 1)))
+    (br 0)))
+    (if (i32.eq (get_local $char) (i32.const 0x2e))(then ;; .
+      (set_local $char (i32.load8_u (get_global $~pos)))
+      (set_global $~pos (i32.add (get_global $~pos) (i32.const 1)))
+      (block(loop
+        (br_if 1 
+          (i32.or
+            (i32.lt_u (get_local $char) (i32.const 0x30)) ;; 0
+            (i32.gt_u (get_local $char) (i32.const 0x39)) ;; 9
+        ))
+        (set_local $num (f64.mul (get_local $num) (f64.const 10)))
+        (set_local $num (f64.add (get_local $num) (f64.convert_u/i32(i32.sub
+          (get_local $char)
+          (i32.const 0x30)
+        ))))
+        (set_local $exp (f64.sub (get_local $exp) (f64.const 1)))
+        (set_local $char (i32.load8_u (get_global $~pos)))
+        (set_global $~pos (i32.add (get_global $~pos) (i32.const 1)))
+      (br 0)))
+      (block(loop (br_if 1 (f64.ge (get_local $exp) (f64.const 0)))
+        (set_local $num (f64.div (get_local $num) (f64.const 10)))
+        (set_local $exp (f64.add (get_local $exp) (f64.const 1)))
+      (br 0)))
+    ))
+    (if (i32.eq (get_local $char) (i32.const 0x65))(then ;; e
+      (set_local $char (i32.sub (get_local $char) (i32.const 0x20)))
+    ))
+    (if (i32.eq (get_local $char) (i32.const 0x45))(then ;; E
+      (set_local $char (i32.load8_u (get_global $~pos)))
+      (set_global $~pos (i32.add (get_global $~pos) (i32.const 1)))
+      (if (i32.eq (get_local $char) (i32.const 0x2d))(then ;; -
+        (set_local $eneg (f64.const -1))
+        (set_local $char (i32.load8_u (get_global $~pos)))
+        (set_global $~pos (i32.add (get_global $~pos) (i32.const 1)))
+      )(else
+        (set_local $eneg (f64.const 1))
+      ))
+      (block(loop
+        (br_if 1 
+          (i32.or
+            (i32.lt_u (get_local $char) (i32.const 0x30)) ;; 0
+            (i32.gt_u (get_local $char) (i32.const 0x39)) ;; 9
+        ))
+        (set_local $exp (f64.mul (get_local $exp) (f64.const 10)))
+        (set_local $exp (f64.add (get_local $exp) (f64.convert_u/i32(i32.sub
+          (get_local $char)
+          (i32.const 0x30)
+        ))))
+        (set_local $char (i32.load8_u (get_global $~pos)))
+        (set_global $~pos (i32.add (get_global $~pos) (i32.const 1)))
+      (br 0)))
+      (set_local $exp (f64.mul (get_local $exp) (get_local $eneg)))
+      (block(loop (br_if 1 (f64.le (get_local $exp) (f64.const 0)))
+        (set_local $num (f64.mul (get_local $num) (f64.const 10)))
+        (set_local $exp (f64.sub (get_local $exp) (f64.const 1)))
+      (br 0)))
+      (block(loop (br_if 1 (f64.ge (get_local $exp) (f64.const 0)))
+        (set_local $num (f64.div (get_local $num) (f64.const 10)))
+        (set_local $exp (f64.add (get_local $exp) (f64.const 1)))
+      (br 0)))
+    ))
+    (set_global $~pos (i32.sub (get_global $~pos) (i32.const 1)))
+    (set_local $value (call $-number (f64.mul (get_local $num) (get_local $neg))))
+  ))
+  (if (i32.eq (get_local $char) (i32.const 0x22))(then ;; "
+    (set_local $char (i32.load8_u (get_global $~pos)))
+    (set_global $~pos (i32.add (get_global $~pos) (i32.const 1)))
+    (set_local $value (call $-new_value (i32.const 3) (i32.const 0)))
+    (block(loop (br_if 1 (i32.eq (get_local $char) (i32.const 0x22))) ;; "
+      (set_local $pos (call $-len (get_local $value)))
+      (if (i32.eq (get_local $char) (i32.const 0x5c))(then ;; \
+        (set_local $char (i32.load8_u (get_global $~pos)))
+        (set_global $~pos (i32.add (get_global $~pos) (i32.const 1)))
+        (call $-write8 (get_local $value) (get_local $pos) (get_local $char))
+        (if (i32.eq (get_local $char) (i32.const 0x62))(then ;; b
+          (call $-write8 (get_local $value) (get_local $pos) (i32.const 0x08))
+        ))
+        (if (i32.eq (get_local $char) (i32.const 0x66))(then ;; f
+          (call $-write8 (get_local $value) (get_local $pos) (i32.const 0x0c))
+        ))
+        (if (i32.eq (get_local $char) (i32.const 0x6e))(then ;; n
+          (call $-write8 (get_local $value) (get_local $pos) (i32.const 0x0a))
+        ))
+        (if (i32.eq (get_local $char) (i32.const 0x72))(then ;; r
+          (call $-write8 (get_local $value) (get_local $pos) (i32.const 0x0d))
+        ))
+        (if (i32.eq (get_local $char) (i32.const 0x74))(then ;; t
+          (call $-write8 (get_local $value) (get_local $pos) (i32.const 0x09))
+        ))
+        (if (i32.eq (get_local $char) (i32.const 0x75))(then ;; u
+          (if (i32.eqz (get_local $hex))(then
+            (set_local $hex (call $-new_value (i32.const 3) (i32.const 4)))
+          ))
+          (set_local $char (i32.load (get_global $~pos)))
+          (set_global $~pos (i32.add (get_global $~pos) (i32.const 4)))
+          (call $-write32 (get_local $hex) (i32.const 0) (get_local $char))
+          (set_local $char (call $-from_hex (get_local $hex)))
+          (if (i32.eq (i32.and (get_local $char) (i32.const 0xfc00)) (i32.const 0xd800))(then ;; surrogate pair
+            (set_global $~pos (i32.add (get_global $~pos) (i32.const 2)))
+            (call $-write32 (get_local $hex) (i32.const 0) (i32.load (get_global $~pos)))
+            (set_global $~pos (i32.add (get_global $~pos) (i32.const 4)))
+            (set_local $hex (call $-from_hex (get_local $hex)))
+            (set_local $char (i32.mul (i32.sub (get_local $char) (i32.const 0xd800)) (i32.const 0x400)))
+            (set_local $hex (i32.sub (get_local $hex) (i32.const 0xdc00)))
+            (set_local $char (i32.add (i32.add (get_local $char) (get_local $hex)) (i32.const 0x10000)))
+            (set_local $char (call $-char (get_local $char)))
+            (set_local $hex (i32.const 0))
+          )(else
+            (set_local $char (call $-char (get_local $char)))
+          ))
+          (call $-write_to (get_local $value) (get_local $pos) (get_local $char))
+        ))
+      )(else
+        (call $-write8 (get_local $value) (get_local $pos) (get_local $char))
+      ))
+
+      (set_local $char (i32.load8_u (get_global $~pos)))
+      (set_global $~pos (i32.add (get_global $~pos) (i32.const 1)))
+    (br 0)))
+  ))
+  (if (i32.eq (get_local $char) (i32.const 0x5b))(then ;; [
+    (set_local $value (call $-new_value (i32.const 4) (i32.const 0)))
+    (set_local $char (call $~skip_whitespace))
+    (set_local $err (i32.eqz (call $~skip_whitespace)))
+    (block(loop (br_if 1 (i32.or (get_local $err) (i32.eq (get_local $char) (i32.const 0x5d)))) ;; ]
+      (if (i32.eq (get_local $char) (i32.const 0x2c))(then ;; ,
+        (set_global $~pos (i32.add (get_global $~pos) (i32.const 1)))
+      ))
+      (call $-write32 (get_local $value) (call $-len (get_local $value)) (call $~json_decode))
+      (set_local $char (call $~skip_whitespace))
+      (set_local $err (i32.eqz (call $~skip_whitespace)))
+    (br 0)))
+  ))
+  (if (i32.eq (get_local $char) (i32.const 0x7b))(then ;; {
+    (set_local $value (call $-new_value (i32.const 5) (i32.const 0)))
+    (set_local $char (call $~skip_whitespace))
+    (set_local $err (i32.eqz (call $~skip_whitespace)))
+    (block(loop (br_if 1 (i32.or (get_local $err) (i32.eq (get_local $char) (i32.const 0x7d)))) ;; }
+      (if (i32.eq (get_local $char) (i32.const 0x2c))(then ;; ,
+        (set_global $~pos (i32.add (get_global $~pos) (i32.const 1)))
+      ))
+      (call $-write32 (get_local $value) (call $-len (get_local $value)) (call $~json_decode))
+      (set_local $char (call $~skip_whitespace))
+      (set_local $err (i32.eqz (call $~skip_whitespace)))
+      (if (i32.eq (get_local $char) (i32.const 0x3a))(then ;; :
+        (set_global $~pos (i32.add (get_global $~pos) (i32.const 1)))
+      ))
+      (call $-write32 (get_local $value) (call $-len (get_local $value)) (call $~json_decode))
+      (set_local $char (call $~skip_whitespace))
+      (set_local $err (i32.eqz (call $~skip_whitespace)))
+    (br 0)))
+  ))
+  (get_local $value)
+)
+(func $~skip_whitespace (result i32)
+  (local $char i32)
+  (local $err i32)
+  (set_local $char (i32.load8_u (get_global $~pos)))
+  (set_global $~pos (i32.add (get_global $~pos) (i32.const 1)))
+  (block(loop (br_if 1 (i32.or (get_local $err) (i32.gt_u (get_local $char) (i32.const 0x20))))
+    (if (i32.eqz (get_local $char)) (then
+      (set_local $err (i32.const 1))
+    )(else
+      (set_local $char (i32.load8_u (get_global $~pos)))
+      (set_global $~pos (i32.add (get_global $~pos) (i32.const 1)))
+    ))
+  (br 0)))
+  (set_global $~pos (i32.sub (get_global $~pos) (i32.const 1)))
+  (get_local $char)
+)

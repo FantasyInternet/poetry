@@ -415,6 +415,19 @@
     (i32.store (i32.add (get_local $offset) (get_local $pos)) (get_local $data))
   ))
 )
+(func $-write_to (param $id i32) (param $pos i32) (param $data_id i32)
+  (local $offset i32)
+  (local $len i32)
+  (set_local $offset (call $-offset (get_local $id)))
+  (set_local $len (call $-len (get_local $data_id)))
+  (if (get_local $offset)(then
+    (if (i32.gt_u (i32.add (get_local $pos) (get_local $len)) (call $-len (get_local $id)) )(then
+      (call $-resize (get_local $id) (i32.add (get_local $pos) (get_local $len)))
+      (set_local $offset (call $-offset (get_local $id)))
+    ))
+    (call $-memcopy (call $-offset (get_local $data_id)) (i32.add (get_local $offset) (get_local $pos)) (get_local $len))
+  ))
+)
 
 ;; make room for a new value
 (global $-next_id (mut i32) (i32.const 0))
@@ -773,6 +786,44 @@
     (set_local $id3 (call $-concat (i32.const 3) (get_local $id)))
   ))
   (get_local $id3)
+)
+
+(func $-to_hex (param $int i32) (param $digits i32) (result i32)
+  (local $str i32)
+  (local $dig i32)
+  (set_local $str (call $-new_value (i32.const 3) (get_local $digits)))
+  (block(loop (br_if 1 (i32.eqz (get_local $digits)))
+    (set_local $digits (i32.sub (get_local $digits) (i32.const 1)))
+    (set_local $dig (i32.and (get_local $int) (i32.const 0xf)))
+    (set_local $int (i32.div_u (get_local $int) (i32.const 0x10)))
+    (if (i32.lt_u (get_local $dig) (i32.const 0xa))(then
+      (call $-write8 (get_local $str) (get_local $digits) (i32.add (i32.const 0x30) (get_local $dig)))
+    )(else
+      (call $-write8 (get_local $str) (get_local $digits) (i32.add (i32.const 0x57) (get_local $dig)))
+    ))
+  (br 0)))
+  (get_local $str)
+)
+(func $-from_hex (param $str i32) (result i32)
+  (local $int i32)
+  (local $dig i32)
+  (local $pos i32)
+  (local $len i32)
+  (set_local $len (call $-len (get_local $str)))
+  (block(loop (br_if 1 (i32.ge_u (get_local $pos) (get_local $len)))
+    (set_local $int (i32.mul (get_local $int) (i32.const 0x10)))
+    (set_local $dig (call $-read8 (get_local $str) (get_local $pos)))
+    (if (i32.gt_u (get_local $dig) (i32.const 0x5f))(then
+      (set_local $dig (i32.sub (get_local $dig) (i32.const 0x20)))
+    ))
+    (if (i32.lt_u (get_local $dig) (i32.const 0x40))(then
+      (set_local $int (i32.add (get_local $int) (i32.sub (get_local $dig) (i32.const 0x30))))
+    )(else
+      (set_local $int (i32.add (get_local $int) (i32.sub (get_local $dig) (i32.const 0x37))))
+    ))
+    (set_local $pos (i32.add (get_local $pos) (i32.const 1)))
+  (br 0)))
+  (get_local $int)
 )
 
 (func $-add (param $id1 i32) (param $id2 i32) (result i32)
