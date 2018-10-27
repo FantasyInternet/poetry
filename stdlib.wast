@@ -726,7 +726,7 @@
       (set_local $char (call $-read32 (get_local $value) (get_local $ipos)))
       (set_local $ipos (i32.add (get_local $ipos) (i32.const 4)))
       (set_local $opos (call $-len (get_local $json_string)))
-      (call $-write_to (get_local $json_string) (get_local $opos) (call $json_encode (get_local $char)))
+      (call $-write_to (get_local $json_string) (get_local $opos) (call $json_encode (call $-to_string (get_local $char))))
       (set_local $opos (call $-len (get_local $json_string)))
       (call $-write8 (get_local $json_string) (get_local $opos) (i32.const 0x3a)) ;; :
       (set_local $char (call $-read32 (get_local $value) (get_local $ipos)))
@@ -960,6 +960,9 @@
       (set_local $char (call $~skip_whitespace))
       (set_local $err (i32.eqz (call $~skip_whitespace)))
     (br 0)))
+    (if (i32.eq (get_local $char) (i32.const 0x5d))(then ;; ]
+      (set_global $~pos (i32.add (get_global $~pos) (i32.const 1)))
+    ))
   ))
   (if (i32.eq (get_local $char) (i32.const 0x7b))(then ;; {
     (set_local $value (call $-new_value (i32.const 5) (i32.const 0)))
@@ -979,6 +982,9 @@
       (set_local $char (call $~skip_whitespace))
       (set_local $err (i32.eqz (call $~skip_whitespace)))
     (br 0)))
+    (if (i32.eq (get_local $char) (i32.const 0x7d))(then ;; }
+      (set_global $~pos (i32.add (get_global $~pos) (i32.const 1)))
+    ))
   ))
   (get_local $value)
 )
