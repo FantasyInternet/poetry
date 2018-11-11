@@ -828,6 +828,19 @@
   (get_local $int)
 )
 
+(func $-inc (param $num i32) (param $delta f64) (result i32)
+  (local $offset i32)
+  (local $float f64)
+  (set_local $offset (call $-offset (get_local $num)))
+  (if (get_local $offset)(then
+    (set_local $float (f64.load (get_local $offset)))
+    (f64.store (get_local $offset) (f64.add (get_local $float) (get_local $delta)))
+  )(else
+    (set_local $num (call $-number (get_local $delta)))
+  ))
+  (get_local $num)
+)
+
 (func $-add (param $id1 i32) (param $id2 i32) (result i32)
   (local $datatype1 i32)
   (local $datatype2 i32)

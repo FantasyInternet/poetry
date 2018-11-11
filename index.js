@@ -803,6 +803,23 @@ function compileExpression(tokenTree, globals, locals, list) {
   values = []
   for (let token of _values) {
     values.push(token)
+    if (values[values.length - 1] === "++") {
+      values.pop()
+      let operand = values.pop()
+      values.push(operand)
+      values.push(`=`)
+      values.push(`(call $-inc ${operand} (f64.const 1))`)
+    }
+    if (values[values.length - 1] === "--") {
+      values.pop()
+      values.push(`-=`)
+      values.push(`(call $-inc ${operand} (f64.const -1))`)
+    }
+  }
+  _values = values
+  values = []
+  for (let token of _values) {
+    values.push(token)
     if (values[values.length - 2] === "*") {
       let operand2 = values.pop()
       values.pop()
@@ -820,21 +837,6 @@ function compileExpression(tokenTree, globals, locals, list) {
       values.pop()
       let operand1 = values.pop()
       values.push(`(call $-mod ${operand1} ${operand2})`)
-    }
-  }
-  _values = values
-  values = []
-  for (let token of _values) {
-    values.push(token)
-    if (values[values.length - 1] === "++") {
-      values.pop()
-      values.push(`+=`)
-      values.push(`(call $-integer_s (i32.const 1))`)
-    }
-    if (values[values.length - 1] === "--") {
-      values.pop()
-      values.push(`-=`)
-      values.push(`(call $-integer_s (i32.const 1))`)
     }
   }
   _values = values
