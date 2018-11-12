@@ -200,11 +200,20 @@ function nextToken(c) {
     token = token.toLowerCase()
   } else if (token.match(/[0-9.]/)) {
     let dot = token === "."
-    char = nextChar(c, true)
-    while (char.match(/[0-9]/) || (char === "." && !dot)) {
-      if (char === ".") dot = true
-      token += nextChar(c)
-      char = nextChar(c, true)
+    char = nextChar(c, true).toLowerCase()
+    if (token === "0" && char === "x") {
+      token += nextChar(c).toLowerCase()
+      char = nextChar(c, true).toLowerCase()
+      while (char.match(/[0-9a-f]/)) {
+        token += nextChar(c).toLowerCase()
+        char = nextChar(c, true).toLowerCase()
+      }
+    } else {
+      while (char.match(/[0-9]/) || (char === "." && !dot)) {
+        if (char === ".") dot = true
+        token += nextChar(c)
+        char = nextChar(c, true)
+      }
     }
     if (token.length > 1 && token[0] === ".") token = "0" + token
   } else if (token.match(/["']/)) {
