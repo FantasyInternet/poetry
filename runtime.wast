@@ -53,7 +53,7 @@
       ;; are we allowed to grow memory?
       (if (get_local $allowgrow)(then
         (set_local $offset2 (i32.add (get_global $-totmem) (i32.const 8)))
-        (drop (grow_memory (i32.const 1)))
+        (drop (grow_memory (current_memory)))
         (set_global $-totmem (i32.mul (i32.const 65536) (current_memory)))
         (i32.store (get_local $offset2) (i32.sub (get_global $-totmem) (i32.add (i32.const 8) (get_local $offset2))))
         (call $-dealloc (i32.sub (get_local $offset2) (i32.const 8)))
