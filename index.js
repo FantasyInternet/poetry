@@ -821,7 +821,9 @@ function compileExpression(tokenTree, globals, locals, list) {
     }
     if (values[values.length - 1] === "--") {
       values.pop()
-      values.push(`-=`)
+      let operand = values.pop()
+      values.push(operand)
+      values.push(`=`)
       values.push(`(call $-inc ${operand} (f64.const -1))`)
     }
   }
