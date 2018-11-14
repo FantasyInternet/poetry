@@ -735,7 +735,7 @@
     (set_local $id3 (call $-new_value (i32.const 3) (i32.const 4)))
     (call $-write32 (get_local $id3) (i32.const 0) (i32.const 0x65757274));;true
   ))
-  (if (i32.eq (get_local $datatype) (i32.const 2))(then
+  (if (i32.eq (get_local $datatype) (i32.const 2))(then ;; number
     (set_local $id3 (call $-new_value (i32.const 3) (i32.const 0)))
     (set_local $digit (call $-f64 (get_local $id)))
     (if (f64.lt (get_local $digit) (f64.const 0))(then
@@ -743,35 +743,41 @@
       (set_local $pos (i32.add (get_local $pos) (i32.const 1)))
       (set_local $digit (f64.mul (get_local $digit) (f64.const -1)))
     ))
-    (block(loop
-      (br_if 1 (f64.lt (get_local $digit) (f64.const 10)))
+    (call $-write8 (get_local $id3) (get_local $pos) (i32.const 0x30));; 0
+    (block(loop  (br_if 1 (f64.lt (get_local $digit) (f64.const 1)))
       (set_local $digit (f64.div (get_local $digit) (f64.const 10)))
-      (set_local $decimals (i32.sub (get_local $decimals) (i32.const 1)))
+      (call $-write8 (get_local $id3) (get_local $pos) (i32.const 0x30));; 0
+      (set_local $pos (i32.add (get_local $pos) (i32.const 1)))
       (br 0)
     ))
-    (block(loop
-      (br_if 1 (i32.ge_s (get_local $decimals) (i32.const 10)))
-      (call $-write8 (get_local $id3) (get_local $pos) (i32.add (i32.const 0x30) (i32.trunc_s/f64 (f64.trunc (get_local $digit)))))
+    (set_local $decimals (i32.trunc_u/f64 (f64.trunc (f64.abs (call $-f64 (get_local $id))))))
+    (block(loop (br_if 1 (i32.eqz (get_local $decimals)))
+      (set_local $pos (i32.sub (get_local $pos) (i32.const 1)))
+      (call $-write8 (get_local $id3) (get_local $pos) (i32.add (i32.const 0x30) (i32.rem_u (get_local $decimals) (i32.const 10))))
+      (set_local $decimals (i32.div_u (get_local $decimals) (i32.const 10)))
+    (br 0)))
+    (set_local $pos (call $-len (get_local $id3)))
+    (set_local $decimals (i32.const 0))
+    (set_local $digit (f64.abs (call $-f64 (get_local $id))))
+    (set_local $digit (f64.sub (get_local $digit) (f64.trunc (get_local $digit))))
+    (if (f64.gt (get_local $digit) (f64.const 0.00001))(then
+      (call $-write8 (get_local $id3) (get_local $pos) (i32.const 0x2e));; .
       (set_local $pos (i32.add (get_local $pos) (i32.const 1)))
-      (if (i32.eq (get_local $decimals) (i32.const 0))(then
-        (set_local $digit (f64.abs (call $-f64 (get_local $id))))
-        (set_local $digit (f64.sub (get_local $digit) (f64.trunc (get_local $digit))))
-        (if (f64.gt (get_local $digit) (f64.const 0.00001))(then
-          (call $-write8 (get_local $id3) (get_local $pos) (i32.const 0x2e));; .
-          (set_local $pos (i32.add (get_local $pos) (i32.const 1)))
-        )(else
-          (set_local $decimals (i32.const 1024))
-        ))
-      ))
-      (set_local $digit (f64.sub (get_local $digit) (f64.trunc (get_local $digit))))
       (set_local $digit (f64.mul (get_local $digit) (f64.const 10)))
-      (if (i32.gt_s (get_local $decimals) (i32.const 0))(then
-        (if (f64.le (get_local $digit) (f64.const 0.00001))(then
-          (set_local $decimals (i32.const 1024))
+      (block(loop
+        (br_if 1 (i32.ge_s (get_local $decimals) (i32.const 16)))
+        (call $-write8 (get_local $id3) (get_local $pos) (i32.add (i32.const 0x30) (i32.trunc_s/f64 (f64.trunc (get_local $digit)))))
+        (set_local $pos (i32.add (get_local $pos) (i32.const 1)))
+        (set_local $digit (f64.sub (get_local $digit) (f64.trunc (get_local $digit))))
+        (set_local $digit (f64.mul (get_local $digit) (f64.const 10)))
+        (if (i32.gt_s (get_local $decimals) (i32.const 0))(then
+          (if (f64.le (get_local $digit) (f64.const 0.00001))(then
+            (set_local $decimals (i32.const 1024))
+          ))
         ))
+        (set_local $decimals (i32.add (get_local $decimals) (i32.const 1)))
+        (br 0)
       ))
-      (set_local $decimals (i32.add (get_local $decimals) (i32.const 1)))
-      (br 0)
     ))
   ))
   (if (i32.eq (get_local $datatype) (i32.const 4))(then
