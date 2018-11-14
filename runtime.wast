@@ -770,10 +770,8 @@
         (set_local $pos (i32.add (get_local $pos) (i32.const 1)))
         (set_local $digit (f64.sub (get_local $digit) (f64.trunc (get_local $digit))))
         (set_local $digit (f64.mul (get_local $digit) (f64.const 10)))
-        (if (i32.gt_s (get_local $decimals) (i32.const 0))(then
-          (if (f64.le (get_local $digit) (f64.const 0.00001))(then
-            (set_local $decimals (i32.const 1024))
-          ))
+        (if (f64.le (get_local $digit) (f64.const 0.00001))(then
+          (set_local $decimals (i32.const 1024))
         ))
         (set_local $decimals (i32.add (get_local $decimals) (i32.const 1)))
         (br 0)
