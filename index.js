@@ -431,7 +431,7 @@ function compileModule(c) {
     offset += len
     offset = Math.floor(offset / 8) * 8 + 16
   }
-  start += `(call $-zerorefs)\n`
+  start += `(call $-funcstart)\n`
   c.globals["-string"] = c.strings
   c.globals["-table"] = []
 
@@ -453,11 +453,11 @@ function compileModule(c) {
           exports += `(param $${statement[i]} f64)`
         }
         exports += `(result f64)(call $-funcstart)`
-        exports += `(call $-f64 (call $${statement[2]}`
+        exports += `(call $-funcend (call $${statement[2]}`
         for (let i = 3; i < statement.length - 1; i++) {
           exports += `(call $-number (get_local $${statement[i]}))`
         }
-        exports += `))(call $-funcend))(export ${statement[1]} (func $--${statement[2]}))\n`
+        exports += `))(call $-f64))(export ${statement[1]} (func $--${statement[2]}))\n`
         statement.shift()
         statement[0] = "@func"
       }
@@ -530,20 +530,20 @@ function compileModule(c) {
       exports += `(param $${c.globals[c.globals["-table"][i]][p]} f64)`
     }
     exports += `(result f64)(call $-funcstart)`
-    exports += `(call $-f64 (call $${c.globals["-table"][i]}`
+    exports += `(call $-funcend (call $${c.globals["-table"][i]}`
     for (let p = 0; p < c.globals[c.globals["-table"][i]].length; p++) {
       exports += `(call $-number (get_local $${c.globals[c.globals["-table"][i]][p]}))`
     }
-    exports += `))(call $-funcend))\n`
+    exports += `))(call $-f64))\n`
   }
-  gc += `(func $-traceGC\n`
-  gc += `(call $-zerorefs)\n`
+  gc += `(func $-passdown_globals\n`
+  // gc += `(call $-zerorefs)\n`
   for (let g in c.globals) {
     if (c.globals[g] === true && !g.includes("~")) {
-      gc += `(call $-reftree (get_global $${g}))\n`
+      gc += `(call $-passdown (get_global $${g}))\n`
     }
   }
-  gc += `(call $-garbagecollect)\n`
+  // gc += `(call $-garbagecollect)\n`
   gc += `)\n`
 
   return `
@@ -602,8 +602,11 @@ function compileFunction(tokenTree, globals) {
         wast += `(local $${locals[i]} i32)`
       }
       wast += `(local $-ret i32)(local $-success i32)`
+      wast += `(call $-funcstart)`
       wast += block
-      wast += `(get_local $-ret)`
+      wast += `(call $-funcend (get_local $-ret))`
+      // wast += `(call $-passdown)`
+      // wast += `(get_local $-ret)`
     }
   }
   wast += `)\n`
