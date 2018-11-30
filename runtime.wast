@@ -9,15 +9,26 @@
 ;; function wrapper
 (global $-calls (mut i32) (i32.const 0))
 (func $-funcstart
-  (if (i32.eqz (get_global $-calls))(then
-    (call $-traceGC)
+  (if (i32.le_u (get_global $-calls) (i32.const 1))(then
+    (set_global $-passdown_mark (i32.rem_u (i32.add (get_global $-passdown_mark) (i32.const 1)) (i32.const 255)))
+    (call $-zerorefs)
+    (call $-garbagecollect)
   ))
   (set_global $-calls (i32.add (get_global $-calls) (i32.const 1)))
 )
-(func $-funcend
+(global $-gc_pending (mut i32) (i32.const 1))
+(func $-funcend (param $ret i32) (result i32)
   (if (get_global $-calls) (then
     (set_global $-calls (i32.sub (get_global $-calls) (i32.const 1)))
+    (set_global $-passdown_mark (i32.rem_u (i32.add (get_global $-passdown_mark) (i32.const 1)) (i32.const 255)))
+    (if (get_local $ret)(then
+      (call $-passdown (get_local $ret))
+    ))
+    (if (i32.gt_u (get_global $-gc_pending) (get_global $-calls))(then
+      (call $-garbagecollect)
+    ))
   ))
+  (get_local $ret)
 )
 
 ;; allocate memory
@@ -61,6 +72,7 @@
         (set_local $offset (i32.add  (get_local $space) (i32.const 4)))
         (set_local $space (i32.load (get_local $offset)))
       )(else ;; first time? start from beginning
+        (call $-garbagecollect)
         (set_local $allowgrow (i32.const 1))
         (set_local $offset (i32.const 0))
         (set_local $space (i32.load (get_local $offset)))
@@ -237,6 +249,17 @@
     (set_local $len (i32.load (i32.sub (get_local $offset) (i32.const 4))))
   ))
   (get_local $len)
+)
+
+;; callstack-depth of memory allocation
+(func $-callstack_depth (param $id i32) (result i32)
+  (local $depth i32)
+  (if (i32.ge_u (get_local $id) (i32.const 8))(then
+    (set_local $depth (i32.sub (get_global $-mindex) (i32.const 64)))
+    (set_local $depth (i32.add (get_local $depth) (i32.add (i32.mul (i32.const 8) (get_local $id)) (i32.const 4))))
+    (set_local $depth (i32.load16_u (get_local $depth)))
+  ))
+  (get_local $depth)
 )
 
 ;; resize memory allocation
@@ -443,9 +466,10 @@
     (set_local $id (i32.add (get_local $id) (i32.const 1)))
     (br 0)
   ))
-  (call $-write32 (i32.const -1) (i32.mul (get_local $id) (i32.const 8)) (get_local $offset))
-  (call $-write32 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 4)) (i32.const 0))
+  (call $-write32 (i32.const -1)          (i32.mul (get_local $id) (i32.const 8))                (get_local $offset))
+  (call $-write16 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 4)) (get_global $-calls))
   (call $-write8  (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 6)) (get_local $datatype))
+  (call $-write8  (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 7)) (get_global $-passdown_mark))
   (set_global $-next_id (i32.add (get_local $id) (i32.const 1)))
   (i32.add (get_local $id) (i32.const 8))
 )
@@ -471,36 +495,39 @@
   (block(loop (br_if 1 (i32.eqz (get_local $id)))
     (set_local $id (i32.sub (get_local $id) (i32.const 1)))
     (if (i32.lt_u (get_local $id) (get_global $-hard_value))(then
-      (call $-write8 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 7)) (i32.const 1))
+      (call $-write16 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 4)) (i32.const 0))
     )(else
-      (call $-write8 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 7)) (i32.const 0))
+      (call $-write16 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 4)) (i32.const 4))
     ))
   (br 0)))
 )
-;; register reference recursively (if unregistered)
-(func $-reftree (param $id i32)
+(global $-passdown_mark (mut i32) (i32.const 1))
+;; pass down reference recursively
+(func $-passdown (param $id i32)
   (local $offset i32)
   (local $datatype i32)
-  (local $refs i32)
+  (local $csdepth i32)
+  (local $mark i32)
   (set_local $offset (call $-offset (get_local $id)))
   ;; is it even in memory?
   (if (get_local $offset) (then
     (set_local $id (i32.sub (get_local $id) (i32.const 8)))
-    (set_local $refs (call $-read8 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 7))))
+    (set_local $mark (call $-read8 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 7))))
     ;; is it unreferenced?
-    (if (i32.eqz (get_local $refs))(then
-      (call $-write8 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 7)) (i32.const 1))
+    (if (i32.ne (get_local $mark) (get_global $-passdown_mark))(then
+      (call $-write8 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 7)) (get_global $-passdown_mark))
+      (set_local $csdepth (call $-read16 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 4))))
+      (if (i32.gt_u (get_local $csdepth) (get_global $-calls))(then
+        (call $-write16 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 4)) (get_global $-calls))
+      ))
       (set_local $datatype (call $-read8 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 6))))
       (set_local $id (i32.add (get_local $id) (i32.const 8)))
-      ;; (if (i32.gt_u (get_local $id) (get_global $-high_id))(then
-      ;;   (set_global $-high_id (get_local $id))
-      ;; ))
       ;; is it array/object?
       (if (i32.eq (i32.and (get_local $datatype) (i32.const 6)) (i32.const 4))(then
         (set_local $offset (call $-len (get_local $id)))
         (block(loop (br_if 1 (i32.eqz (get_local $offset)))
           (set_local $offset (i32.sub (get_local $offset) (i32.const 4)))
-          (call $-reftree (call $-read32 (get_local $id) (get_local $offset)))
+          (call $-passdown (call $-read32 (get_local $id) (get_local $offset)))
         (br 0)))
       ))
     ))
@@ -510,25 +537,32 @@
 ;; garbage collector
 (func $-garbagecollect
   (local $id i32)
-  (local $refs i32)
+  (local $csdepth i32)
   (local $offset i32)
+  (local $last_id i32)
 
+  (call $-passdown_globals)
   (set_local $id (i32.div_u (call $-len (i32.const -1)) (i32.const 8)))
   (block(loop (br_if 1 (i32.eqz (get_local $id)))
     (set_local $id (i32.sub (get_local $id) (i32.const 1)))
-    (set_local $refs (call $-read8 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 7))))
-    (if (i32.eqz (get_local $refs))(then
-      (set_local $offset (call $-read32 (i32.const -1) (i32.mul (get_local $id) (i32.const 8))))
-      (if (get_local $offset)(then
+    (set_local $offset (call $-read32 (i32.const -1) (i32.mul (get_local $id) (i32.const 8))))
+    (set_local $csdepth (call $-read16 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 4))))
+    (if (get_local $offset)(then
+      (if (i32.gt_u (get_local $csdepth) (get_global $-calls))(then
         (call $-dealloc (get_local $offset))
+        (set_global $-next_id (get_local $id))
         (call $-write32 (i32.const -1)          (i32.mul (get_local $id) (i32.const 8))                (i32.const 0))
         (call $-write32 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 4)) (i32.const 0))
+      )(else
+        (if (i32.eqz (get_local $last_id))(then
+          (set_local $last_id (get_local $id))
+        ))
       ))
     ))
   (br 0)))
   (set_global $-last_alloc (i32.const 0))
-  (set_global $-next_id (i32.const 0))
-  ;; (call $-resize (i32.const -1) (i32.mul (i32.add (get_global $-high_id) (i32.const 1)) (i32.const 8)))
+  (set_global $-gc_pending (get_global $-calls))
+  (call $-resize (i32.const -1) (i32.mul (i32.add (get_local $last_id) (i32.const 1)) (i32.const 8)))
 )
 
 (func $-truthy (param $id i32) (result i32)
