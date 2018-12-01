@@ -10,7 +10,7 @@
 (global $-calls (mut i32) (i32.const 0))
 (func $-funcstart
   (if (i32.le_u (get_global $-calls) (i32.const 1))(then
-    (set_global $-passdown_mark (i32.rem_u (i32.add (get_global $-passdown_mark) (i32.const 1)) (i32.const 255)))
+    ;; (set_global $-passdown_mark (i32.and (i32.add (get_global $-passdown_mark) (i32.const 1)) (i32.const 127)))
     (call $-zerorefs)
     (call $-garbagecollect)
   ))
@@ -20,8 +20,8 @@
 (func $-funcend (param $ret i32) (result i32)
   (if (get_global $-calls) (then
     (set_global $-calls (i32.sub (get_global $-calls) (i32.const 1)))
-    (set_global $-passdown_mark (i32.rem_u (i32.add (get_global $-passdown_mark) (i32.const 1)) (i32.const 255)))
     (if (get_local $ret)(then
+      (set_global $-passdown_mark (i32.and (i32.add (get_global $-passdown_mark) (i32.const 1)) (i32.const 127)))
       (call $-passdown (get_local $ret))
     ))
     (if (i32.gt_u (get_global $-gc_pending) (get_global $-calls))(then
@@ -469,7 +469,7 @@
   (call $-write32 (i32.const -1)          (i32.mul (get_local $id) (i32.const 8))                (get_local $offset))
   (call $-write16 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 4)) (get_global $-calls))
   (call $-write8  (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 6)) (get_local $datatype))
-  (call $-write8  (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 7)) (get_global $-passdown_mark))
+  (call $-write8  (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 7)) (i32.const 130))
   (set_global $-next_id (i32.add (get_local $id) (i32.const 1)))
   (i32.add (get_local $id) (i32.const 8))
 )
@@ -513,10 +513,13 @@
   (if (get_local $offset) (then
     (set_local $id (i32.sub (get_local $id) (i32.const 8)))
     (set_local $mark (call $-read8 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 7))))
+    (set_local $csdepth (call $-read16 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 4))))
     ;; is it unreferenced?
-    (if (i32.ne (get_local $mark) (get_global $-passdown_mark))(then
+    (if (i32.or
+      (i32.ne (get_local $mark) (get_global $-passdown_mark))
+      (i32.gt_u (get_local $csdepth) (get_global $-calls))
+    )(then
       (call $-write8 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 7)) (get_global $-passdown_mark))
-      (set_local $csdepth (call $-read16 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 4))))
       (if (i32.gt_u (get_local $csdepth) (get_global $-calls))(then
         (call $-write16 (i32.const -1) (i32.add (i32.mul (get_local $id) (i32.const 8)) (i32.const 4)) (get_global $-calls))
       ))
@@ -541,6 +544,7 @@
   (local $offset i32)
   (local $last_id i32)
 
+  (set_global $-passdown_mark (i32.and (i32.add (get_global $-passdown_mark) (i32.const 1)) (i32.const 127)))
   (call $-passdown_globals)
   (set_local $id (i32.div_u (call $-len (i32.const -1)) (i32.const 8)))
   (block(loop (br_if 1 (i32.eqz (get_local $id)))
