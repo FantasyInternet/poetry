@@ -870,6 +870,144 @@
   (get_local $int)
 )
 
+(global $-parsing_offset (mut i32) (i32.const 0))
+(func $-parse_integer (param $base i32) (param $offset i32) (result i64)
+  (local $result i64)
+  (local $neg i32)
+  (local $char i32)
+  (local $digit i32)
+  (if (i32.eqz (get_local $offset))(then
+    (set_local $offset (get_global $-parsing_offset))
+  ))
+  (if (i32.eqz (get_local $base))(then
+    (set_local $base (i32.const 10))
+  ))
+  (set_local $neg (i32.const 1))
+  (set_local $char (i32.load8_u (get_local $offset)))
+  (if (i32.eq (get_local $char) (i32.const 0x2d))(then ;; -
+    (set_local $neg (i32.const -1))
+    (set_local $char (i32.const 0x30))
+    (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
+  ))
+  (block(loop
+    (set_local $char (i32.load8_u (get_local $offset)))
+    (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
+    (br_if 1 (i32.lt_u (get_local $char) (i32.const 0x30)))
+    (set_local $digit (i32.sub (get_local $char) (i32.const 0x30)))
+    (if (i32.gt_u (get_local $digit) (i32.const 0x9))(then
+      (set_local $digit (i32.sub (get_local $digit) (i32.const 0x7)))
+    ))
+    (if (i32.gt_u (get_local $digit) (i32.const 0x23))(then
+      (set_local $digit (i32.sub (get_local $digit) (i32.const 0x20)))
+    ))
+    (if (i32.eq (get_local $digit) (i32.const 0x21))(then ;; x
+      (set_local $base (i32.const 0x10))
+      (set_local $digit (i32.const 0x0))
+    ))
+    (br_if 1 (i32.ge_u (get_local $digit) (get_local $base)))
+    (set_local $result (i64.mul (get_local $result) (i64.extend_u/i32 (get_local $base))))
+    (set_local $result (i64.add (get_local $result) (i64.extend_u/i32 (get_local $digit))))
+  (br 0)))
+  (set_local $offset (i32.sub (get_local $offset) (i32.const 1)))
+  (set_global $-parsing_offset (get_local $offset))
+  (i64.mul (get_local $result) (i64.extend_s/i32 (get_local $neg)))
+)
+;; (func $-parse_float (param $offset i32) (result f64)
+;;   (local $result f64)
+;;   (local $neg i32)
+;;   (local $base i32)
+;;   (local $char i32)
+;;   (local $digit i32)
+;;   (local $decimals f64)
+;;   (local $exp i64)
+;;   (local $expneg i64)
+;;   (local $dpoint f64)
+;;   (local $ipoint f64)
+;;   (if (i32.eqz (get_local $offset))(then
+;;     (set_local $offset (get_local $-parsing_offset))
+;;   ))
+;;   (set_local $base (i32.const 10))
+;;   (set_local $neg (i32.const 1))
+;;   (set_local $expneg (i32.const 1))
+;;   (set_local $point (f64.const 1))
+;;   (set_local $char (i32.load8_u (get_local $offset)))
+;;   (if (i32.eq (get_local $char) (i32.const 0x2d))(then ;; -
+;;     (set_local $neg (i32.const -1))
+;;     (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
+;;   ))
+;;   (block(loop
+;;     (set_local $char (i32.load8_u (get_local $offset)))
+;;     (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
+;;     (br_if 1 (i32.lt_u (get_local $char) (i32.const 0x30)))
+;;     (set_local $digit (i32.sub (get_local $char) (i32.const 0x30)))
+;;     (if (i32.gt_u (get_local $digit) (i32.const 0x9))(then
+;;       (set_local $digit (i32.sub (get_local $digit) (i32.const 0x7)))
+;;     ))
+;;     (if (i32.gt_u (get_local $digit) (i32.const 0x23))(then
+;;       (set_local $digit (i32.sub (get_local $digit) (i32.const 0x20)))
+;;     ))
+;;     (if (i32.eq (get_local $digit) (i32.const 0x21))(then ;; x
+;;       (set_local $base (i32.const 0x10))
+;;       (set_local $digit (i32.const 0x0))
+;;     ))
+;;     (br_if 1 (i32.ge_u (get_local $digit) (get_local $base)))
+;;     (set_local $result (f64.mul (get_local $result) (f64.convert_u/i32 (get_local $base))))
+;;     (set_local $result (f64.add (get_local $result) (f64.convert_u/i32 (get_local $digit))))
+;;   (br 0)))
+;;   (if (i32.eq (get_local $char) (i32.const 0x2e))(then ;; .
+;;     (block(loop
+;;       (set_local $char (i32.load8_u (get_local $offset)))
+;;       (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
+;;       (br_if 1 (i32.lt_u (get_local $char) (i32.const 0x30)))
+;;       (set_local $digit (i32.sub (get_local $char) (i32.const 0x30)))
+;;       (if (i32.gt_u (get_local $digit) (i32.const 0x9))(then
+;;         (set_local $digit (i32.sub (get_local $digit) (i32.const 0x7)))
+;;       ))
+;;       (if (i32.gt_u (get_local $digit) (i32.const 0x23))(then
+;;         (set_local $digit (i32.sub (get_local $digit) (i32.const 0x20)))
+;;       ))
+;;       (br_if 1 (i32.ge_u (get_local $digit) (get_local $base)))
+;;       (set_local $point (f64.mul (get_local $point) (f64.convert_u/i32 (get_local $base))))
+;;       (set_local $decimals (f64.mul (get_local $decimals) (f64.convert_u/i32 (get_local $base))))
+;;       (set_local $decimals (f64.add (get_local $decimals) (f64.convert_u/i32 (get_local $digit))))
+;;     (br 0)))
+;;   ))
+;;   (if (i32.or
+;;       (i32.eq (get_local $digit) (i32.const 0x0e)) ;; E
+;;       (i32.eq (get_local $digit) (i32.const 0x19)) ;; P
+;;     )(then
+;;     (set_local $char (i32.load8_u (get_local $offset)))
+;;     (if (i32.eq (get_local $char) (i32.const 0x2d))(then ;; -
+;;       (set_local $expneg (i32.const -1))
+;;       (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
+;;     ))
+;;     (if (i32.eq (get_local $char) (i32.const 0x2b))(then ;; +
+;;       (set_local $expneg (i32.const 1))
+;;       (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
+;;     ))
+;;     (block(loop
+;;       (set_local $char (i32.load8_u (get_local $offset)))
+;;       (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
+;;       (br_if 1 (i32.lt_u (get_local $char) (i32.const 0x30)))
+;;       (set_local $digit (i32.sub (get_local $char) (i32.const 0x30)))
+;;       (if (i32.gt_u (get_local $digit) (i32.const 0x9))(then
+;;         (set_local $digit (i32.sub (get_local $digit) (i32.const 0x7)))
+;;       ))
+;;       (if (i32.gt_u (get_local $digit) (i32.const 0x23))(then
+;;         (set_local $digit (i32.sub (get_local $digit) (i32.const 0x20)))
+;;       ))
+;;       (br_if 1 (i32.ge_u (get_local $digit) (get_local $base)))
+;;       (set_local $exp (i64.mul (get_local $exp) (i64.extend_u/i32 (get_local $base))))
+;;       (set_local $exp (f64.add (get_local $exp) (i64.extend_u/i32 (get_local $digit))))
+;;     (br 0)))
+;;   ))
+;;   (set_local $decimals (f64.div (get_local $decimals) (get_local $point)))
+;;   (set_local $result (f64.add (get_local $result) (get_local $decimals)))
+;;   (set_local $offset (i32.sub (get_local $offset) (i32.const 1)))
+;;   (set_global $-parsing_offset (get_local $offset))
+;;   (f64.mul (get_local $result) (f64.convert_s/i32 (get_local $neg)))
+;; )
+
 (func $-inc (param $num i32) (param $delta f64) (result i32)
   (local $offset i32)
   (local $float f64)

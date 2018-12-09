@@ -8,4 +8,4 @@
 )
 (export "load_f64" (func $load_f64))
 (export "garbagecollect" (func $-garbagecollect))
-(export "traceGC" (func $-traceGC))
+;; (export "traceGC" (func $-traceGC))

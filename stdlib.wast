@@ -639,6 +639,10 @@
   (if (i32.lt_u (get_local $datatype) (i32.const 3))(then
     (set_local $json_string (call $-to_string (get_local $value)))
   ))
+  (if (i32.gt_u (get_local $datatype) (i32.const 5))(then
+    (set_local $value (call $-to_string (get_local $value)))
+    (set_local $datatype (i32.const 3))
+  ))
   (if (i32.eq (get_local $datatype) (i32.const 3))(then ;; string
     (set_local $json_string (call $-new_value (i32.const 3) (call $-len (get_local $value))))
     (call $-write8 (get_local $json_string) (get_local $opos) (i32.const 0x22)) ;; "
