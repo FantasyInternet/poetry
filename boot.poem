@@ -41,10 +41,11 @@ func test_json
   log json_encode val
   log json_encode friends
   log json_encode my_pet
+  log "" + json_decode "42"
   log "" + json_decode "-42.50E-1"
   log json_decode '"Sm\\u00e5 s\\u00f8de\\njordb\\u00e6r!\\ud83c\\udf53"'
   log json_encode (json_decode (json_encode friends))
-  log json_encode json_decode json_encode json_decode "{\n  \"name\": \"poetry-compiler\",\n  \"version\": \"0.34.0\",\n  \"description\": \"Poetic programming language that compiles to webassembly\",\n  \"main\": \"index.js\",\n  \"scripts\": {\n    \"build\": \"node cli.js boot.poem -t boot.wast -b boot.wasm --debug boot.debug.json\",\n    \"test\": \"echo \\\"Error: no test specified\\\" && exit 1\"\n  },\n  \"bin\": {\n    \"poetry\": \".\/cli.js\"\n  },\n  \"repository\": {\n    \"type\": \"git\",\n    \"url\": \"git+https:\/\/github.com\/FantasyInternet\/poetry.git\"\n  },\n  \"keywords\": [\n    \"wasm\",\n    \"webassembly\",\n    \"compiler\",\n    \"programming\",\n    \"language\",\n    \"poetry\"\n  ],\n  \"author\": \"\",\n  \"license\": \"ISC\",\n  \"bugs\": {\n    \"url\": \"https:\/\/github.com\/FantasyInternet\/poetry\/issues\"\n  },\n  \"homepage\": \"https:\/\/github.com\/FantasyInternet\/poetry#readme\",\n  \"dependencies\": {\n    \"commander\": \"^2.17.1\",\n    \"wabt\": \"^1.0.0\"\n  }\n}"
+  log json_encode json_decode json_encode json_decode "{\n  \"pi\": 3.141592653589793,\n \"name\": \"poetry-compiler\",\n  \"version\": \"0.34.0\",\n  \"description\": \"Poetic programming language that compiles to webassembly\",\n  \"main\": \"index.js\",\n  \"scripts\": {\n    \"build\": \"node cli.js boot.poem -t boot.wast -b boot.wasm --debug boot.debug.json\",\n    \"test\": \"echo \\\"Error: no test specified\\\" && exit 1\"\n  },\n  \"bin\": {\n    \"poetry\": \".\/cli.js\"\n  },\n  \"repository\": {\n    \"type\": \"git\",\n    \"url\": \"git+https:\/\/github.com\/FantasyInternet\/poetry.git\"\n  },\n  \"keywords\": [\n    \"wasm\",\n    \"webassembly\",\n    \"compiler\",\n    \"programming\",\n    \"language\",\n    \"poetry\"\n  ],\n  \"author\": \"\",\n  \"license\": \"ISC\",\n  \"bugs\": {\n    \"url\": \"https:\/\/github.com\/FantasyInternet\/poetry\/issues\"\n  },\n  \"homepage\": \"https:\/\/github.com\/FantasyInternet\/poetry#readme\",\n  \"dependencies\": {\n    \"commander\": \"^2.17.1\",\n    \"wabt\": \"^1.0.0\"\n  }\n}"
 
 func test_unicode
   var danish = "æøå$¢€𐍈💩"
