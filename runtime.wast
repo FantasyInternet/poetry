@@ -870,6 +870,154 @@
   (get_local $int)
 )
 
+(global $-parsing_offset (mut i32) (i32.const 0))
+(func $-parse_integer (param $offset i32) (param $base i32) (result i64)
+  (local $result i64)
+  (local $neg i32)
+  (local $char i32)
+  (local $digit i32)
+  (if (i32.eqz (get_local $offset))(then
+    (set_local $offset (get_global $-parsing_offset))
+  ))
+  (if (i32.eqz (get_local $base))(then
+    (set_local $base (i32.const 10))
+  ))
+  (set_local $neg (i32.const 1))
+  (set_local $char (i32.load8_u (get_local $offset)))
+  (if (i32.eq (get_local $char) (i32.const 0x2d))(then ;; -
+    (set_local $neg (i32.const -1))
+    (set_local $char (i32.const 0x30))
+    (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
+  ))
+  (if (i32.eq (get_local $char) (i32.const 0x2b))(then ;; +
+    (set_local $neg (i32.const 1))
+    (set_local $char (i32.const 0x30))
+    (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
+  ))
+  (block(loop
+    (set_local $char (i32.load8_u (get_local $offset)))
+    (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
+    (br_if 1 (i32.lt_u (get_local $char) (i32.const 0x30)))
+    (set_local $digit (i32.sub (get_local $char) (i32.const 0x30)))
+    (if (i32.gt_u (get_local $digit) (i32.const 0x9))(then
+      (set_local $digit (i32.sub (get_local $digit) (i32.const 0x7)))
+    ))
+    (if (i32.gt_u (get_local $digit) (i32.const 0x29))(then
+      (set_local $digit (i32.sub (get_local $digit) (i32.const 0x20)))
+    ))
+    (if (i32.eq (get_local $digit) (i32.const 0x21))(then ;; x
+      (set_local $base (i32.const 0x10))
+      (set_local $digit (i32.const 0x0))
+    ))
+    (br_if 1 (i32.ge_u (get_local $digit) (get_local $base)))
+    (set_local $result (i64.mul (get_local $result) (i64.extend_u/i32 (get_local $base))))
+    (set_local $result (i64.add (get_local $result) (i64.extend_u/i32 (get_local $digit))))
+  (br 0)))
+  (set_local $offset (i32.sub (get_local $offset) (i32.const 1)))
+  (set_global $-parsing_offset (get_local $offset))
+  (i64.mul (get_local $result) (i64.extend_s/i32 (get_local $neg)))
+)
+(func $-parse_float (param $offset i32) (param $base i32) (result f64)
+  (local $iresult f64)
+  (local $dresult f64)
+  (local $int i64)
+  (local $dec i64)
+  (local $declen i64)
+  (local $exp i64)
+  (local $neg f64)
+  (local $k f64)
+  (local $char i32)
+  (if (i32.eqz (get_local $offset))(then
+    (set_local $offset (get_global $-parsing_offset))
+  ))
+  (if (i32.eqz (get_local $base))(then
+    (set_local $base (i32.const 10))
+  ))
+  (set_local $neg (f64.const 1))
+  (set_local $char (i32.load8_u (get_local $offset)))
+  (if (i32.eq (get_local $char) (i32.const 0x2d))(then ;; -
+    (set_local $neg (f64.const -1))
+    (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
+  ))
+  (if (i32.eq (get_local $char) (i32.const 0x2b))(then ;; +
+    (set_local $neg (f64.const 1))
+    (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
+  ))
+  (set_local $char (i32.load16_u (get_local $offset)))
+  (if (i32.eq (get_local $char) (i32.const 0x5830))(then ;; 0X
+    (set_local $base (i32.const 0x10))
+  ))
+  (if (i32.eq (get_local $char) (i32.const 0x7830))(then ;; 0x
+    (set_local $base (i32.const 0x10))
+  ))
+  (set_local $int (call $-parse_integer (get_local $offset) (get_local $base)))
+  (set_local $offset (get_global $-parsing_offset))
+  (set_local $char (i32.load8_u (get_local $offset)))
+  (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
+  (if (i32.eq (get_local $char) (i32.const 0x2e))(then ;; .
+    (set_local $dec (call $-parse_integer (get_local $offset) (get_local $base)))
+    (set_local $declen (i64.extend_u/i32 (i32.sub (get_global $-parsing_offset) (get_local $offset))))
+    (set_local $offset (get_global $-parsing_offset))
+    (set_local $char (i32.load8_u (get_local $offset)))
+    (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
+  ))
+  (if (i32.ge_u (get_local $char) (i32.const 0x60))(then
+    (set_local $char (i32.sub (get_local $char) (i32.const 0x20)))
+  ))
+  (if (i32.eq (get_local $char) (i32.const 0x45))(then ;; E
+    (set_local $char (i32.const 0x50))
+  ))
+  (if (i32.eq (get_local $char) (i32.const 0x50))(then ;; P
+    (set_local $exp (call $-parse_integer (get_local $offset) (get_local $base)))
+  ))
+
+  (set_local $dresult (f64.convert_u/i64 (get_local $dec)))
+  (set_local $declen (i64.sub (get_local $exp) (get_local $declen)))
+  (if (i64.lt_s (get_local $declen) (i64.const 0))(then
+    (set_local $k (f64.const -1))
+  )(else
+    (set_local $k (f64.const 1))
+  ))
+  (block(loop (br_if 1 (i64.ge_s (get_local $declen) (i64.const 0)))
+    (set_local $k (f64.mul (get_local $k) (f64.convert_u/i32 (get_local $base))))
+    (set_local $declen (i64.add (get_local $declen) (i64.const 1)))
+  (br 0)))
+  (block(loop (br_if 1 (i64.le_s (get_local $declen) (i64.const 0)))
+    (set_local $k (f64.mul (get_local $k) (f64.convert_u/i32 (get_local $base))))
+    (set_local $declen (i64.sub (get_local $declen) (i64.const 1)))
+  (br 0)))
+  (if (f64.lt (get_local $k) (f64.const 0))(then
+    (set_local $k (f64.mul (get_local $k) (f64.const -1)))
+    (set_local $dresult (f64.div (get_local $dresult) (get_local $k)))
+  )(else
+    (set_local $dresult (f64.mul (get_local $dresult) (get_local $k)))
+  ))
+
+  (set_local $iresult (f64.convert_u/i64 (get_local $int)))
+  (if (i64.lt_s (get_local $exp) (i64.const 0))(then
+    (set_local $k (f64.const -1))
+  )(else
+    (set_local $k (f64.const 1))
+  ))
+  (block(loop (br_if 1 (i64.ge_s (get_local $exp) (i64.const 0)))
+    (set_local $k (f64.mul (get_local $k) (f64.convert_u/i32 (get_local $base))))
+    (set_local $exp (i64.add (get_local $exp) (i64.const 1)))
+  (br 0)))
+  (block(loop (br_if 1 (i64.le_s (get_local $exp) (i64.const 0)))
+    (set_local $k (f64.mul (get_local $k) (f64.convert_u/i32 (get_local $base))))
+    (set_local $exp (i64.sub (get_local $exp) (i64.const 1)))
+  (br 0)))
+  (if (f64.lt (get_local $k) (f64.const 0))(then
+    (set_local $k (f64.mul (get_local $k) (f64.const -1)))
+    (set_local $iresult (f64.div (get_local $iresult) (get_local $k)))
+  )(else
+    (set_local $iresult (f64.mul (get_local $iresult) (get_local $k)))
+  ))
+
+
+  (f64.mul (get_local $neg) (f64.add (get_local $iresult) (get_local $dresult)))
+)
+
 (func $-inc (param $num i32) (param $delta f64) (result i32)
   (local $offset i32)
   (local $float f64)
