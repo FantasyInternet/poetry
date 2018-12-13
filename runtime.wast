@@ -902,7 +902,7 @@
     (if (i32.gt_u (get_local $digit) (i32.const 0x9))(then
       (set_local $digit (i32.sub (get_local $digit) (i32.const 0x7)))
     ))
-    (if (i32.gt_u (get_local $digit) (i32.const 0x23))(then
+    (if (i32.gt_u (get_local $digit) (i32.const 0x29))(then
       (set_local $digit (i32.sub (get_local $digit) (i32.const 0x20)))
     ))
     (if (i32.eq (get_local $digit) (i32.const 0x21))(then ;; x
