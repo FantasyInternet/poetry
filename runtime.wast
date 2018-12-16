@@ -915,7 +915,8 @@
   (br 0)))
   (set_local $offset (i32.sub (get_local $offset) (i32.const 1)))
   (set_global $-parsing_offset (get_local $offset))
-  (i64.mul (get_local $result) (i64.extend_s/i32 (get_local $neg)))
+  (tee_local $result (i64.mul (get_local $result) (i64.extend_s/i32 (get_local $neg))))
+  ;; (call $logNumber (f64.convert_s/i64 (get_local $result)))
 )
 (func $-parse_float (param $offset i32) (param $base i32) (result f64)
   (local $iresult f64)
@@ -924,15 +925,19 @@
   (local $dec i64)
   (local $declen i64)
   (local $exp i64)
+  (local $pow i64)
   (local $neg f64)
   (local $k f64)
   (local $char i32)
+  ;; (call $logNumber (f64.const 0xcafebabe) )
+  ;; default params
   (if (i32.eqz (get_local $offset))(then
     (set_local $offset (get_global $-parsing_offset))
   ))
   (if (i32.eqz (get_local $base))(then
     (set_local $base (i32.const 10))
   ))
+  ;; read sign
   (set_local $neg (f64.const 1))
   (set_local $char (i32.load8_u (get_local $offset)))
   (if (i32.eq (get_local $char) (i32.const 0x2d))(then ;; -
@@ -943,15 +948,20 @@
     (set_local $neg (f64.const 1))
     (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
   ))
+  ;; read base
   (set_local $char (i32.load16_u (get_local $offset)))
   (if (i32.eq (get_local $char) (i32.const 0x5830))(then ;; 0X
     (set_local $base (i32.const 0x10))
+    (set_local $offset (i32.add (get_local $offset) (i32.const 2)))
   ))
   (if (i32.eq (get_local $char) (i32.const 0x7830))(then ;; 0x
     (set_local $base (i32.const 0x10))
+    (set_local $offset (i32.add (get_local $offset) (i32.const 2)))
   ))
+  ;; read integer
   (set_local $int (call $-parse_integer (get_local $offset) (get_local $base)))
   (set_local $offset (get_global $-parsing_offset))
+  ;; read decimals
   (set_local $char (i32.load8_u (get_local $offset)))
   (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
   (if (i32.eq (get_local $char) (i32.const 0x2e))(then ;; .
@@ -961,16 +971,18 @@
     (set_local $char (i32.load8_u (get_local $offset)))
     (set_local $offset (i32.add (get_local $offset) (i32.const 1)))
   ))
+  ;; read exponent
   (if (i32.ge_u (get_local $char) (i32.const 0x60))(then
     (set_local $char (i32.sub (get_local $char) (i32.const 0x20)))
   ))
   (if (i32.eq (get_local $char) (i32.const 0x45))(then ;; E
-    (set_local $char (i32.const 0x50))
+    (set_local $exp (call $-parse_integer (get_local $offset) (i32.const 0)))
   ))
   (if (i32.eq (get_local $char) (i32.const 0x50))(then ;; P
-    (set_local $exp (call $-parse_integer (get_local $offset) (get_local $base)))
+    (set_local $pow (call $-parse_integer (get_local $offset) (i32.const 0)))
   ))
 
+  ;; calc decimals
   (set_local $dresult (f64.convert_u/i64 (get_local $dec)))
   (set_local $declen (i64.sub (get_local $exp) (get_local $declen)))
   (if (i64.lt_s (get_local $declen) (i64.const 0))(then
@@ -993,6 +1005,7 @@
     (set_local $dresult (f64.mul (get_local $dresult) (get_local $k)))
   ))
 
+  ;; calc integer
   (set_local $iresult (f64.convert_u/i64 (get_local $int)))
   (if (i64.lt_s (get_local $exp) (i64.const 0))(then
     (set_local $k (f64.const -1))
@@ -1014,7 +1027,19 @@
     (set_local $iresult (f64.mul (get_local $iresult) (get_local $k)))
   ))
 
+  ;; apply power
+  (block(loop (br_if 1 (i64.ge_s (get_local $pow) (i64.const 0)))
+    (set_local $iresult (f64.div (get_local $iresult) (f64.const 2)))
+    (set_local $dresult (f64.div (get_local $dresult) (f64.const 2)))
+    (set_local $pow (i64.add (get_local $pow) (i64.const 1)))
+  (br 0)))
+  (block(loop (br_if 1 (i64.le_s (get_local $pow) (i64.const 0)))
+    (set_local $iresult (f64.mul (get_local $iresult) (f64.const 2)))
+    (set_local $dresult (f64.mul (get_local $dresult) (f64.const 2)))
+    (set_local $pow (i64.sub (get_local $pow) (i64.const 1)))
+  (br 0)))
 
+  ;; put it all together
   (f64.mul (get_local $neg) (f64.add (get_local $iresult) (get_local $dresult)))
 )
 
