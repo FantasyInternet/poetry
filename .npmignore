@@ -13,3 +13,4 @@ Thumbs.db
 *.kra-autosave.kra
 boot.*
 api.*
+old_*

@@ -10,7 +10,7 @@ Much features! Very hype!
  - Minimalistic syntax
  - Customizable
  - Full control of wasm imports and exports
- - Bundle multiple source files (including `.wa(s)t`-files!)
+ - Bundle multiple source files 
 
 Usage
 -----

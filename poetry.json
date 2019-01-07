@@ -3,6 +3,7 @@
     "./stdlib.wast"
   ],
   "metaphors": {
+    "asm": "@asm",
     "array": "@array",
     "binary": "@binary",
     "else": "@else",

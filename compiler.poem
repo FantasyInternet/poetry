@@ -1,0 +1,11 @@
+include "bnny/bnny.poem"
+
+~ filesystem callbacks
+var read
+var list
+var finished
+
+func compile filename callback
+  finished = callback
+
+
