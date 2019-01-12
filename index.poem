@@ -1,4 +1,5 @@
 export_memory "memory"
+export_table "table"
 import "env" "pushFromMemory" _push_from_memory 2
 import "env" "popToMemory"    _pop_to_memory 1
 import "env" "log"            _log 0
@@ -6,8 +7,24 @@ import "env" "logNumber"      logNumber 1
 import "env" "getInput"       _get_input 0 1
 import "env" "sendOutput"     _send_output 0
 import "env" "sendError"      _send_error 0
+import "env" "read"           _read 1 1
+import "env" "list"           _list 1 1
+import "env" "write"          _write 1 1
+import "env" "finish"         _finish 0
 
-include "./bnny.poem" bnny\
+include "./compiler.poem" poetry\
+
+export "init" init
+  get_input
+  poetry\read = #read
+  poetry\list = #list
+  poetry\compile (get_input) #finish
+  if poetry\error
+    send_error poetry\error
+
+func finish output
+  _push_from_memory (address_of output) (size_of output)
+  _finish
 
 func log msg
   _push_from_memory (address_of msg) (size_of msg)
@@ -26,7 +43,30 @@ func send_error data
   _push_from_memory (address_of data) (size_of data)
   _send_error
 
-export "init" init
-  send_output (bnny\assemble (get_input))
-  if bnny\error
-    send_error bnny\error
+
+var _callbacks = object
+
+func read path callback
+  _push_from_memory (address_of path) (size_of path)
+  var req_id = _read #_read_cb
+  _callbacks[""+req_id] = callback
+  return req_id
+
+func write path data callback
+  _push_from_memory (address_of path) (size_of path)
+  _push_from_memory (address_of data) (size_of data)
+  return _write callback
+
+func list path callback
+  _push_from_memory (address_of path) (size_of path)
+  var req_id = _list #_read_cb
+  _callbacks[""+req_id] = callback
+  return req_id
+
+func _read_cb success length req_id
+  var callback = _callbacks[""+req_id]
+  _callbacks[""+req_id] = null
+  if success
+    var data = binary_string length
+    _pop_to_memory (address_of data)
+  #callback success data req_id

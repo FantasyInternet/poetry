@@ -1,42 +1,32 @@
 const fs = require("fs")
 const assert = require("assert")
-const bnny = require("../index.js")
+const poetry = require("../index.js")
 
-describe("BnNY", function () {
+describe("Poetry", function () {
   this.timeout(32 * 1024)
-  describe("assemble", function () {
+  describe("compile", function () {
     const examples = "./test/examples/"
     let files = shuffle(fs.readdirSync(examples))
-    // files = [
-    //   "bnny.wast",
-    //   "invalid.wast",
-    //   "sum.wast",
-    //   "sum_.wast",
-    //   "testsnstuff.wast",
-    //   "cat.wast",
-    //   "cat_.wast",
-    // "numbers.wast"
-    // ]
 
     for (const file of files) {
-      if (file.includes(".wast")) {
+      if (file.includes(".poem")) {
         it(file, async function () {
           let target
           let result
           try {
-            result = new Buffer(await bnny(fs.readFileSync(examples + file)))
+            result = new Buffer(await poetry(examples + file))
           } catch (error) {
-            result = new Buffer(error.toString())
+            result = new Buffer(error.stack)
           }
           try {
-            target = fs.readFileSync(examples + file.replace(".wast", ".wasm"))
+            target = fs.readFileSync(examples + file.replace(".poem", ".txt"))
           } catch (error) {
-            fs.writeFileSync(examples + file.replace(".wast", ".wasm"), result)
+            fs.writeFileSync(examples + file.replace(".poem", ".txt"), result)
           }
           try {
             assert.deepEqual(result, target)
           } catch (error) {
-            fs.writeFileSync(examples + file.replace(".wast", ".json"), result)
+            fs.writeFileSync(examples + file.replace(".poem", ".json"), result)
             assert.deepEqual(result, target.slice(0, result.byteLength))
             console.warn("\t ↙` " + ("" + result.byteLength / target.byteLength * 100).substr(0, 4) + "% match")
           }

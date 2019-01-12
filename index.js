@@ -27,10 +27,14 @@ const imports = {
     },
     "sendError": () => {
       error = "" + new Buffer(bufferStack.pop())
+      errorCB(error)
     },
     "read": (callback) => {
       let reqId = nextReqId++
       let path = "" + new Buffer(bufferStack.pop())
+      if (typeof callback == "number") {
+        callback = poetry.table.get(callback)
+      }
       fs.readFile(path, (err, data) => {
         if (err) {
           callback(false, null, reqId)
@@ -78,7 +82,7 @@ const imports = {
       return reqId
     },
     "finish": () => {
-      let output = new Buffer(bufferStack.pop())
+      let output = bufferStack.pop()
       finishCB(output)
     }
   }
@@ -89,6 +93,14 @@ let input = ""
 let output
 let error
 let finishCB
+let errorCB
+function _compile() {
+  return new Promise((resolve, reject) => {
+    finishCB = resolve
+    errorCB = reject
+    poetry.init()
+  })
+}
 let poetry = WebAssembly.instantiate(fs.readFileSync(path.join(__dirname, "./index.wasm")), imports)
 poetry.then((result) => {
   poetry = result.instance.exports
@@ -100,7 +112,7 @@ async function compile(path, options = {}) {
   output = null
   if (!poetry.init) await poetry
   input = path
-  poetry.init()
+  output = await _compile()
   if (poetry.memory.buffer.byteLength !== last_mem) {
     last_mem = poetry.memory.buffer.byteLength
     // console.log("Memory:", last_mem / (1024 * 1024), "MiB")

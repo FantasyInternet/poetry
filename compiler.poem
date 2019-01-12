@@ -5,7 +5,16 @@ var read
 var list
 var finished
 
+var error
+
 func compile filename callback
   finished = callback
+  #read filename #load_file
 
+func load_file success data reqId
+  if success
+    #finished (string_upper data)
+  else
+    error = "sorry, sir! I just couldn't do it!"
+    #finished null
 

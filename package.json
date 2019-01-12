@@ -4,8 +4,9 @@
   "description": "Poetic programming language that compiles to webassembly",
   "main": "index.js",
   "scripts": {
-    "build": "node old_cli.js index.poem -t test/index.wast -b index.wasm --debug index.debug.json",
-    "test": "mocha"
+    "build": "node old_cli.js index.poem -t test/index.wast -b index.wasm --debug test/index.debug.json",
+    "test": "npm run build && mocha",
+    "watch": "watch \"npm test\" . --wait 16 -d"
   },
   "bin": {
     "poetry": "./cli.js"
@@ -29,10 +30,12 @@
   },
   "homepage": "https://github.com/FantasyInternet/poetry#readme",
   "dependencies": {
-    "commander": "^2.19.0"
+    "commander": "^2.19.0",
+    "wabt": "^1.0.6"
   },
   "devDependencies": {
     "bnny": "^0.10.0",
-    "mocha": "^5.2.0"
+    "mocha": "^5.2.0",
+    "watch": "^1.0.2"
   }
 }
