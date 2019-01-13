@@ -31,34 +31,34 @@
 
   (memory $-memory 2 )
   (data (i32.const 65536 ) "sorry, sir! I just couldn't do it!" )
-  (data (i32.const 65584 ) "(" )
-  (data (i32.const 65600 ) "'('" )
-  (data (i32.const 65616 ) "module" )
-  (data (i32.const 65632 ) "'module'" )
-  (data (i32.const 65656 ) "type" )
-  (data (i32.const 65672 ) "import" )
-  (data (i32.const 65688 ) "function" )
-  (data (i32.const 65712 ) "table" )
-  (data (i32.const 65728 ) "memory" )
-  (data (i32.const 65744 ) "global" )
-  (data (i32.const 65760 ) "export" )
-  (data (i32.const 65776 ) "start" )
-  (data (i32.const 65792 ) "element" )
-  (data (i32.const 65808 ) "code" )
-  (data (i32.const 65824 ) "data" )
-  (data (i32.const 65840 ) "name" )
-  (data (i32.const 65856 ) "locals" )
-  (data (i32.const 65872 ) "pos" )
-  (data (i32.const 65888 ) "line" )
-  (data (i32.const 65904 ) "column" )
-  (data (i32.const 65920 ) "! (<input>:" )
-  (data (i32.const 65944 ) ":" )
-  (data (i32.const 65960 ) ")" )
-  (data (i32.const 65976 ) "unexpected token '" )
-  (data (i32.const 66008 ) "'" )
-  (data (i32.const 66024 ) ", where " )
-  (data (i32.const 66048 ) " should be" )
-  (data (i32.const 66072 ) "\0a" )
+  (data (i32.const 65584 ) "pos" )
+  (data (i32.const 65600 ) "line" )
+  (data (i32.const 65616 ) "column" )
+  (data (i32.const 65632 ) "! (<input>:" )
+  (data (i32.const 65656 ) ":" )
+  (data (i32.const 65672 ) ")" )
+  (data (i32.const 65688 ) "unexpected token '" )
+  (data (i32.const 65720 ) "'" )
+  (data (i32.const 65736 ) ", where " )
+  (data (i32.const 65760 ) " should be" )
+  (data (i32.const 65784 ) "\0a" )
+  (data (i32.const 65800 ) "(" )
+  (data (i32.const 65816 ) "'('" )
+  (data (i32.const 65832 ) "module" )
+  (data (i32.const 65848 ) "'module'" )
+  (data (i32.const 65872 ) "type" )
+  (data (i32.const 65888 ) "import" )
+  (data (i32.const 65904 ) "function" )
+  (data (i32.const 65928 ) "table" )
+  (data (i32.const 65944 ) "memory" )
+  (data (i32.const 65960 ) "global" )
+  (data (i32.const 65976 ) "export" )
+  (data (i32.const 65992 ) "start" )
+  (data (i32.const 66008 ) "element" )
+  (data (i32.const 66024 ) "code" )
+  (data (i32.const 66040 ) "data" )
+  (data (i32.const 66056 ) "name" )
+  (data (i32.const 66072 ) "locals" )
   (data (i32.const 66088 ) "0123456789ABCDEFabcdef" )
   (data (i32.const 66120 ) ";" )
   (data (i32.const 66136 ) ";)" )
@@ -332,13 +332,10 @@
   (global $ns2\list
     (mut i32 )
     (i32.const 0 ) )
-  (global $ns2\finished
+  (global $ns2\finish
     (mut i32 )
     (i32.const 0 ) )
   (global $ns2\error
-    (mut i32 )
-    (i32.const 0 ) )
-  (global $ns3\error
     (mut i32 )
     (i32.const 0 ) )
   (global $ns3\src
@@ -356,19 +353,37 @@
   (global $ns3\pos_stack
     (mut i32 )
     (i32.const 0 ) )
-  (global $ns3\sections
+  (global $ns4\error
     (mut i32 )
     (i32.const 0 ) )
-  (global $ns3\wasm
+  (global $ns4\src
     (mut i32 )
     (i32.const 0 ) )
-  (global $ns3\local_names
+  (global $ns4\pos
     (mut i32 )
     (i32.const 0 ) )
-  (global $ns3\blocks
+  (global $ns4\line
     (mut i32 )
     (i32.const 0 ) )
-  (global $ns5\opcodes
+  (global $ns4\column
+    (mut i32 )
+    (i32.const 0 ) )
+  (global $ns4\pos_stack
+    (mut i32 )
+    (i32.const 0 ) )
+  (global $ns4\sections
+    (mut i32 )
+    (i32.const 0 ) )
+  (global $ns4\wasm
+    (mut i32 )
+    (i32.const 0 ) )
+  (global $ns4\local_names
+    (mut i32 )
+    (i32.const 0 ) )
+  (global $ns4\blocks
+    (mut i32 )
+    (i32.const 0 ) )
+  (global $ns6\opcodes
     (mut i32 )
     (i32.const 0 ) )
 
@@ -446,12 +461,6 @@
       (drop (call $ns2\compile
           (call $ns0\get_input )
           (call $-integer_u (i32.const 4 ) ) ) )
-      (if
-        (call $-truthy (get_global $ns2\error ) )
-        (then
-          (drop (call $ns0\send_error (get_global $ns2\error ) ) )
-          (set_local $-success (i32.const 1 ) ) )
-        (else (set_local $-success (i32.const 0 ) ) ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
@@ -464,10 +473,20 @@
     (local $-success i32 )
     (call $-funcstart )
     (block
-      (drop (call $ns0\_push_from_memory
-          (call $ns1\address_of (get_local $ns0\output ) )
-          (call $ns1\size_of (get_local $ns0\output ) ) ) )
-      (drop (call $ns0\_finish ) )
+      (if
+        (call $-truthy (get_global $ns2\error ) )
+        (then
+          (drop (call $ns0\send_error (get_global $ns2\error ) ) )
+          (set_local $-success (i32.const 1 ) ) )
+        (else (set_local $-success (i32.const 0 ) ) ) )
+      (if
+        (i32.eqz (get_local $-success ) )
+        (then
+          (drop (call $ns0\_push_from_memory
+              (call $ns1\address_of (get_local $ns0\output ) )
+              (call $ns1\size_of (get_local $ns0\output ) ) ) )
+          (drop (call $ns0\_finish ) )
+          (set_local $-success (i32.const 1 ) ) ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
@@ -2258,8 +2277,8 @@
     (call $-funcstart )
     (block
       (drop
-        (set_global $ns2\finished (get_local $ns2\callback ) )
-        (get_global $ns2\finished ) )
+        (set_global $ns2\finish (get_local $ns2\callback ) )
+        (get_global $ns2\finish ) )
       (drop (call_indirect
           (param i32 )
           (param i32 )
@@ -2292,7 +2311,7 @@
               (call $ns1\string_upper (get_local $ns2\data ) )
               (i32.add
                 (i32.const 1 )
-                (call $-i32_u (get_global $ns2\finished ) ) ) ) )
+                (call $-i32_u (get_global $ns2\finish ) ) ) ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (if
@@ -2307,313 +2326,24 @@
               (i32.const 0 )
               (i32.add
                 (i32.const 1 )
-                (call $-i32_u (get_global $ns2\finished ) ) ) ) )
+                (call $-i32_u (get_global $ns2\finish ) ) ) ) )
           (set_local $-success (i32.const 1 ) ) ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\assemble
+  ;; function $ns3\load_src
 
-  (func $ns3\assemble
-    (param $ns3\wast i32 )
+  (func $ns3\load_src
+    (param $ns3\_src i32 )
     (result i32 )
-    (local $ns3\token i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
-      (drop (call $ns3\reset ) )
       (drop
-        (set_global $ns3\src (get_local $ns3\wast ) )
+        (set_global $ns3\src (get_local $ns3\_src ) )
         (get_global $ns3\src ) )
-      (drop
-        (set_local $ns3\token (call $ns3\read_token ) )
-        (get_local $ns3\token ) )
-      (if
-        (call $-truthy (call $-unequal
-            (get_local $ns3\token )
-            (i32.const 9 ) ) )
-        (then
-          (set_local $-ret (call $ns3\unexpected
-              (get_local $ns3\token )
-              (i32.const 10 ) ) )
-          (br 1 )
-          (set_local $-success (i32.const 1 ) ) )
-        (else (set_local $-success (i32.const 0 ) ) ) )
-      (drop
-        (set_local $ns3\token (call $ns3\read_token ) )
-        (get_local $ns3\token ) )
-      (if
-        (call $-truthy (call $-unequal
-            (get_local $ns3\token )
-            (i32.const 11 ) ) )
-        (then
-          (set_local $-ret (call $ns3\unexpected
-              (get_local $ns3\token )
-              (i32.const 12 ) ) )
-          (br 1 )
-          (set_local $-success (i32.const 1 ) ) )
-        (else (set_local $-success (i32.const 0 ) ) ) )
-      (drop (call $ns3\read_names ) )
-      (if
-        (call $-truthy (get_global $ns3\error ) )
-        (then
-          (set_local $-ret (i32.const 0 ) )
-          (br 1 )
-          (set_local $-success (i32.const 1 ) ) )
-        (else (set_local $-success (i32.const 0 ) ) ) )
       (drop (call $ns3\rewind ) )
-      (drop
-        (set_local $ns3\token (call $ns3\read_token ) )
-        (get_local $ns3\token ) )
-      (if
-        (call $-truthy (call $-unequal
-            (get_local $ns3\token )
-            (i32.const 9 ) ) )
-        (then
-          (set_local $-ret (call $ns3\unexpected
-              (get_local $ns3\token )
-              (i32.const 10 ) ) )
-          (br 1 )
-          (set_local $-success (i32.const 1 ) ) )
-        (else (set_local $-success (i32.const 0 ) ) ) )
-      (drop
-        (set_local $ns3\token (call $ns3\read_token ) )
-        (get_local $ns3\token ) )
-      (if
-        (call $-truthy (call $-unequal
-            (get_local $ns3\token )
-            (i32.const 11 ) ) )
-        (then
-          (set_local $-ret (call $ns3\unexpected
-              (get_local $ns3\token )
-              (i32.const 12 ) ) )
-          (br 1 )
-          (set_local $-success (i32.const 1 ) ) )
-        (else (set_local $-success (i32.const 0 ) ) ) )
-      (drop (call $ns3\read_module ) )
-      (if
-        (call $-truthy (get_global $ns3\error ) )
-        (then
-          (set_local $-ret (i32.const 0 ) )
-          (br 1 )
-          (set_local $-success (i32.const 1 ) ) )
-        (else (set_local $-success (i32.const 0 ) ) ) )
-      (if
-        (i32.eqz (get_local $-success ) )
-        (then
-          (drop (call $ns3\write_module ) )
-          (drop (call $ns3\reset ) )
-          (drop
-            (set_global $ns3\src (i32.const 0 ) )
-            (get_global $ns3\src ) )
-          (drop
-            (set_global $ns3\sections (i32.const 0 ) )
-            (get_global $ns3\sections ) )
-          (set_local $-ret (get_global $ns3\wasm ) )
-          (br 1 )
-          (set_local $-success (i32.const 1 ) ) ) )
-      (set_local $-success (i32.const 1 ) ) )
-    (call $-funcend (get_local $-ret ) ) )
-
-  ;; function $ns3\reset
-
-  (func $ns3\reset
-    (result i32 )
-    (local $-obj0 i32 )
-    (local $-obj1 i32 )
-    (local $-ret i32 )
-    (local $-success i32 )
-    (call $-funcstart )
-    (block
-      (drop (call $ns3\rewind ) )
-      (drop
-        (set_global $ns3\error (i32.const 0 ) )
-        (get_global $ns3\error ) )
-      (drop
-        (set_global $ns3\sections
-          (tee_local $-obj0 (call $-new_value
-              (i32.const 5 )
-              (i32.const 0 ) ) )
-          (drop
-            (call $-set_to_obj
-              (get_local $-obj0 )
-              (i32.const 13 )
-              (call $-new_value
-                (i32.const 4 )
-                (i32.const 0 ) ) )
-            (call $-get_from_obj
-              (get_local $-obj0 )
-              (i32.const 13 ) ) )
-          (drop
-            (call $-set_to_obj
-              (get_local $-obj0 )
-              (i32.const 14 )
-              (call $-new_value
-                (i32.const 4 )
-                (i32.const 0 ) ) )
-            (call $-get_from_obj
-              (get_local $-obj0 )
-              (i32.const 14 ) ) )
-          (drop
-            (call $-set_to_obj
-              (get_local $-obj0 )
-              (i32.const 15 )
-              (call $-new_value
-                (i32.const 4 )
-                (i32.const 0 ) ) )
-            (call $-get_from_obj
-              (get_local $-obj0 )
-              (i32.const 15 ) ) )
-          (drop
-            (call $-set_to_obj
-              (get_local $-obj0 )
-              (i32.const 16 )
-              (call $-new_value
-                (i32.const 4 )
-                (i32.const 0 ) ) )
-            (call $-get_from_obj
-              (get_local $-obj0 )
-              (i32.const 16 ) ) )
-          (drop
-            (call $-set_to_obj
-              (get_local $-obj0 )
-              (i32.const 17 )
-              (call $-new_value
-                (i32.const 4 )
-                (i32.const 0 ) ) )
-            (call $-get_from_obj
-              (get_local $-obj0 )
-              (i32.const 17 ) ) )
-          (drop
-            (call $-set_to_obj
-              (get_local $-obj0 )
-              (i32.const 18 )
-              (call $-new_value
-                (i32.const 4 )
-                (i32.const 0 ) ) )
-            (call $-get_from_obj
-              (get_local $-obj0 )
-              (i32.const 18 ) ) )
-          (drop
-            (call $-set_to_obj
-              (get_local $-obj0 )
-              (i32.const 19 )
-              (call $-new_value
-                (i32.const 4 )
-                (i32.const 0 ) ) )
-            (call $-get_from_obj
-              (get_local $-obj0 )
-              (i32.const 19 ) ) )
-          (drop
-            (call $-set_to_obj
-              (get_local $-obj0 )
-              (i32.const 20 )
-              (i32.const 0 ) )
-            (call $-get_from_obj
-              (get_local $-obj0 )
-              (i32.const 20 ) ) )
-          (drop
-            (call $-set_to_obj
-              (get_local $-obj0 )
-              (i32.const 21 )
-              (call $-new_value
-                (i32.const 4 )
-                (i32.const 0 ) ) )
-            (call $-get_from_obj
-              (get_local $-obj0 )
-              (i32.const 21 ) ) )
-          (drop
-            (call $-set_to_obj
-              (get_local $-obj0 )
-              (i32.const 22 )
-              (call $-new_value
-                (i32.const 4 )
-                (i32.const 0 ) ) )
-            (call $-get_from_obj
-              (get_local $-obj0 )
-              (i32.const 22 ) ) )
-          (drop
-            (call $-set_to_obj
-              (get_local $-obj0 )
-              (i32.const 23 )
-              (call $-new_value
-                (i32.const 4 )
-                (i32.const 0 ) ) )
-            (call $-get_from_obj
-              (get_local $-obj0 )
-              (i32.const 23 ) ) )
-          (drop
-            (call $-set_to_obj
-              (get_local $-obj0 )
-              (i32.const 24 )
-              (tee_local $-obj1 (call $-new_value
-                  (i32.const 5 )
-                  (i32.const 0 ) ) )
-              (drop
-                (call $-set_to_obj
-                  (get_local $-obj1 )
-                  (i32.const 13 )
-                  (call $-new_value
-                    (i32.const 4 )
-                    (i32.const 0 ) ) )
-                (call $-get_from_obj
-                  (get_local $-obj1 )
-                  (i32.const 13 ) ) )
-              (drop
-                (call $-set_to_obj
-                  (get_local $-obj1 )
-                  (i32.const 15 )
-                  (call $-new_value
-                    (i32.const 4 )
-                    (i32.const 0 ) ) )
-                (call $-get_from_obj
-                  (get_local $-obj1 )
-                  (i32.const 15 ) ) )
-              (drop
-                (call $-set_to_obj
-                  (get_local $-obj1 )
-                  (i32.const 25 )
-                  (call $-new_value
-                    (i32.const 4 )
-                    (i32.const 0 ) ) )
-                (call $-get_from_obj
-                  (get_local $-obj1 )
-                  (i32.const 25 ) ) )
-              (drop
-                (call $-set_to_obj
-                  (get_local $-obj1 )
-                  (i32.const 18 )
-                  (call $-new_value
-                    (i32.const 4 )
-                    (i32.const 0 ) ) )
-                (call $-get_from_obj
-                  (get_local $-obj1 )
-                  (i32.const 18 ) ) )
-              (drop
-                (call $-set_to_obj
-                  (get_local $-obj1 )
-                  (i32.const 17 )
-                  (call $-new_value
-                    (i32.const 4 )
-                    (i32.const 0 ) ) )
-                (call $-get_from_obj
-                  (get_local $-obj1 )
-                  (i32.const 17 ) ) )
-              (drop
-                (call $-set_to_obj
-                  (get_local $-obj1 )
-                  (i32.const 16 )
-                  (call $-new_value
-                    (i32.const 4 )
-                    (i32.const 0 ) ) )
-                (call $-get_from_obj
-                  (get_local $-obj1 )
-                  (i32.const 16 ) ) ) )
-            (call $-get_from_obj
-              (get_local $-obj0 )
-              (i32.const 24 ) ) ) )
-        (get_global $ns3\sections ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
@@ -2660,33 +2390,33 @@
           (drop
             (call $-set_to_obj
               (get_local $-obj0 )
-              (i32.const 26 )
+              (i32.const 9 )
               (call $-add
                 (call $-number (f64.const 0 ) )
                 (get_global $ns3\pos ) ) )
             (call $-get_from_obj
               (get_local $-obj0 )
-              (i32.const 26 ) ) )
+              (i32.const 9 ) ) )
           (drop
             (call $-set_to_obj
               (get_local $-obj0 )
-              (i32.const 27 )
+              (i32.const 10 )
               (call $-add
                 (call $-number (f64.const 0 ) )
                 (get_global $ns3\line ) ) )
             (call $-get_from_obj
               (get_local $-obj0 )
-              (i32.const 27 ) ) )
+              (i32.const 10 ) ) )
           (drop
             (call $-set_to_obj
               (get_local $-obj0 )
-              (i32.const 28 )
+              (i32.const 11 )
               (call $-add
                 (call $-number (f64.const 0 ) )
                 (get_global $ns3\column ) ) )
             (call $-get_from_obj
               (get_local $-obj0 )
-              (i32.const 28 ) ) ) )
+              (i32.const 11 ) ) ) )
         (get_local $ns3\p ) )
       (drop (call $ns1\array_push
           (get_global $ns3\pos_stack )
@@ -2711,17 +2441,17 @@
       (drop
         (set_global $ns3\pos (call $-get_from_obj
             (get_local $ns3\p )
-            (i32.const 26 ) ) )
+            (i32.const 9 ) ) )
         (get_global $ns3\pos ) )
       (drop
         (set_global $ns3\line (call $-get_from_obj
             (get_local $ns3\p )
-            (i32.const 27 ) ) )
+            (i32.const 10 ) ) )
         (get_global $ns3\line ) )
       (drop
         (set_global $ns3\column (call $-get_from_obj
             (get_local $ns3\p )
-            (i32.const 28 ) ) )
+            (i32.const 11 ) ) )
         (get_global $ns3\column ) )
       (set_local $-ret (get_local $ns3\p ) )
       (br 0 )
@@ -2750,21 +2480,18 @@
     (local $-success i32 )
     (call $-funcstart )
     (block
-      (drop
-        (set_global $ns3\error (call $-or
-            (get_global $ns3\error )
+      (set_local $-ret (call $-add
+          (call $-add
             (call $-add
               (call $-add
                 (call $-add
-                  (call $-add
-                    (call $-add
-                      (get_local $ns3\message )
-                      (i32.const 29 ) )
-                    (get_global $ns3\line ) )
-                  (i32.const 30 ) )
-                (get_global $ns3\column ) )
-              (i32.const 31 ) ) ) )
-        (get_global $ns3\error ) )
+                  (get_local $ns3\message )
+                  (i32.const 12 ) )
+                (get_global $ns3\line ) )
+              (i32.const 13 ) )
+            (get_global $ns3\column ) )
+          (i32.const 14 ) ) )
+      (br 0 )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
@@ -2782,9 +2509,9 @@
       (drop
         (set_local $ns3\message (call $-add
             (call $-add
-              (i32.const 32 )
+              (i32.const 15 )
               (get_local $ns3\actual ) )
-            (i32.const 33 ) ) )
+            (i32.const 16 ) ) )
         (get_local $ns3\message ) )
       (if
         (call $-truthy (get_local $ns3\expected ) )
@@ -2794,13 +2521,14 @@
                 (get_local $ns3\message )
                 (call $-add
                   (call $-add
-                    (i32.const 34 )
+                    (i32.const 17 )
                     (get_local $ns3\expected ) )
-                  (i32.const 35 ) ) ) )
+                  (i32.const 18 ) ) ) )
             (get_local $ns3\message ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
-      (drop (call $ns3\croak (get_local $ns3\message ) ) )
+      (set_local $-ret (call $ns3\croak (get_local $ns3\message ) ) )
+      (br 0 )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
@@ -2862,7 +2590,7 @@
       (if
         (call $-truthy (call $-equal
             (get_local $ns3\char )
-            (i32.const 36 ) ) )
+            (i32.const 19 ) ) )
         (then
           (drop
             (set_global $ns3\line (call $-inc
@@ -2879,122 +2607,689 @@
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\backstep
+  ;; function $ns4\assemble
 
-  (func $ns3\backstep
+  (func $ns4\assemble
+    (param $ns4\wast i32 )
     (result i32 )
-    (local $ns3\char i32 )
+    (local $ns4\token i32 )
+    (local $-ret i32 )
+    (local $-success i32 )
+    (call $-funcstart )
+    (block
+      (drop (call $ns4\reset ) )
+      (drop
+        (set_global $ns4\src (get_local $ns4\wast ) )
+        (get_global $ns4\src ) )
+      (drop
+        (set_local $ns4\token (call $ns4\read_token ) )
+        (get_local $ns4\token ) )
+      (if
+        (call $-truthy (call $-unequal
+            (get_local $ns4\token )
+            (i32.const 20 ) ) )
+        (then
+          (set_local $-ret (call $ns4\unexpected
+              (get_local $ns4\token )
+              (i32.const 21 ) ) )
+          (br 1 )
+          (set_local $-success (i32.const 1 ) ) )
+        (else (set_local $-success (i32.const 0 ) ) ) )
+      (drop
+        (set_local $ns4\token (call $ns4\read_token ) )
+        (get_local $ns4\token ) )
+      (if
+        (call $-truthy (call $-unequal
+            (get_local $ns4\token )
+            (i32.const 22 ) ) )
+        (then
+          (set_local $-ret (call $ns4\unexpected
+              (get_local $ns4\token )
+              (i32.const 23 ) ) )
+          (br 1 )
+          (set_local $-success (i32.const 1 ) ) )
+        (else (set_local $-success (i32.const 0 ) ) ) )
+      (drop (call $ns4\read_names ) )
+      (if
+        (call $-truthy (get_global $ns4\error ) )
+        (then
+          (set_local $-ret (i32.const 0 ) )
+          (br 1 )
+          (set_local $-success (i32.const 1 ) ) )
+        (else (set_local $-success (i32.const 0 ) ) ) )
+      (drop (call $ns4\rewind ) )
+      (drop
+        (set_local $ns4\token (call $ns4\read_token ) )
+        (get_local $ns4\token ) )
+      (if
+        (call $-truthy (call $-unequal
+            (get_local $ns4\token )
+            (i32.const 20 ) ) )
+        (then
+          (set_local $-ret (call $ns4\unexpected
+              (get_local $ns4\token )
+              (i32.const 21 ) ) )
+          (br 1 )
+          (set_local $-success (i32.const 1 ) ) )
+        (else (set_local $-success (i32.const 0 ) ) ) )
+      (drop
+        (set_local $ns4\token (call $ns4\read_token ) )
+        (get_local $ns4\token ) )
+      (if
+        (call $-truthy (call $-unequal
+            (get_local $ns4\token )
+            (i32.const 22 ) ) )
+        (then
+          (set_local $-ret (call $ns4\unexpected
+              (get_local $ns4\token )
+              (i32.const 23 ) ) )
+          (br 1 )
+          (set_local $-success (i32.const 1 ) ) )
+        (else (set_local $-success (i32.const 0 ) ) ) )
+      (drop (call $ns4\read_module ) )
+      (if
+        (call $-truthy (get_global $ns4\error ) )
+        (then
+          (set_local $-ret (i32.const 0 ) )
+          (br 1 )
+          (set_local $-success (i32.const 1 ) ) )
+        (else (set_local $-success (i32.const 0 ) ) ) )
+      (if
+        (i32.eqz (get_local $-success ) )
+        (then
+          (drop (call $ns4\write_module ) )
+          (drop (call $ns4\reset ) )
+          (drop
+            (set_global $ns4\src (i32.const 0 ) )
+            (get_global $ns4\src ) )
+          (drop
+            (set_global $ns4\sections (i32.const 0 ) )
+            (get_global $ns4\sections ) )
+          (set_local $-ret (get_global $ns4\wasm ) )
+          (br 1 )
+          (set_local $-success (i32.const 1 ) ) ) )
+      (set_local $-success (i32.const 1 ) ) )
+    (call $-funcend (get_local $-ret ) ) )
+
+  ;; function $ns4\reset
+
+  (func $ns4\reset
+    (result i32 )
+    (local $-obj0 i32 )
+    (local $-obj1 i32 )
+    (local $-ret i32 )
+    (local $-success i32 )
+    (call $-funcstart )
+    (block
+      (drop (call $ns4\rewind ) )
+      (drop
+        (set_global $ns4\error (i32.const 0 ) )
+        (get_global $ns4\error ) )
+      (drop
+        (set_global $ns4\sections
+          (tee_local $-obj0 (call $-new_value
+              (i32.const 5 )
+              (i32.const 0 ) ) )
+          (drop
+            (call $-set_to_obj
+              (get_local $-obj0 )
+              (i32.const 24 )
+              (call $-new_value
+                (i32.const 4 )
+                (i32.const 0 ) ) )
+            (call $-get_from_obj
+              (get_local $-obj0 )
+              (i32.const 24 ) ) )
+          (drop
+            (call $-set_to_obj
+              (get_local $-obj0 )
+              (i32.const 25 )
+              (call $-new_value
+                (i32.const 4 )
+                (i32.const 0 ) ) )
+            (call $-get_from_obj
+              (get_local $-obj0 )
+              (i32.const 25 ) ) )
+          (drop
+            (call $-set_to_obj
+              (get_local $-obj0 )
+              (i32.const 26 )
+              (call $-new_value
+                (i32.const 4 )
+                (i32.const 0 ) ) )
+            (call $-get_from_obj
+              (get_local $-obj0 )
+              (i32.const 26 ) ) )
+          (drop
+            (call $-set_to_obj
+              (get_local $-obj0 )
+              (i32.const 27 )
+              (call $-new_value
+                (i32.const 4 )
+                (i32.const 0 ) ) )
+            (call $-get_from_obj
+              (get_local $-obj0 )
+              (i32.const 27 ) ) )
+          (drop
+            (call $-set_to_obj
+              (get_local $-obj0 )
+              (i32.const 28 )
+              (call $-new_value
+                (i32.const 4 )
+                (i32.const 0 ) ) )
+            (call $-get_from_obj
+              (get_local $-obj0 )
+              (i32.const 28 ) ) )
+          (drop
+            (call $-set_to_obj
+              (get_local $-obj0 )
+              (i32.const 29 )
+              (call $-new_value
+                (i32.const 4 )
+                (i32.const 0 ) ) )
+            (call $-get_from_obj
+              (get_local $-obj0 )
+              (i32.const 29 ) ) )
+          (drop
+            (call $-set_to_obj
+              (get_local $-obj0 )
+              (i32.const 30 )
+              (call $-new_value
+                (i32.const 4 )
+                (i32.const 0 ) ) )
+            (call $-get_from_obj
+              (get_local $-obj0 )
+              (i32.const 30 ) ) )
+          (drop
+            (call $-set_to_obj
+              (get_local $-obj0 )
+              (i32.const 31 )
+              (i32.const 0 ) )
+            (call $-get_from_obj
+              (get_local $-obj0 )
+              (i32.const 31 ) ) )
+          (drop
+            (call $-set_to_obj
+              (get_local $-obj0 )
+              (i32.const 32 )
+              (call $-new_value
+                (i32.const 4 )
+                (i32.const 0 ) ) )
+            (call $-get_from_obj
+              (get_local $-obj0 )
+              (i32.const 32 ) ) )
+          (drop
+            (call $-set_to_obj
+              (get_local $-obj0 )
+              (i32.const 33 )
+              (call $-new_value
+                (i32.const 4 )
+                (i32.const 0 ) ) )
+            (call $-get_from_obj
+              (get_local $-obj0 )
+              (i32.const 33 ) ) )
+          (drop
+            (call $-set_to_obj
+              (get_local $-obj0 )
+              (i32.const 34 )
+              (call $-new_value
+                (i32.const 4 )
+                (i32.const 0 ) ) )
+            (call $-get_from_obj
+              (get_local $-obj0 )
+              (i32.const 34 ) ) )
+          (drop
+            (call $-set_to_obj
+              (get_local $-obj0 )
+              (i32.const 35 )
+              (tee_local $-obj1 (call $-new_value
+                  (i32.const 5 )
+                  (i32.const 0 ) ) )
+              (drop
+                (call $-set_to_obj
+                  (get_local $-obj1 )
+                  (i32.const 24 )
+                  (call $-new_value
+                    (i32.const 4 )
+                    (i32.const 0 ) ) )
+                (call $-get_from_obj
+                  (get_local $-obj1 )
+                  (i32.const 24 ) ) )
+              (drop
+                (call $-set_to_obj
+                  (get_local $-obj1 )
+                  (i32.const 26 )
+                  (call $-new_value
+                    (i32.const 4 )
+                    (i32.const 0 ) ) )
+                (call $-get_from_obj
+                  (get_local $-obj1 )
+                  (i32.const 26 ) ) )
+              (drop
+                (call $-set_to_obj
+                  (get_local $-obj1 )
+                  (i32.const 36 )
+                  (call $-new_value
+                    (i32.const 4 )
+                    (i32.const 0 ) ) )
+                (call $-get_from_obj
+                  (get_local $-obj1 )
+                  (i32.const 36 ) ) )
+              (drop
+                (call $-set_to_obj
+                  (get_local $-obj1 )
+                  (i32.const 29 )
+                  (call $-new_value
+                    (i32.const 4 )
+                    (i32.const 0 ) ) )
+                (call $-get_from_obj
+                  (get_local $-obj1 )
+                  (i32.const 29 ) ) )
+              (drop
+                (call $-set_to_obj
+                  (get_local $-obj1 )
+                  (i32.const 28 )
+                  (call $-new_value
+                    (i32.const 4 )
+                    (i32.const 0 ) ) )
+                (call $-get_from_obj
+                  (get_local $-obj1 )
+                  (i32.const 28 ) ) )
+              (drop
+                (call $-set_to_obj
+                  (get_local $-obj1 )
+                  (i32.const 27 )
+                  (call $-new_value
+                    (i32.const 4 )
+                    (i32.const 0 ) ) )
+                (call $-get_from_obj
+                  (get_local $-obj1 )
+                  (i32.const 27 ) ) ) )
+            (call $-get_from_obj
+              (get_local $-obj0 )
+              (i32.const 35 ) ) ) )
+        (get_global $ns4\sections ) )
+      (set_local $-success (i32.const 1 ) ) )
+    (call $-funcend (get_local $-ret ) ) )
+
+  ;; function $ns4\rewind
+
+  (func $ns4\rewind
+    (result i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
       (drop
-        (set_global $ns3\pos (call $-inc
-            (get_global $ns3\pos )
-            (f64.const -1 ) ) )
-        (get_global $ns3\pos ) )
+        (set_global $ns4\pos (call $-number (f64.const 0 ) ) )
+        (get_global $ns4\pos ) )
       (drop
-        (set_global $ns3\column (call $-inc
-            (get_global $ns3\column )
-            (f64.const -1 ) ) )
-        (get_global $ns3\column ) )
+        (set_global $ns4\line (call $-number (f64.const 1 ) ) )
+        (get_global $ns4\line ) )
       (drop
-        (set_local $ns3\char (call $ns3\peek_char ) )
-        (get_local $ns3\char ) )
-      (if
-        (call $-truthy (call $-equal
-            (get_local $ns3\char )
-            (i32.const 36 ) ) )
-        (then
+        (set_global $ns4\column (call $-number (f64.const 0 ) ) )
+        (get_global $ns4\column ) )
+      (drop
+        (set_global $ns4\pos_stack (call $-new_value
+            (i32.const 4 )
+            (i32.const 0 ) ) )
+        (get_global $ns4\pos_stack ) )
+      (set_local $-success (i32.const 1 ) ) )
+    (call $-funcend (get_local $-ret ) ) )
+
+  ;; function $ns4\save_pos
+
+  (func $ns4\save_pos
+    (result i32 )
+    (local $ns4\p i32 )
+    (local $-obj0 i32 )
+    (local $-ret i32 )
+    (local $-success i32 )
+    (call $-funcstart )
+    (block
+      (drop
+        (set_local $ns4\p
+          (tee_local $-obj0 (call $-new_value
+              (i32.const 5 )
+              (i32.const 0 ) ) )
           (drop
-            (set_global $ns3\line (call $-inc
-                (get_global $ns3\line )
-                (f64.const -1 ) ) )
-            (get_global $ns3\line ) )
+            (call $-set_to_obj
+              (get_local $-obj0 )
+              (i32.const 9 )
+              (call $-add
+                (call $-number (f64.const 0 ) )
+                (get_global $ns4\pos ) ) )
+            (call $-get_from_obj
+              (get_local $-obj0 )
+              (i32.const 9 ) ) )
           (drop
-            (set_global $ns3\column (call $-number (f64.const 0xfffffff ) ) )
-            (get_global $ns3\column ) )
-          (set_local $-success (i32.const 1 ) ) )
-        (else (set_local $-success (i32.const 0 ) ) ) )
-      (set_local $-ret (get_local $ns3\char ) )
+            (call $-set_to_obj
+              (get_local $-obj0 )
+              (i32.const 10 )
+              (call $-add
+                (call $-number (f64.const 0 ) )
+                (get_global $ns4\line ) ) )
+            (call $-get_from_obj
+              (get_local $-obj0 )
+              (i32.const 10 ) ) )
+          (drop
+            (call $-set_to_obj
+              (get_local $-obj0 )
+              (i32.const 11 )
+              (call $-add
+                (call $-number (f64.const 0 ) )
+                (get_global $ns4\column ) ) )
+            (call $-get_from_obj
+              (get_local $-obj0 )
+              (i32.const 11 ) ) ) )
+        (get_local $ns4\p ) )
+      (drop (call $ns1\array_push
+          (get_global $ns4\pos_stack )
+          (get_local $ns4\p ) ) )
+      (set_local $-ret (get_local $ns4\p ) )
       (br 0 )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\read_raw_token
+  ;; function $ns4\restore_pos
 
-  (func $ns3\read_raw_token
+  (func $ns4\restore_pos
     (result i32 )
-    (local $ns3\hexdigits i32 )
-    (local $ns3\token i32 )
-    (local $ns3\char i32 )
-    (local $ns3\illegals i32 )
+    (local $ns4\p i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
       (drop
-        (set_local $ns3\hexdigits (i32.const 37 ) )
-        (get_local $ns3\hexdigits ) )
-      (drop (get_local $ns3\token ) )
+        (set_local $ns4\p (call $ns1\array_pop (get_global $ns4\pos_stack ) ) )
+        (get_local $ns4\p ) )
       (drop
-        (set_local $ns3\char (call $ns3\peek_char ) )
-        (get_local $ns3\char ) )
+        (set_global $ns4\pos (call $-get_from_obj
+            (get_local $ns4\p )
+            (i32.const 9 ) ) )
+        (get_global $ns4\pos ) )
+      (drop
+        (set_global $ns4\line (call $-get_from_obj
+            (get_local $ns4\p )
+            (i32.const 10 ) ) )
+        (get_global $ns4\line ) )
+      (drop
+        (set_global $ns4\column (call $-get_from_obj
+            (get_local $ns4\p )
+            (i32.const 11 ) ) )
+        (get_global $ns4\column ) )
+      (set_local $-ret (get_local $ns4\p ) )
+      (br 0 )
+      (set_local $-success (i32.const 1 ) ) )
+    (call $-funcend (get_local $-ret ) ) )
+
+  ;; function $ns4\pop_pos
+
+  (func $ns4\pop_pos
+    (result i32 )
+    (local $-ret i32 )
+    (local $-success i32 )
+    (call $-funcstart )
+    (block
+      (set_local $-ret (call $ns1\array_pop (get_global $ns4\pos_stack ) ) )
+      (br 0 )
+      (set_local $-success (i32.const 1 ) ) )
+    (call $-funcend (get_local $-ret ) ) )
+
+  ;; function $ns4\croak
+
+  (func $ns4\croak
+    (param $ns4\message i32 )
+    (result i32 )
+    (local $-ret i32 )
+    (local $-success i32 )
+    (call $-funcstart )
+    (block
+      (drop
+        (set_global $ns4\error (call $-or
+            (get_global $ns4\error )
+            (call $-add
+              (call $-add
+                (call $-add
+                  (call $-add
+                    (call $-add
+                      (get_local $ns4\message )
+                      (i32.const 12 ) )
+                    (get_global $ns4\line ) )
+                  (i32.const 13 ) )
+                (get_global $ns4\column ) )
+              (i32.const 14 ) ) ) )
+        (get_global $ns4\error ) )
+      (set_local $-success (i32.const 1 ) ) )
+    (call $-funcend (get_local $-ret ) ) )
+
+  ;; function $ns4\unexpected
+
+  (func $ns4\unexpected
+    (param $ns4\actual i32 )
+    (param $ns4\expected i32 )
+    (result i32 )
+    (local $ns4\message i32 )
+    (local $-ret i32 )
+    (local $-success i32 )
+    (call $-funcstart )
+    (block
+      (drop
+        (set_local $ns4\message (call $-add
+            (call $-add
+              (i32.const 15 )
+              (get_local $ns4\actual ) )
+            (i32.const 16 ) ) )
+        (get_local $ns4\message ) )
+      (if
+        (call $-truthy (get_local $ns4\expected ) )
+        (then
+          (drop
+            (set_local $ns4\message (call $-add
+                (get_local $ns4\message )
+                (call $-add
+                  (call $-add
+                    (i32.const 17 )
+                    (get_local $ns4\expected ) )
+                  (i32.const 18 ) ) ) )
+            (get_local $ns4\message ) )
+          (set_local $-success (i32.const 1 ) ) )
+        (else (set_local $-success (i32.const 0 ) ) ) )
+      (drop (call $ns4\croak (get_local $ns4\message ) ) )
+      (set_local $-success (i32.const 1 ) ) )
+    (call $-funcend (get_local $-ret ) ) )
+
+  ;; function $ns4\is_eof
+
+  (func $ns4\is_eof
+    (result i32 )
+    (local $-ret i32 )
+    (local $-success i32 )
+    (call $-funcstart )
+    (block
+      (set_local $-ret (call $-ge
+          (get_global $ns4\pos )
+          (call $ns1\size_of (get_global $ns4\src ) ) ) )
+      (br 0 )
+      (set_local $-success (i32.const 1 ) ) )
+    (call $-funcend (get_local $-ret ) ) )
+
+  ;; function $ns4\peek_char
+
+  (func $ns4\peek_char
+    (result i32 )
+    (local $-ret i32 )
+    (local $-success i32 )
+    (call $-funcstart )
+    (block
+      (set_local $-ret (call $-add
+          (i32.const 3 )
+          (call $ns1\binary_slice
+            (get_global $ns4\src )
+            (get_global $ns4\pos )
+            (call $-number (f64.const 1 ) ) ) ) )
+      (br 0 )
+      (set_local $-success (i32.const 1 ) ) )
+    (call $-funcend (get_local $-ret ) ) )
+
+  ;; function $ns4\read_char
+
+  (func $ns4\read_char
+    (result i32 )
+    (local $ns4\char i32 )
+    (local $-ret i32 )
+    (local $-success i32 )
+    (call $-funcstart )
+    (block
+      (drop
+        (set_local $ns4\char (call $ns4\peek_char ) )
+        (get_local $ns4\char ) )
+      (drop
+        (set_global $ns4\pos (call $-inc
+            (get_global $ns4\pos )
+            (f64.const 1 ) ) )
+        (get_global $ns4\pos ) )
+      (drop
+        (set_global $ns4\column (call $-inc
+            (get_global $ns4\column )
+            (f64.const 1 ) ) )
+        (get_global $ns4\column ) )
+      (if
+        (call $-truthy (call $-equal
+            (get_local $ns4\char )
+            (i32.const 19 ) ) )
+        (then
+          (drop
+            (set_global $ns4\line (call $-inc
+                (get_global $ns4\line )
+                (f64.const 1 ) ) )
+            (get_global $ns4\line ) )
+          (drop
+            (set_global $ns4\column (call $-number (f64.const 0 ) ) )
+            (get_global $ns4\column ) )
+          (set_local $-success (i32.const 1 ) ) )
+        (else (set_local $-success (i32.const 0 ) ) ) )
+      (set_local $-ret (get_local $ns4\char ) )
+      (br 0 )
+      (set_local $-success (i32.const 1 ) ) )
+    (call $-funcend (get_local $-ret ) ) )
+
+  ;; function $ns4\backstep
+
+  (func $ns4\backstep
+    (result i32 )
+    (local $ns4\char i32 )
+    (local $-ret i32 )
+    (local $-success i32 )
+    (call $-funcstart )
+    (block
+      (drop
+        (set_global $ns4\pos (call $-inc
+            (get_global $ns4\pos )
+            (f64.const -1 ) ) )
+        (get_global $ns4\pos ) )
+      (drop
+        (set_global $ns4\column (call $-inc
+            (get_global $ns4\column )
+            (f64.const -1 ) ) )
+        (get_global $ns4\column ) )
+      (drop
+        (set_local $ns4\char (call $ns4\peek_char ) )
+        (get_local $ns4\char ) )
+      (if
+        (call $-truthy (call $-equal
+            (get_local $ns4\char )
+            (i32.const 19 ) ) )
+        (then
+          (drop
+            (set_global $ns4\line (call $-inc
+                (get_global $ns4\line )
+                (f64.const -1 ) ) )
+            (get_global $ns4\line ) )
+          (drop
+            (set_global $ns4\column (call $-number (f64.const 0xfffffff ) ) )
+            (get_global $ns4\column ) )
+          (set_local $-success (i32.const 1 ) ) )
+        (else (set_local $-success (i32.const 0 ) ) ) )
+      (set_local $-ret (get_local $ns4\char ) )
+      (br 0 )
+      (set_local $-success (i32.const 1 ) ) )
+    (call $-funcend (get_local $-ret ) ) )
+
+  ;; function $ns4\read_raw_token
+
+  (func $ns4\read_raw_token
+    (result i32 )
+    (local $ns4\hexdigits i32 )
+    (local $ns4\token i32 )
+    (local $ns4\char i32 )
+    (local $ns4\illegals i32 )
+    (local $-ret i32 )
+    (local $-success i32 )
+    (call $-funcstart )
+    (block
+      (drop
+        (set_local $ns4\hexdigits (i32.const 37 ) )
+        (get_local $ns4\hexdigits ) )
+      (drop (get_local $ns4\token ) )
+      (drop
+        (set_local $ns4\char (call $ns4\peek_char ) )
+        (get_local $ns4\char ) )
       (block (loop
           (br_if 1 (call $-falsy (call $-and
                 (call $-le
                   (call $ns1\char_code
-                    (get_local $ns3\char )
+                    (get_local $ns4\char )
                     (i32.const 0 ) )
                   (call $-number (f64.const 0x20 ) ) )
                 (call $-equal
                   (i32.const 1 )
-                  (call $ns3\is_eof ) ) ) ) )
+                  (call $ns4\is_eof ) ) ) ) )
           (block
-            (drop (call $ns3\read_char ) )
+            (drop (call $ns4\read_char ) )
             (drop
-              (set_local $ns3\char (call $ns3\peek_char ) )
-              (get_local $ns3\char ) )
+              (set_local $ns4\char (call $ns4\peek_char ) )
+              (get_local $ns4\char ) )
             (set_local $-success (i32.const 1 ) ) )
           (br 0 ) ) )
       (if
         (call $-truthy (call $-equal
-            (get_local $ns3\char )
-            (i32.const 9 ) ) )
+            (get_local $ns4\char )
+            (i32.const 20 ) ) )
         (then
           (drop
-            (set_local $ns3\token (call $ns3\read_char ) )
-            (get_local $ns3\token ) )
+            (set_local $ns4\token (call $ns4\read_char ) )
+            (get_local $ns4\token ) )
           (drop
-            (set_local $ns3\char (call $ns3\peek_char ) )
-            (get_local $ns3\char ) )
+            (set_local $ns4\char (call $ns4\peek_char ) )
+            (get_local $ns4\char ) )
           (if
             (call $-truthy (call $-equal
-                (get_local $ns3\char )
+                (get_local $ns4\char )
                 (i32.const 38 ) ) )
             (then
               (drop
-                (set_local $ns3\token (get_local $ns3\char ) )
-                (get_local $ns3\token ) )
+                (set_local $ns4\token (get_local $ns4\char ) )
+                (get_local $ns4\token ) )
               (block (loop
                   (br_if 1 (call $-falsy (call $-and
                         (call $-equal
                           (call $ns1\binary_search
-                            (get_local $ns3\token )
+                            (get_local $ns4\token )
                             (i32.const 39 )
                             (i32.const 0 ) )
                           (i32.const 0 ) )
                         (call $-equal
                           (i32.const 1 )
-                          (call $ns3\is_eof ) ) ) ) )
+                          (call $ns4\is_eof ) ) ) ) )
                   (block
                     (drop
-                      (set_local $ns3\char (call $ns3\read_char ) )
-                      (get_local $ns3\char ) )
+                      (set_local $ns4\char (call $ns4\read_char ) )
+                      (get_local $ns4\char ) )
                     (drop (call $ns1\binary_write
-                        (get_local $ns3\token )
-                        (call $ns1\size_of (get_local $ns3\token ) )
-                        (get_local $ns3\char ) ) )
+                        (get_local $ns4\token )
+                        (call $ns1\size_of (get_local $ns4\token ) )
+                        (get_local $ns4\char ) ) )
                     (set_local $-success (i32.const 1 ) ) )
                   (br 0 ) ) )
               (set_local $-success (i32.const 1 ) ) )
@@ -3005,64 +3300,64 @@
         (i32.and
           (i32.eqz (get_local $-success ) )
           (call $-truthy (call $-equal
-              (get_local $ns3\char )
-              (i32.const 31 ) ) ) )
+              (get_local $ns4\char )
+              (i32.const 14 ) ) ) )
         (then
           (drop
-            (set_local $ns3\token (call $ns3\read_char ) )
-            (get_local $ns3\token ) )
+            (set_local $ns4\token (call $ns4\read_char ) )
+            (get_local $ns4\token ) )
           (set_local $-success (i32.const 1 ) ) ) )
       (if
         (i32.and
           (i32.eqz (get_local $-success ) )
           (call $-truthy (call $-equal
-              (get_local $ns3\char )
+              (get_local $ns4\char )
               (i32.const 40 ) ) ) )
         (then
           (drop
-            (set_local $ns3\token (call $ns3\read_char ) )
-            (get_local $ns3\token ) )
+            (set_local $ns4\token (call $ns4\read_char ) )
+            (get_local $ns4\token ) )
           (drop
-            (set_local $ns3\char (call $ns3\read_char ) )
-            (get_local $ns3\char ) )
+            (set_local $ns4\char (call $ns4\read_char ) )
+            (get_local $ns4\char ) )
           (block (loop
               (br_if 1 (call $-falsy (call $-and
                     (call $-unequal
-                      (get_local $ns3\char )
+                      (get_local $ns4\char )
                       (i32.const 40 ) )
                     (call $-equal
                       (i32.const 1 )
-                      (call $ns3\is_eof ) ) ) ) )
+                      (call $ns4\is_eof ) ) ) ) )
               (block
                 (if
                   (call $-truthy (call $-equal
-                      (get_local $ns3\char )
+                      (get_local $ns4\char )
                       (i32.const 41 ) ) )
                   (then
                     (drop
-                      (set_local $ns3\char (call $ns3\read_char ) )
-                      (get_local $ns3\char ) )
+                      (set_local $ns4\char (call $ns4\read_char ) )
+                      (get_local $ns4\char ) )
                     (if
                       (call $-truthy (call $-equal
-                          (get_local $ns3\char )
+                          (get_local $ns4\char )
                           (i32.const 42 ) ) )
                       (then
                         (drop (call $ns1\binary_write
-                            (get_local $ns3\token )
-                            (call $ns1\size_of (get_local $ns3\token ) )
-                            (i32.const 36 ) ) )
+                            (get_local $ns4\token )
+                            (call $ns1\size_of (get_local $ns4\token ) )
+                            (i32.const 19 ) ) )
                         (set_local $-success (i32.const 1 ) ) )
                       (else (set_local $-success (i32.const 0 ) ) ) )
                     (if
                       (i32.and
                         (i32.eqz (get_local $-success ) )
                         (call $-truthy (call $-equal
-                            (get_local $ns3\char )
+                            (get_local $ns4\char )
                             (i32.const 43 ) ) ) )
                       (then
                         (drop (call $ns1\binary_write
-                            (get_local $ns3\token )
-                            (call $ns1\size_of (get_local $ns3\token ) )
+                            (get_local $ns4\token )
+                            (call $ns1\size_of (get_local $ns4\token ) )
                             (i32.const 44 ) ) )
                         (set_local $-success (i32.const 1 ) ) ) )
                     (if
@@ -3070,28 +3365,28 @@
                         (i32.eqz (get_local $-success ) )
                         (call $-truthy (call $-unequal
                             (call $ns1\binary_search
-                              (get_local $ns3\hexdigits )
-                              (get_local $ns3\char )
+                              (get_local $ns4\hexdigits )
+                              (get_local $ns4\char )
                               (i32.const 0 ) )
                             (i32.const 0 ) ) ) )
                       (then
                         (drop
-                          (set_local $ns3\char (call $-add
-                              (get_local $ns3\char )
-                              (call $ns3\read_char ) ) )
-                          (get_local $ns3\char ) )
+                          (set_local $ns4\char (call $-add
+                              (get_local $ns4\char )
+                              (call $ns4\read_char ) ) )
+                          (get_local $ns4\char ) )
                         (drop (call $ns1\binary_write
-                            (get_local $ns3\token )
-                            (call $ns1\size_of (get_local $ns3\token ) )
-                            (call $ns4\from_hex (get_local $ns3\char ) ) ) )
+                            (get_local $ns4\token )
+                            (call $ns1\size_of (get_local $ns4\token ) )
+                            (call $ns5\from_hex (get_local $ns4\char ) ) ) )
                         (set_local $-success (i32.const 1 ) ) ) )
                     (if
                       (i32.eqz (get_local $-success ) )
                       (then
                         (drop (call $ns1\binary_write
-                            (get_local $ns3\token )
-                            (call $ns1\size_of (get_local $ns3\token ) )
-                            (get_local $ns3\char ) ) )
+                            (get_local $ns4\token )
+                            (call $ns1\size_of (get_local $ns4\token ) )
+                            (get_local $ns4\char ) ) )
                         (set_local $-success (i32.const 1 ) ) ) )
                     (set_local $-success (i32.const 1 ) ) )
                   (else (set_local $-success (i32.const 0 ) ) ) )
@@ -3099,13 +3394,13 @@
                   (i32.eqz (get_local $-success ) )
                   (then
                     (drop (call $ns1\binary_write
-                        (get_local $ns3\token )
-                        (call $ns1\size_of (get_local $ns3\token ) )
-                        (get_local $ns3\char ) ) )
+                        (get_local $ns4\token )
+                        (call $ns1\size_of (get_local $ns4\token ) )
+                        (get_local $ns4\char ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (drop
-                  (set_local $ns3\char (call $ns3\read_char ) )
-                  (get_local $ns3\char ) )
+                  (set_local $ns4\char (call $ns4\read_char ) )
+                  (get_local $ns4\char ) )
                 (set_local $-success (i32.const 1 ) ) )
               (br 0 ) ) )
           (set_local $-success (i32.const 1 ) ) ) )
@@ -3113,36 +3408,36 @@
         (i32.and
           (i32.eqz (get_local $-success ) )
           (call $-truthy (call $-equal
-              (get_local $ns3\char )
+              (get_local $ns4\char )
               (i32.const 38 ) ) ) )
         (then
           (drop
-            (set_local $ns3\token (call $ns3\read_char ) )
-            (get_local $ns3\token ) )
+            (set_local $ns4\token (call $ns4\read_char ) )
+            (get_local $ns4\token ) )
           (drop
-            (set_local $ns3\char (call $ns3\peek_char ) )
-            (get_local $ns3\char ) )
+            (set_local $ns4\char (call $ns4\peek_char ) )
+            (get_local $ns4\char ) )
           (if
             (call $-truthy (call $-equal
-                (get_local $ns3\char )
+                (get_local $ns4\char )
                 (i32.const 38 ) ) )
             (then
               (block (loop
                   (br_if 1 (call $-falsy (call $-and
                         (call $-unequal
-                          (get_local $ns3\char )
-                          (i32.const 36 ) )
+                          (get_local $ns4\char )
+                          (i32.const 19 ) )
                         (call $-equal
                           (i32.const 1 )
-                          (call $ns3\is_eof ) ) ) ) )
+                          (call $ns4\is_eof ) ) ) ) )
                   (block
                     (drop
-                      (set_local $ns3\char (call $ns3\read_char ) )
-                      (get_local $ns3\char ) )
+                      (set_local $ns4\char (call $ns4\read_char ) )
+                      (get_local $ns4\char ) )
                     (drop (call $ns1\binary_write
-                        (get_local $ns3\token )
-                        (call $ns1\size_of (get_local $ns3\token ) )
-                        (get_local $ns3\char ) ) )
+                        (get_local $ns4\token )
+                        (call $ns1\size_of (get_local $ns4\token ) )
+                        (get_local $ns4\char ) ) )
                     (set_local $-success (i32.const 1 ) ) )
                   (br 0 ) ) )
               (set_local $-success (i32.const 1 ) ) )
@@ -3152,135 +3447,135 @@
         (i32.eqz (get_local $-success ) )
         (then
           (drop
-            (set_local $ns3\token (call $-add
+            (set_local $ns4\token (call $-add
                 (i32.const 3 )
                 (call $-new_value
                   (i32.const 6 )
                   (i32.const 0 ) ) ) )
-            (get_local $ns3\token ) )
+            (get_local $ns4\token ) )
           (drop
-            (set_local $ns3\illegals (i32.const 45 ) )
-            (get_local $ns3\illegals ) )
+            (set_local $ns4\illegals (i32.const 45 ) )
+            (get_local $ns4\illegals ) )
           (block (loop
               (br_if 1 (call $-falsy (call $-and
                     (call $-and
                       (call $-gt
                         (call $ns1\char_code
-                          (get_local $ns3\char )
+                          (get_local $ns4\char )
                           (i32.const 0 ) )
                         (call $-number (f64.const 0x20 ) ) )
                       (call $-equal
                         (i32.const 1 )
-                        (call $ns3\is_eof ) ) )
+                        (call $ns4\is_eof ) ) )
                     (call $-equal
                       (call $ns1\binary_search
-                        (get_local $ns3\illegals )
-                        (get_local $ns3\char )
+                        (get_local $ns4\illegals )
+                        (get_local $ns4\char )
                         (i32.const 0 ) )
                       (i32.const 0 ) ) ) ) )
               (block
                 (drop (call $ns1\binary_write
-                    (get_local $ns3\token )
-                    (call $ns1\size_of (get_local $ns3\token ) )
-                    (get_local $ns3\char ) ) )
+                    (get_local $ns4\token )
+                    (call $ns1\size_of (get_local $ns4\token ) )
+                    (get_local $ns4\char ) ) )
                 (drop
-                  (set_global $ns3\pos (call $-inc
-                      (get_global $ns3\pos )
+                  (set_global $ns4\pos (call $-inc
+                      (get_global $ns4\pos )
                       (f64.const 1 ) ) )
-                  (get_global $ns3\pos ) )
+                  (get_global $ns4\pos ) )
                 (drop
-                  (set_local $ns3\char (call $ns3\peek_char ) )
-                  (get_local $ns3\char ) )
+                  (set_local $ns4\char (call $ns4\peek_char ) )
+                  (get_local $ns4\char ) )
                 (set_local $-success (i32.const 1 ) ) )
               (br 0 ) ) )
           (set_local $-success (i32.const 1 ) ) ) )
-      (set_local $-ret (get_local $ns3\token ) )
+      (set_local $-ret (get_local $ns4\token ) )
       (br 0 )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\read_token
+  ;; function $ns4\read_token
 
-  (func $ns3\read_token
+  (func $ns4\read_token
     (result i32 )
-    (local $ns3\token i32 )
+    (local $ns4\token i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
       (drop
-        (set_local $ns3\token (i32.const 46 ) )
-        (get_local $ns3\token ) )
+        (set_local $ns4\token (i32.const 46 ) )
+        (get_local $ns4\token ) )
       (block (loop
           (br_if 1 (call $-falsy (call $-equal
                 (call $ns1\binary_search
-                  (get_local $ns3\token )
+                  (get_local $ns4\token )
                   (i32.const 46 )
                   (i32.const 0 ) )
                 (call $-number (f64.const 0 ) ) ) ) )
           (block
             (drop
-              (set_local $ns3\token (call $ns3\read_raw_token ) )
-              (get_local $ns3\token ) )
+              (set_local $ns4\token (call $ns4\read_raw_token ) )
+              (get_local $ns4\token ) )
             (set_local $-success (i32.const 1 ) ) )
           (br 0 ) ) )
       (if
         (call $-truthy (call $-equal
-            (get_local $ns3\token )
-            (i32.const 31 ) ) )
+            (get_local $ns4\token )
+            (i32.const 14 ) ) )
         (then
-          (drop (call $ns3\backstep ) )
+          (drop (call $ns4\backstep ) )
           (drop
-            (set_local $ns3\token (i32.const 0 ) )
-            (get_local $ns3\token ) )
+            (set_local $ns4\token (i32.const 0 ) )
+            (get_local $ns4\token ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
-      (set_local $-ret (get_local $ns3\token ) )
+      (set_local $-ret (get_local $ns4\token ) )
       (br 0 )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\exit_parens
+  ;; function $ns4\exit_parens
 
-  (func $ns3\exit_parens
+  (func $ns4\exit_parens
     (result i32 )
-    (local $ns3\token i32 )
+    (local $ns4\token i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
       (drop
-        (set_local $ns3\token (i32.const 46 ) )
-        (get_local $ns3\token ) )
+        (set_local $ns4\token (i32.const 46 ) )
+        (get_local $ns4\token ) )
       (block (loop
           (br_if 1 (call $-falsy (call $-and
-                (get_local $ns3\token )
+                (get_local $ns4\token )
                 (call $-unequal
-                  (get_local $ns3\token )
-                  (i32.const 31 ) ) ) ) )
+                  (get_local $ns4\token )
+                  (i32.const 14 ) ) ) ) )
           (block
             (drop
-              (set_local $ns3\token (call $ns3\read_raw_token ) )
-              (get_local $ns3\token ) )
+              (set_local $ns4\token (call $ns4\read_raw_token ) )
+              (get_local $ns4\token ) )
             (if
               (call $-truthy (call $-equal
-                  (get_local $ns3\token )
-                  (i32.const 9 ) ) )
+                  (get_local $ns4\token )
+                  (i32.const 20 ) ) )
               (then
-                (drop (call $ns3\exit_parens ) )
+                (drop (call $ns4\exit_parens ) )
                 (set_local $-success (i32.const 1 ) ) )
               (else (set_local $-success (i32.const 0 ) ) ) )
             (set_local $-success (i32.const 1 ) ) )
           (br 0 ) ) )
-      (set_local $-ret (get_local $ns3\token ) )
+      (set_local $-ret (get_local $ns4\token ) )
       (br 0 )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\is_name
+  ;; function $ns4\is_name
 
-  (func $ns3\is_name
-    (param $ns3\token i32 )
+  (func $ns4\is_name
+    (param $ns4\token i32 )
     (result i32 )
     (local $-ret i32 )
     (local $-success i32 )
@@ -3288,7 +3583,7 @@
     (block
       (set_local $-ret (call $-equal
           (call $ns1\binary_search
-            (get_local $ns3\token )
+            (get_local $ns4\token )
             (i32.const 47 )
             (i32.const 0 ) )
           (call $-number (f64.const 0 ) ) ) )
@@ -3296,10 +3591,10 @@
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\is_string
+  ;; function $ns4\is_string
 
-  (func $ns3\is_string
-    (param $ns3\token i32 )
+  (func $ns4\is_string
+    (param $ns4\token i32 )
     (result i32 )
     (local $-ret i32 )
     (local $-success i32 )
@@ -3307,7 +3602,7 @@
     (block
       (set_local $-ret (call $-equal
           (call $ns1\binary_search
-            (get_local $ns3\token )
+            (get_local $ns4\token )
             (i32.const 40 )
             (i32.const 0 ) )
           (call $-number (f64.const 0 ) ) ) )
@@ -3315,63 +3610,63 @@
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\is_number
+  ;; function $ns4\is_number
 
-  (func $ns3\is_number
-    (param $ns3\token i32 )
+  (func $ns4\is_number
+    (param $ns4\token i32 )
     (result i32 )
-    (local $ns3\digits i32 )
-    (local $ns3\char i32 )
+    (local $ns4\digits i32 )
+    (local $ns4\char i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
       (drop
-        (set_local $ns3\digits (i32.const 48 ) )
-        (get_local $ns3\digits ) )
+        (set_local $ns4\digits (i32.const 48 ) )
+        (get_local $ns4\digits ) )
       (drop
-        (set_local $ns3\char (call $ns1\binary_slice
-            (get_local $ns3\token )
+        (set_local $ns4\char (call $ns1\binary_slice
+            (get_local $ns4\token )
             (call $-number (f64.const 0 ) )
             (call $-number (f64.const 1 ) ) ) )
-        (get_local $ns3\char ) )
+        (get_local $ns4\char ) )
       (set_local $-ret (call $-unequal
           (call $ns1\binary_search
-            (get_local $ns3\digits )
-            (get_local $ns3\char )
+            (get_local $ns4\digits )
+            (get_local $ns4\char )
             (i32.const 0 ) )
           (i32.const 0 ) ) )
       (br 0 )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\token_to_number
+  ;; function $ns4\token_to_number
 
-  (func $ns3\token_to_number
-    (param $ns3\token i32 )
+  (func $ns4\token_to_number
+    (param $ns4\token i32 )
     (result i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
-      (set_local $-ret (call $ns1\json_decode (get_local $ns3\token ) ) )
+      (set_local $-ret (call $ns1\json_decode (get_local $ns4\token ) ) )
       (br 0 )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\translate_code
+  ;; function $ns4\translate_code
 
-  (func $ns3\translate_code
-    (param $ns3\bin i32 )
-    (param $ns3\token i32 )
+  (func $ns4\translate_code
+    (param $ns4\bin i32 )
+    (param $ns4\token i32 )
     (result i32 )
-    (local $ns3\code i32 )
-    (local $ns3\to_code i32 )
-    (local $ns3\autoend i32 )
-    (local $ns3\opcode i32 )
-    (local $ns3\num i32 )
-    (local $ns3\targets i32 )
-    (local $ns3\target i32 )
+    (local $ns4\code i32 )
+    (local $ns4\to_code i32 )
+    (local $ns4\autoend i32 )
+    (local $ns4\opcode i32 )
+    (local $ns4\num i32 )
+    (local $ns4\targets i32 )
+    (local $ns4\target i32 )
     (local $-fori0 i32 )
     (local $-forl0 i32 )
     (local $-fora0 i32 )
@@ -3380,57 +3675,57 @@
     (call $-funcstart )
     (block
       (drop
-        (set_local $ns3\code (call $-new_value
+        (set_local $ns4\code (call $-new_value
             (i32.const 6 )
             (i32.const 0 ) ) )
-        (get_local $ns3\code ) )
+        (get_local $ns4\code ) )
       (drop
-        (set_local $ns3\to_code (i32.const 1 ) )
-        (get_local $ns3\to_code ) )
+        (set_local $ns4\to_code (i32.const 1 ) )
+        (get_local $ns4\to_code ) )
       (drop
-        (set_local $ns3\autoend (i32.const 1 ) )
-        (get_local $ns3\autoend ) )
+        (set_local $ns4\autoend (i32.const 1 ) )
+        (get_local $ns4\autoend ) )
       (if
         (call $-truthy (call $-equal
-            (get_local $ns3\token )
+            (get_local $ns4\token )
             (i32.const 0 ) ) )
         (then
           (drop
-            (set_local $ns3\token (call $ns3\read_token ) )
-            (get_local $ns3\token ) )
+            (set_local $ns4\token (call $ns4\read_token ) )
+            (get_local $ns4\token ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (block (loop
-          (br_if 1 (call $-falsy (get_local $ns3\token ) ) )
+          (br_if 1 (call $-falsy (get_local $ns4\token ) ) )
           (block
             (if
               (call $-truthy (call $-equal
-                  (get_local $ns3\token )
-                  (i32.const 9 ) ) )
+                  (get_local $ns4\token )
+                  (i32.const 20 ) ) )
               (then
                 (if
-                  (call $-truthy (get_local $ns3\to_code ) )
+                  (call $-truthy (get_local $ns4\to_code ) )
                   (then
-                    (drop (call $ns3\translate_code
-                        (get_local $ns3\code )
+                    (drop (call $ns4\translate_code
+                        (get_local $ns4\code )
                         (i32.const 0 ) ) )
                     (set_local $-success (i32.const 1 ) ) )
                   (else (set_local $-success (i32.const 0 ) ) ) )
                 (if
                   (i32.eqz (get_local $-success ) )
                   (then
-                    (drop (call $ns3\translate_code
-                        (get_local $ns3\bin )
+                    (drop (call $ns4\translate_code
+                        (get_local $ns4\bin )
                         (i32.const 0 ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (call $-truthy (call $-equal
-                      (get_local $ns3\to_code )
+                      (get_local $ns4\to_code )
                       (i32.const 0 ) ) )
                   (then
                     (drop
-                      (set_local $ns3\to_code (i32.const 5 ) )
-                      (get_local $ns3\to_code ) )
+                      (set_local $ns4\to_code (i32.const 5 ) )
+                      (get_local $ns4\to_code ) )
                     (set_local $-success (i32.const 1 ) ) )
                   (else (set_local $-success (i32.const 0 ) ) ) )
                 (set_local $-success (i32.const 1 ) ) )
@@ -3439,148 +3734,148 @@
               (i32.eqz (get_local $-success ) )
               (then
                 (drop
-                  (set_local $ns3\opcode (call $-get_from_obj
-                      (get_global $ns5\opcodes )
-                      (get_local $ns3\token ) ) )
-                  (get_local $ns3\opcode ) )
+                  (set_local $ns4\opcode (call $-get_from_obj
+                      (get_global $ns6\opcodes )
+                      (get_local $ns4\token ) ) )
+                  (get_local $ns4\opcode ) )
                 (if
                   (call $-truthy (call $-unequal
-                      (get_local $ns3\opcode )
+                      (get_local $ns4\opcode )
                       (i32.const 0 ) ) )
                   (then
                     (drop (call $ns1\binary_write
-                        (get_local $ns3\code )
-                        (call $ns1\size_of (get_local $ns3\code ) )
-                        (get_local $ns3\opcode ) ) )
+                        (get_local $ns4\code )
+                        (call $ns1\size_of (get_local $ns4\code ) )
+                        (get_local $ns4\opcode ) ) )
                     (set_local $-success (i32.const 1 ) ) )
                   (else (set_local $-success (i32.const 0 ) ) ) )
                 (if
                   (call $-truthy (call $-or
                       (call $-or
                         (call $-equal
-                          (get_local $ns3\token )
+                          (get_local $ns4\token )
                           (i32.const 49 ) )
                         (call $-equal
-                          (get_local $ns3\token )
+                          (get_local $ns4\token )
                           (i32.const 50 ) ) )
                       (call $-equal
-                        (get_local $ns3\token )
+                        (get_local $ns4\token )
                         (i32.const 51 ) ) ) )
                   (then
                     (if
                       (call $-truthy (call $-equal
-                          (get_local $ns3\token )
+                          (get_local $ns4\token )
                           (i32.const 51 ) ) )
                       (then
                         (drop
-                          (set_local $ns3\to_code (i32.const 0 ) )
-                          (get_local $ns3\to_code ) )
+                          (set_local $ns4\to_code (i32.const 0 ) )
+                          (get_local $ns4\to_code ) )
                         (set_local $-success (i32.const 1 ) ) )
                       (else (set_local $-success (i32.const 0 ) ) ) )
                     (if
                       (i32.eqz (get_local $-success ) )
                       (then
                         (drop
-                          (set_local $ns3\to_code (i32.const 5 ) )
-                          (get_local $ns3\to_code ) )
+                          (set_local $ns4\to_code (i32.const 5 ) )
+                          (get_local $ns4\to_code ) )
                         (set_local $-success (i32.const 1 ) ) ) )
                     (drop
-                      (set_local $ns3\autoend (i32.const 5 ) )
-                      (get_local $ns3\autoend ) )
-                    (drop (call $ns3\save_pos ) )
+                      (set_local $ns4\autoend (i32.const 5 ) )
+                      (get_local $ns4\autoend ) )
+                    (drop (call $ns4\save_pos ) )
                     (drop
-                      (set_local $ns3\num (call $ns3\read_token ) )
-                      (get_local $ns3\num ) )
+                      (set_local $ns4\num (call $ns4\read_token ) )
+                      (get_local $ns4\num ) )
                     (if
-                      (call $-truthy (call $ns3\is_name (get_local $ns3\num ) ) )
+                      (call $-truthy (call $ns4\is_name (get_local $ns4\num ) ) )
                       (then
                         (drop (call $ns1\array_unshift
-                            (get_global $ns3\blocks )
-                            (get_local $ns3\num ) ) )
-                        (drop (call $ns3\pop_pos ) )
+                            (get_global $ns4\blocks )
+                            (get_local $ns4\num ) ) )
+                        (drop (call $ns4\pop_pos ) )
                         (set_local $-success (i32.const 1 ) ) )
                       (else (set_local $-success (i32.const 0 ) ) ) )
                     (if
                       (i32.eqz (get_local $-success ) )
                       (then
                         (drop (call $ns1\array_unshift
-                            (get_global $ns3\blocks )
+                            (get_global $ns4\blocks )
                             (i32.const 47 ) ) )
-                        (drop (call $ns3\restore_pos ) )
+                        (drop (call $ns4\restore_pos ) )
                         (set_local $-success (i32.const 1 ) ) ) )
-                    (drop (call $ns3\save_pos ) )
+                    (drop (call $ns4\save_pos ) )
                     (drop
-                      (set_local $ns3\num (call $ns3\read_token ) )
-                      (get_local $ns3\num ) )
+                      (set_local $ns4\num (call $ns4\read_token ) )
+                      (get_local $ns4\num ) )
                     (if
                       (call $-truthy (call $-equal
-                          (get_local $ns3\num )
-                          (i32.const 9 ) ) )
+                          (get_local $ns4\num )
+                          (i32.const 20 ) ) )
                       (then
                         (drop
-                          (set_local $ns3\num (call $ns3\read_token ) )
-                          (get_local $ns3\num ) )
+                          (set_local $ns4\num (call $ns4\read_token ) )
+                          (get_local $ns4\num ) )
                         (if
                           (call $-truthy (call $-equal
-                              (get_local $ns3\num )
+                              (get_local $ns4\num )
                               (i32.const 52 ) ) )
                           (then
                             (drop
-                              (set_local $ns3\num (call $ns3\read_token ) )
-                              (get_local $ns3\num ) )
+                              (set_local $ns4\num (call $ns4\read_token ) )
+                              (get_local $ns4\num ) )
                             (if
                               (call $-truthy (call $-equal
-                                  (get_local $ns3\num )
+                                  (get_local $ns4\num )
                                   (i32.const 53 ) ) )
                               (then
                                 (drop
-                                  (set_local $ns3\num (call $-number (f64.const 0x7f ) ) )
-                                  (get_local $ns3\num ) )
+                                  (set_local $ns4\num (call $-number (f64.const 0x7f ) ) )
+                                  (get_local $ns4\num ) )
                                 (set_local $-success (i32.const 1 ) ) )
                               (else (set_local $-success (i32.const 0 ) ) ) )
                             (if
                               (i32.and
                                 (i32.eqz (get_local $-success ) )
                                 (call $-truthy (call $-equal
-                                    (get_local $ns3\num )
+                                    (get_local $ns4\num )
                                     (i32.const 54 ) ) ) )
                               (then
                                 (drop
-                                  (set_local $ns3\num (call $-number (f64.const 0x7e ) ) )
-                                  (get_local $ns3\num ) )
+                                  (set_local $ns4\num (call $-number (f64.const 0x7e ) ) )
+                                  (get_local $ns4\num ) )
                                 (set_local $-success (i32.const 1 ) ) ) )
                             (if
                               (i32.and
                                 (i32.eqz (get_local $-success ) )
                                 (call $-truthy (call $-equal
-                                    (get_local $ns3\num )
+                                    (get_local $ns4\num )
                                     (i32.const 55 ) ) ) )
                               (then
                                 (drop
-                                  (set_local $ns3\num (call $-number (f64.const 0x7d ) ) )
-                                  (get_local $ns3\num ) )
+                                  (set_local $ns4\num (call $-number (f64.const 0x7d ) ) )
+                                  (get_local $ns4\num ) )
                                 (set_local $-success (i32.const 1 ) ) ) )
                             (if
                               (i32.and
                                 (i32.eqz (get_local $-success ) )
                                 (call $-truthy (call $-equal
-                                    (get_local $ns3\num )
+                                    (get_local $ns4\num )
                                     (i32.const 56 ) ) ) )
                               (then
                                 (drop
-                                  (set_local $ns3\num (call $-number (f64.const 0x7c ) ) )
-                                  (get_local $ns3\num ) )
+                                  (set_local $ns4\num (call $-number (f64.const 0x7c ) ) )
+                                  (get_local $ns4\num ) )
                                 (set_local $-success (i32.const 1 ) ) ) )
-                            (drop (call $ns3\pop_pos ) )
+                            (drop (call $ns4\pop_pos ) )
                             (set_local $-success (i32.const 1 ) ) )
                           (else (set_local $-success (i32.const 0 ) ) ) )
                         (if
                           (i32.eqz (get_local $-success ) )
                           (then
                             (drop
-                              (set_local $ns3\num (call $-number (f64.const 0x40 ) ) )
-                              (get_local $ns3\num ) )
-                            (drop (call $ns3\restore_pos ) )
+                              (set_local $ns4\num (call $-number (f64.const 0x40 ) ) )
+                              (get_local $ns4\num ) )
+                            (drop (call $ns4\restore_pos ) )
                             (set_local $-success (i32.const 1 ) ) ) )
                         (set_local $-success (i32.const 1 ) ) )
                       (else (set_local $-success (i32.const 0 ) ) ) )
@@ -3588,80 +3883,80 @@
                       (i32.eqz (get_local $-success ) )
                       (then
                         (drop
-                          (set_local $ns3\num (call $-number (f64.const 0x40 ) ) )
-                          (get_local $ns3\num ) )
-                        (drop (call $ns3\restore_pos ) )
+                          (set_local $ns4\num (call $-number (f64.const 0x40 ) ) )
+                          (get_local $ns4\num ) )
+                        (drop (call $ns4\restore_pos ) )
                         (set_local $-success (i32.const 1 ) ) ) )
-                    (drop (call $ns4\write_varuint
-                        (get_local $ns3\code )
-                        (get_local $ns3\num ) ) )
+                    (drop (call $ns5\write_varuint
+                        (get_local $ns4\code )
+                        (get_local $ns4\num ) ) )
                     (set_local $-success (i32.const 1 ) ) )
                   (else (set_local $-success (i32.const 0 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
+                        (get_local $ns4\token )
                         (i32.const 57 ) ) ) )
                   (then
                     (drop
-                      (set_local $ns3\to_code (i32.const 5 ) )
-                      (get_local $ns3\to_code ) )
+                      (set_local $ns4\to_code (i32.const 5 ) )
+                      (get_local $ns4\to_code ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
+                        (get_local $ns4\token )
                         (i32.const 58 ) ) ) )
                   (then
                     (drop
-                      (set_local $ns3\to_code (i32.const 1 ) )
-                      (get_local $ns3\to_code ) )
+                      (set_local $ns4\to_code (i32.const 1 ) )
+                      (get_local $ns4\to_code ) )
                     (drop
-                      (set_local $ns3\autoend (i32.const 1 ) )
-                      (get_local $ns3\autoend ) )
-                    (drop (call $ns1\array_shift (get_global $ns3\blocks ) ) )
+                      (set_local $ns4\autoend (i32.const 1 ) )
+                      (get_local $ns4\autoend ) )
+                    (drop (call $ns1\array_shift (get_global $ns4\blocks ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-or
                         (call $-equal
-                          (get_local $ns3\token )
+                          (get_local $ns4\token )
                           (i32.const 59 ) )
                         (call $-equal
-                          (get_local $ns3\token )
+                          (get_local $ns4\token )
                           (i32.const 60 ) ) ) ) )
                   (then
                     (drop
-                      (set_local $ns3\num (call $ns3\read_token ) )
-                      (get_local $ns3\num ) )
+                      (set_local $ns4\num (call $ns4\read_token ) )
+                      (get_local $ns4\num ) )
                     (if
-                      (call $-truthy (call $ns3\is_number (get_local $ns3\num ) ) )
+                      (call $-truthy (call $ns4\is_number (get_local $ns4\num ) ) )
                       (then
-                        (drop (call $ns4\write_varuint
-                            (get_local $ns3\code )
-                            (call $ns3\token_to_number (get_local $ns3\num ) ) ) )
+                        (drop (call $ns5\write_varuint
+                            (get_local $ns4\code )
+                            (call $ns4\token_to_number (get_local $ns4\num ) ) ) )
                         (set_local $-success (i32.const 1 ) ) )
                       (else (set_local $-success (i32.const 0 ) ) ) )
                     (if
                       (i32.and
                         (i32.eqz (get_local $-success ) )
-                        (call $-truthy (call $ns3\is_name (get_local $ns3\num ) ) ) )
+                        (call $-truthy (call $ns4\is_name (get_local $ns4\num ) ) ) )
                       (then
-                        (drop (call $ns4\write_varuint
-                            (get_local $ns3\code )
+                        (drop (call $ns5\write_varuint
+                            (get_local $ns4\code )
                             (call $ns1\array_search
-                              (get_global $ns3\blocks )
-                              (get_local $ns3\num )
+                              (get_global $ns4\blocks )
+                              (get_local $ns4\num )
                               (i32.const 0 ) ) ) )
                         (set_local $-success (i32.const 1 ) ) ) )
                     (if
                       (i32.eqz (get_local $-success ) )
                       (then
-                        (set_local $-ret (call $ns3\unexpected
-                            (get_local $ns3\num )
+                        (set_local $-ret (call $ns4\unexpected
+                            (get_local $ns4\num )
                             (i32.const 61 ) ) )
                         (br 6 )
                         (set_local $-success (i32.const 1 ) ) ) )
@@ -3670,60 +3965,60 @@
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
+                        (get_local $ns4\token )
                         (i32.const 62 ) ) ) )
                   (then
                     (drop
-                      (set_local $ns3\targets (call $-new_value
+                      (set_local $ns4\targets (call $-new_value
                           (i32.const 4 )
                           (i32.const 0 ) ) )
-                      (get_local $ns3\targets ) )
-                    (drop (call $ns3\save_pos ) )
+                      (get_local $ns4\targets ) )
+                    (drop (call $ns4\save_pos ) )
                     (drop
-                      (set_local $ns3\num (call $ns3\read_token ) )
-                      (get_local $ns3\num ) )
+                      (set_local $ns4\num (call $ns4\read_token ) )
+                      (get_local $ns4\num ) )
                     (block (loop
                         (br_if 1 (call $-falsy (call $-and
-                              (get_local $ns3\num )
+                              (get_local $ns4\num )
                               (call $-or
-                                (call $ns3\is_name (get_local $ns3\num ) )
-                                (call $ns3\is_number (get_local $ns3\num ) ) ) ) ) )
+                                (call $ns4\is_name (get_local $ns4\num ) )
+                                (call $ns4\is_number (get_local $ns4\num ) ) ) ) ) )
                         (block
-                          (drop (call $ns3\pop_pos ) )
-                          (drop (call $ns3\save_pos ) )
+                          (drop (call $ns4\pop_pos ) )
+                          (drop (call $ns4\save_pos ) )
                           (if
-                            (call $-truthy (call $ns3\is_name (get_local $ns3\num ) ) )
+                            (call $-truthy (call $ns4\is_name (get_local $ns4\num ) ) )
                             (then
                               (drop (call $ns1\array_push
-                                  (get_local $ns3\targets )
+                                  (get_local $ns4\targets )
                                   (call $ns1\array_search
-                                    (get_global $ns3\blocks )
-                                    (get_local $ns3\num )
+                                    (get_global $ns4\blocks )
+                                    (get_local $ns4\num )
                                     (i32.const 0 ) ) ) )
                               (set_local $-success (i32.const 1 ) ) )
                             (else (set_local $-success (i32.const 0 ) ) ) )
                           (if
                             (i32.and
                               (i32.eqz (get_local $-success ) )
-                              (call $-truthy (call $ns3\is_number (get_local $ns3\num ) ) ) )
+                              (call $-truthy (call $ns4\is_number (get_local $ns4\num ) ) ) )
                             (then
                               (drop (call $ns1\array_push
-                                  (get_local $ns3\targets )
-                                  (call $ns3\token_to_number (get_local $ns3\num ) ) ) )
+                                  (get_local $ns4\targets )
+                                  (call $ns4\token_to_number (get_local $ns4\num ) ) ) )
                               (set_local $-success (i32.const 1 ) ) ) )
                           (drop
-                            (set_local $ns3\num (call $ns3\read_token ) )
-                            (get_local $ns3\num ) )
+                            (set_local $ns4\num (call $ns4\read_token ) )
+                            (get_local $ns4\num ) )
                           (set_local $-success (i32.const 1 ) ) )
                         (br 0 ) ) )
-                    (drop (call $ns3\restore_pos ) )
-                    (drop (call $ns4\write_varuint
-                        (get_local $ns3\code )
+                    (drop (call $ns4\restore_pos ) )
+                    (drop (call $ns5\write_varuint
+                        (get_local $ns4\code )
                         (call $-sub
-                          (call $ns1\array_length (get_local $ns3\targets ) )
+                          (call $ns1\array_length (get_local $ns4\targets ) )
                           (call $-number (f64.const 1 ) ) ) ) )
                     (set_local $-fori0 (i32.const 0 ) )
-                    (set_local $-fora0 (get_local $ns3\targets ) )
+                    (set_local $-fora0 (get_local $ns4\targets ) )
                     (set_local $-forl0 (i32.div_u
                         (call $-len (get_local $-fora0 ) )
                         (i32.const 4 ) ) )
@@ -3731,13 +4026,13 @@
                         (br_if 1 (i32.ge_u
                             (get_local $-fori0 )
                             (get_local $-forl0 ) ) )
-                        (set_local $ns3\target (call $-get_from_obj
+                        (set_local $ns4\target (call $-get_from_obj
                             (get_local $-fora0 )
                             (call $-integer_u (get_local $-fori0 ) ) ) )
                         (block
-                          (drop (call $ns4\write_varuint
-                              (get_local $ns3\code )
-                              (get_local $ns3\target ) ) )
+                          (drop (call $ns5\write_varuint
+                              (get_local $ns4\code )
+                              (get_local $ns4\target ) ) )
                           (set_local $-success (i32.const 1 ) ) )
                         (set_local $-fori0 (i32.add
                             (get_local $-fori0 )
@@ -3748,41 +4043,41 @@
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
+                        (get_local $ns4\token )
                         (i32.const 63 ) ) ) )
                   (then
                     (drop
-                      (set_local $ns3\num (call $ns3\read_token ) )
-                      (get_local $ns3\num ) )
+                      (set_local $ns4\num (call $ns4\read_token ) )
+                      (get_local $ns4\num ) )
                     (if
-                      (call $-truthy (call $ns3\is_number (get_local $ns3\num ) ) )
+                      (call $-truthy (call $ns4\is_number (get_local $ns4\num ) ) )
                       (then
-                        (drop (call $ns4\write_varuint
-                            (get_local $ns3\code )
-                            (call $ns3\token_to_number (get_local $ns3\num ) ) ) )
+                        (drop (call $ns5\write_varuint
+                            (get_local $ns4\code )
+                            (call $ns4\token_to_number (get_local $ns4\num ) ) ) )
                         (set_local $-success (i32.const 1 ) ) )
                       (else (set_local $-success (i32.const 0 ) ) ) )
                     (if
                       (i32.and
                         (i32.eqz (get_local $-success ) )
-                        (call $-truthy (call $ns3\is_name (get_local $ns3\num ) ) ) )
+                        (call $-truthy (call $ns4\is_name (get_local $ns4\num ) ) ) )
                       (then
-                        (drop (call $ns4\write_varuint
-                            (get_local $ns3\code )
+                        (drop (call $ns5\write_varuint
+                            (get_local $ns4\code )
                             (call $ns1\array_search
                               (call $-get_from_obj
                                 (call $-get_from_obj
-                                  (get_global $ns3\sections )
-                                  (i32.const 24 ) )
-                                (i32.const 15 ) )
-                              (get_local $ns3\num )
+                                  (get_global $ns4\sections )
+                                  (i32.const 35 ) )
+                                (i32.const 26 ) )
+                              (get_local $ns4\num )
                               (i32.const 0 ) ) ) )
                         (set_local $-success (i32.const 1 ) ) ) )
                     (if
                       (i32.eqz (get_local $-success ) )
                       (then
-                        (set_local $-ret (call $ns3\unexpected
-                            (get_local $ns3\num )
+                        (set_local $-ret (call $ns4\unexpected
+                            (get_local $ns4\num )
                             (i32.const 64 ) ) )
                         (br 6 )
                         (set_local $-success (i32.const 1 ) ) ) )
@@ -3791,17 +4086,17 @@
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
+                        (get_local $ns4\token )
                         (i32.const 65 ) ) ) )
                   (then
-                    (drop (call $ns3\save_pos ) )
-                    (drop (call $ns4\write_varuint
-                        (get_local $ns3\code )
-                        (call $ns3\read_func_type (i32.const 0 ) ) ) )
-                    (drop (call $ns4\write_varuint
-                        (get_local $ns3\code )
+                    (drop (call $ns4\save_pos ) )
+                    (drop (call $ns5\write_varuint
+                        (get_local $ns4\code )
+                        (call $ns4\read_func_type (i32.const 0 ) ) ) )
+                    (drop (call $ns5\write_varuint
+                        (get_local $ns4\code )
                         (call $-number (f64.const 0 ) ) ) )
-                    (drop (call $ns3\restore_pos ) )
+                    (drop (call $ns4\restore_pos ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
@@ -3809,45 +4104,45 @@
                     (call $-truthy (call $-or
                         (call $-equal
                           (call $ns1\binary_search
-                            (get_local $ns3\token )
+                            (get_local $ns4\token )
                             (i32.const 66 )
                             (i32.const 0 ) )
                           (call $-number (f64.const 3 ) ) )
                         (call $-equal
                           (call $ns1\binary_search
-                            (get_local $ns3\token )
+                            (get_local $ns4\token )
                             (i32.const 67 )
                             (i32.const 0 ) )
                           (call $-number (f64.const 0 ) ) ) ) ) )
                   (then
                     (drop
-                      (set_local $ns3\num (call $ns3\read_token ) )
-                      (get_local $ns3\num ) )
+                      (set_local $ns4\num (call $ns4\read_token ) )
+                      (get_local $ns4\num ) )
                     (if
-                      (call $-truthy (call $ns3\is_number (get_local $ns3\num ) ) )
+                      (call $-truthy (call $ns4\is_number (get_local $ns4\num ) ) )
                       (then
-                        (drop (call $ns4\write_varuint
-                            (get_local $ns3\code )
-                            (call $ns3\token_to_number (get_local $ns3\num ) ) ) )
+                        (drop (call $ns5\write_varuint
+                            (get_local $ns4\code )
+                            (call $ns4\token_to_number (get_local $ns4\num ) ) ) )
                         (set_local $-success (i32.const 1 ) ) )
                       (else (set_local $-success (i32.const 0 ) ) ) )
                     (if
                       (i32.and
                         (i32.eqz (get_local $-success ) )
-                        (call $-truthy (call $ns3\is_name (get_local $ns3\num ) ) ) )
+                        (call $-truthy (call $ns4\is_name (get_local $ns4\num ) ) ) )
                       (then
-                        (drop (call $ns4\write_varuint
-                            (get_local $ns3\code )
+                        (drop (call $ns5\write_varuint
+                            (get_local $ns4\code )
                             (call $ns1\array_search
-                              (get_global $ns3\local_names )
-                              (get_local $ns3\num )
+                              (get_global $ns4\local_names )
+                              (get_local $ns4\num )
                               (i32.const 0 ) ) ) )
                         (set_local $-success (i32.const 1 ) ) ) )
                     (if
                       (i32.eqz (get_local $-success ) )
                       (then
-                        (set_local $-ret (call $ns3\unexpected
-                            (get_local $ns3\num )
+                        (set_local $-ret (call $ns4\unexpected
+                            (get_local $ns4\num )
                             (i32.const 68 ) ) )
                         (br 6 )
                         (set_local $-success (i32.const 1 ) ) ) )
@@ -3858,49 +4153,49 @@
                     (call $-truthy (call $-or
                         (call $-equal
                           (call $ns1\binary_search
-                            (get_local $ns3\token )
+                            (get_local $ns4\token )
                             (i32.const 69 )
                             (i32.const 0 ) )
                           (call $-number (f64.const 3 ) ) )
                         (call $-equal
                           (call $ns1\binary_search
-                            (get_local $ns3\token )
+                            (get_local $ns4\token )
                             (i32.const 70 )
                             (i32.const 0 ) )
                           (call $-number (f64.const 0 ) ) ) ) ) )
                   (then
                     (drop
-                      (set_local $ns3\num (call $ns3\read_token ) )
-                      (get_local $ns3\num ) )
+                      (set_local $ns4\num (call $ns4\read_token ) )
+                      (get_local $ns4\num ) )
                     (if
-                      (call $-truthy (call $ns3\is_number (get_local $ns3\num ) ) )
+                      (call $-truthy (call $ns4\is_number (get_local $ns4\num ) ) )
                       (then
-                        (drop (call $ns4\write_varuint
-                            (get_local $ns3\code )
-                            (call $ns3\token_to_number (get_local $ns3\num ) ) ) )
+                        (drop (call $ns5\write_varuint
+                            (get_local $ns4\code )
+                            (call $ns4\token_to_number (get_local $ns4\num ) ) ) )
                         (set_local $-success (i32.const 1 ) ) )
                       (else (set_local $-success (i32.const 0 ) ) ) )
                     (if
                       (i32.and
                         (i32.eqz (get_local $-success ) )
-                        (call $-truthy (call $ns3\is_name (get_local $ns3\num ) ) ) )
+                        (call $-truthy (call $ns4\is_name (get_local $ns4\num ) ) ) )
                       (then
-                        (drop (call $ns4\write_varuint
-                            (get_local $ns3\code )
+                        (drop (call $ns5\write_varuint
+                            (get_local $ns4\code )
                             (call $ns1\array_search
                               (call $-get_from_obj
                                 (call $-get_from_obj
-                                  (get_global $ns3\sections )
-                                  (i32.const 24 ) )
-                                (i32.const 18 ) )
-                              (get_local $ns3\num )
+                                  (get_global $ns4\sections )
+                                  (i32.const 35 ) )
+                                (i32.const 29 ) )
+                              (get_local $ns4\num )
                               (i32.const 0 ) ) ) )
                         (set_local $-success (i32.const 1 ) ) ) )
                     (if
                       (i32.eqz (get_local $-success ) )
                       (then
-                        (set_local $-ret (call $ns3\unexpected
-                            (get_local $ns3\num )
+                        (set_local $-ret (call $ns4\unexpected
+                            (get_local $ns4\num )
                             (i32.const 71 ) ) )
                         (br 6 )
                         (set_local $-success (i32.const 1 ) ) ) )
@@ -3911,67 +4206,67 @@
                     (call $-truthy (call $-or
                         (call $-equal
                           (call $ns1\binary_search
-                            (get_local $ns3\token )
+                            (get_local $ns4\token )
                             (i32.const 72 )
                             (i32.const 0 ) )
                           (call $-number (f64.const 3 ) ) )
                         (call $-equal
                           (call $ns1\binary_search
-                            (get_local $ns3\token )
+                            (get_local $ns4\token )
                             (i32.const 73 )
                             (i32.const 0 ) )
                           (call $-number (f64.const 3 ) ) ) ) ) )
                   (then
-                    (drop (get_local $ns3\num ) )
+                    (drop (get_local $ns4\num ) )
                     (if
                       (call $-truthy (call $ns1\binary_search
-                          (get_local $ns3\token )
+                          (get_local $ns4\token )
                           (i32.const 74 )
                           (i32.const 0 ) ) )
                       (then
                         (drop
-                          (set_local $ns3\num (call $-number (f64.const 3 ) ) )
-                          (get_local $ns3\num ) )
+                          (set_local $ns4\num (call $-number (f64.const 3 ) ) )
+                          (get_local $ns4\num ) )
                         (set_local $-success (i32.const 1 ) ) )
                       (else (set_local $-success (i32.const 0 ) ) ) )
                     (if
                       (call $-truthy (call $ns1\binary_search
-                          (get_local $ns3\token )
+                          (get_local $ns4\token )
                           (i32.const 75 )
                           (i32.const 0 ) ) )
                       (then
                         (drop
-                          (set_local $ns3\num (call $-number (f64.const 2 ) ) )
-                          (get_local $ns3\num ) )
+                          (set_local $ns4\num (call $-number (f64.const 2 ) ) )
+                          (get_local $ns4\num ) )
                         (set_local $-success (i32.const 1 ) ) )
                       (else (set_local $-success (i32.const 0 ) ) ) )
                     (if
                       (call $-truthy (call $ns1\binary_search
-                          (get_local $ns3\token )
+                          (get_local $ns4\token )
                           (i32.const 76 )
                           (i32.const 0 ) ) )
                       (then
                         (drop
-                          (set_local $ns3\num (call $-number (f64.const 1 ) ) )
-                          (get_local $ns3\num ) )
+                          (set_local $ns4\num (call $-number (f64.const 1 ) ) )
+                          (get_local $ns4\num ) )
                         (set_local $-success (i32.const 1 ) ) )
                       (else (set_local $-success (i32.const 0 ) ) ) )
                     (if
                       (call $-truthy (call $ns1\binary_search
-                          (get_local $ns3\token )
+                          (get_local $ns4\token )
                           (i32.const 77 )
                           (i32.const 0 ) ) )
                       (then
                         (drop
-                          (set_local $ns3\num (call $-number (f64.const 0 ) ) )
-                          (get_local $ns3\num ) )
+                          (set_local $ns4\num (call $-number (f64.const 0 ) ) )
+                          (get_local $ns4\num ) )
                         (set_local $-success (i32.const 1 ) ) )
                       (else (set_local $-success (i32.const 0 ) ) ) )
-                    (drop (call $ns4\write_varuint
-                        (get_local $ns3\code )
-                        (get_local $ns3\num ) ) )
-                    (drop (call $ns4\write_varuint
-                        (get_local $ns3\code )
+                    (drop (call $ns5\write_varuint
+                        (get_local $ns4\code )
+                        (get_local $ns4\num ) ) )
+                    (drop (call $ns5\write_varuint
+                        (get_local $ns4\code )
                         (call $-number (f64.const 0 ) ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
@@ -3980,19 +4275,19 @@
                     (call $-truthy (call $-or
                         (call $-gt
                           (call $ns1\binary_search
-                            (get_local $ns3\token )
+                            (get_local $ns4\token )
                             (i32.const 78 )
                             (i32.const 0 ) )
                           (call $-number (f64.const 3 ) ) )
                         (call $-equal
                           (call $ns1\binary_search
-                            (get_local $ns3\token )
+                            (get_local $ns4\token )
                             (i32.const 79 )
                             (i32.const 0 ) )
                           (call $-number (f64.const 0 ) ) ) ) ) )
                   (then
-                    (drop (call $ns4\write_varuint
-                        (get_local $ns3\code )
+                    (drop (call $ns5\write_varuint
+                        (get_local $ns4\code )
                         (call $-number (f64.const 0 ) ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
@@ -4000,29 +4295,29 @@
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-or
                         (call $-equal
-                          (get_local $ns3\token )
+                          (get_local $ns4\token )
                           (i32.const 80 ) )
                         (call $-equal
-                          (get_local $ns3\token )
+                          (get_local $ns4\token )
                           (i32.const 81 ) ) ) ) )
                   (then
                     (drop
-                      (set_local $ns3\num (call $ns3\read_token ) )
-                      (get_local $ns3\num ) )
+                      (set_local $ns4\num (call $ns4\read_token ) )
+                      (get_local $ns4\num ) )
                     (if
-                      (call $-truthy (call $ns3\is_number (get_local $ns3\num ) ) )
+                      (call $-truthy (call $ns4\is_number (get_local $ns4\num ) ) )
                       (then
                         (drop (call $ns1\binary_write
-                            (get_local $ns3\code )
-                            (call $ns1\size_of (get_local $ns3\code ) )
-                            (call $ns4\token_to_varint (get_local $ns3\num ) ) ) )
+                            (get_local $ns4\code )
+                            (call $ns1\size_of (get_local $ns4\code ) )
+                            (call $ns5\token_to_varint (get_local $ns4\num ) ) ) )
                         (set_local $-success (i32.const 1 ) ) )
                       (else (set_local $-success (i32.const 0 ) ) ) )
                     (if
                       (i32.eqz (get_local $-success ) )
                       (then
-                        (set_local $-ret (call $ns3\unexpected
-                            (get_local $ns3\num )
+                        (set_local $-ret (call $ns4\unexpected
+                            (get_local $ns4\num )
                             (i32.const 82 ) ) )
                         (br 6 )
                         (set_local $-success (i32.const 1 ) ) ) )
@@ -4031,26 +4326,26 @@
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
+                        (get_local $ns4\token )
                         (i32.const 83 ) ) ) )
                   (then
                     (drop
-                      (set_local $ns3\num (call $ns3\read_token ) )
-                      (get_local $ns3\num ) )
+                      (set_local $ns4\num (call $ns4\read_token ) )
+                      (get_local $ns4\num ) )
                     (if
-                      (call $-truthy (call $ns3\is_number (get_local $ns3\num ) ) )
+                      (call $-truthy (call $ns4\is_number (get_local $ns4\num ) ) )
                       (then
                         (drop (call $ns1\binary_write
-                            (get_local $ns3\code )
-                            (call $ns1\size_of (get_local $ns3\code ) )
-                            (call $ns4\number_to_f32bin (call $ns3\token_to_number (get_local $ns3\num ) ) ) ) )
+                            (get_local $ns4\code )
+                            (call $ns1\size_of (get_local $ns4\code ) )
+                            (call $ns5\number_to_f32bin (call $ns4\token_to_number (get_local $ns4\num ) ) ) ) )
                         (set_local $-success (i32.const 1 ) ) )
                       (else (set_local $-success (i32.const 0 ) ) ) )
                     (if
                       (i32.eqz (get_local $-success ) )
                       (then
-                        (set_local $-ret (call $ns3\unexpected
-                            (get_local $ns3\num )
+                        (set_local $-ret (call $ns4\unexpected
+                            (get_local $ns4\num )
                             (i32.const 82 ) ) )
                         (br 6 )
                         (set_local $-success (i32.const 1 ) ) ) )
@@ -4059,167 +4354,167 @@
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
+                        (get_local $ns4\token )
                         (i32.const 84 ) ) ) )
                   (then
                     (drop
-                      (set_local $ns3\num (call $ns3\read_token ) )
-                      (get_local $ns3\num ) )
+                      (set_local $ns4\num (call $ns4\read_token ) )
+                      (get_local $ns4\num ) )
                     (if
-                      (call $-truthy (call $ns3\is_number (get_local $ns3\num ) ) )
+                      (call $-truthy (call $ns4\is_number (get_local $ns4\num ) ) )
                       (then
                         (drop (call $ns1\binary_write
-                            (get_local $ns3\code )
-                            (call $ns1\size_of (get_local $ns3\code ) )
-                            (call $ns4\number_to_f64bin (call $ns3\token_to_number (get_local $ns3\num ) ) ) ) )
+                            (get_local $ns4\code )
+                            (call $ns1\size_of (get_local $ns4\code ) )
+                            (call $ns5\number_to_f64bin (call $ns4\token_to_number (get_local $ns4\num ) ) ) ) )
                         (set_local $-success (i32.const 1 ) ) )
                       (else (set_local $-success (i32.const 0 ) ) ) )
                     (if
                       (i32.eqz (get_local $-success ) )
                       (then
-                        (set_local $-ret (call $ns3\unexpected
-                            (get_local $ns3\num )
+                        (set_local $-ret (call $ns4\unexpected
+                            (get_local $ns4\num )
                             (i32.const 82 ) ) )
                         (br 6 )
                         (set_local $-success (i32.const 1 ) ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (set_local $-success (i32.const 1 ) ) ) )
             (drop
-              (set_local $ns3\token (call $ns3\read_token ) )
-              (get_local $ns3\token ) )
+              (set_local $ns4\token (call $ns4\read_token ) )
+              (get_local $ns4\token ) )
             (set_local $-success (i32.const 1 ) ) )
           (br 0 ) ) )
       (if
-        (call $-truthy (get_local $ns3\autoend ) )
+        (call $-truthy (get_local $ns4\autoend ) )
         (then
           (drop (call $ns1\binary_write
-              (get_local $ns3\code )
-              (call $ns1\size_of (get_local $ns3\code ) )
+              (get_local $ns4\code )
+              (call $ns1\size_of (get_local $ns4\code ) )
               (call $-number (f64.const 0x0b ) ) ) )
-          (drop (call $ns1\array_shift (get_global $ns3\blocks ) ) )
+          (drop (call $ns1\array_shift (get_global $ns4\blocks ) ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
-      (drop (call $ns3\exit_parens ) )
+      (drop (call $ns4\exit_parens ) )
       (drop (call $ns1\binary_write
-          (get_local $ns3\bin )
-          (call $ns1\size_of (get_local $ns3\bin ) )
-          (get_local $ns3\code ) ) )
-      (set_local $-ret (get_local $ns3\bin ) )
+          (get_local $ns4\bin )
+          (call $ns1\size_of (get_local $ns4\bin ) )
+          (get_local $ns4\code ) ) )
+      (set_local $-ret (get_local $ns4\bin ) )
       (br 0 )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\read_names
+  ;; function $ns4\read_names
 
-  (func $ns3\read_names
+  (func $ns4\read_names
     (result i32 )
-    (local $ns3\token i32 )
-    (local $ns3\name i32 )
+    (local $ns4\token i32 )
+    (local $ns4\name i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
       (drop
-        (set_local $ns3\token (call $ns3\read_token ) )
-        (get_local $ns3\token ) )
+        (set_local $ns4\token (call $ns4\read_token ) )
+        (get_local $ns4\token ) )
       (block (loop
-          (br_if 1 (call $-falsy (get_local $ns3\token ) ) )
+          (br_if 1 (call $-falsy (get_local $ns4\token ) ) )
           (block
             (if
               (call $-truthy (call $-equal
-                  (get_local $ns3\token )
-                  (i32.const 9 ) ) )
+                  (get_local $ns4\token )
+                  (i32.const 20 ) ) )
               (then
                 (drop
-                  (set_local $ns3\token (call $ns3\read_token ) )
-                  (get_local $ns3\token ) )
+                  (set_local $ns4\token (call $ns4\read_token ) )
+                  (get_local $ns4\token ) )
                 (if
                   (call $-truthy (call $-equal
-                      (get_local $ns3\token )
-                      (i32.const 13 ) ) )
+                      (get_local $ns4\token )
+                      (i32.const 24 ) ) )
                   (then
                     (drop (call $ns1\array_push
                         (call $-get_from_obj
                           (call $-get_from_obj
-                            (get_global $ns3\sections )
-                            (i32.const 24 ) )
-                          (i32.const 13 ) )
-                        (call $ns3\read_name ) ) )
+                            (get_global $ns4\sections )
+                            (i32.const 35 ) )
+                          (i32.const 24 ) )
+                        (call $ns4\read_name ) ) )
                     (set_local $-success (i32.const 1 ) ) )
                   (else (set_local $-success (i32.const 0 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
-                        (i32.const 14 ) ) ) )
+                        (get_local $ns4\token )
+                        (i32.const 25 ) ) ) )
                   (then
-                    (drop (call $ns3\read_token ) )
-                    (drop (call $ns3\read_token ) )
-                    (drop (call $ns3\read_names ) )
+                    (drop (call $ns4\read_token ) )
+                    (drop (call $ns4\read_token ) )
+                    (drop (call $ns4\read_names ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
-                        (i32.const 16 ) ) ) )
-                  (then
-                    (drop (call $ns1\array_push
-                        (call $-get_from_obj
-                          (call $-get_from_obj
-                            (get_global $ns3\sections )
-                            (i32.const 24 ) )
-                          (i32.const 16 ) )
-                        (call $ns3\read_name ) ) )
-                    (set_local $-success (i32.const 1 ) ) ) )
-                (if
-                  (i32.and
-                    (i32.eqz (get_local $-success ) )
-                    (call $-truthy (call $-equal
-                        (get_local $ns3\token )
-                        (i32.const 17 ) ) ) )
+                        (get_local $ns4\token )
+                        (i32.const 27 ) ) ) )
                   (then
                     (drop (call $ns1\array_push
                         (call $-get_from_obj
                           (call $-get_from_obj
-                            (get_global $ns3\sections )
-                            (i32.const 24 ) )
-                          (i32.const 17 ) )
-                        (call $ns3\read_name ) ) )
+                            (get_global $ns4\sections )
+                            (i32.const 35 ) )
+                          (i32.const 27 ) )
+                        (call $ns4\read_name ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
+                        (get_local $ns4\token )
+                        (i32.const 28 ) ) ) )
+                  (then
+                    (drop (call $ns1\array_push
+                        (call $-get_from_obj
+                          (call $-get_from_obj
+                            (get_global $ns4\sections )
+                            (i32.const 35 ) )
+                          (i32.const 28 ) )
+                        (call $ns4\read_name ) ) )
+                    (set_local $-success (i32.const 1 ) ) ) )
+                (if
+                  (i32.and
+                    (i32.eqz (get_local $-success ) )
+                    (call $-truthy (call $-equal
+                        (get_local $ns4\token )
                         (i32.const 85 ) ) ) )
                   (then
                     (drop
-                      (set_global $ns3\local_names (call $-new_value
+                      (set_global $ns4\local_names (call $-new_value
                           (i32.const 4 )
                           (i32.const 0 ) ) )
-                      (get_global $ns3\local_names ) )
+                      (get_global $ns4\local_names ) )
                     (drop (call $ns1\array_push
                         (call $-get_from_obj
                           (call $-get_from_obj
-                            (get_global $ns3\sections )
-                            (i32.const 24 ) )
-                          (i32.const 25 ) )
-                        (get_global $ns3\local_names ) ) )
+                            (get_global $ns4\sections )
+                            (i32.const 35 ) )
+                          (i32.const 36 ) )
+                        (get_global $ns4\local_names ) ) )
                     (drop
-                      (set_local $ns3\name (call $ns3\read_token ) )
-                      (get_local $ns3\name ) )
+                      (set_local $ns4\name (call $ns4\read_token ) )
+                      (get_local $ns4\name ) )
                     (if
-                      (call $-truthy (call $ns3\is_name (get_local $ns3\name ) ) )
+                      (call $-truthy (call $ns4\is_name (get_local $ns4\name ) ) )
                       (then
                         (drop (call $ns1\array_push
                             (call $-get_from_obj
                               (call $-get_from_obj
-                                (get_global $ns3\sections )
-                                (i32.const 24 ) )
-                              (i32.const 15 ) )
-                            (get_local $ns3\name ) ) )
+                                (get_global $ns4\sections )
+                                (i32.const 35 ) )
+                              (i32.const 26 ) )
+                            (get_local $ns4\name ) ) )
                         (set_local $-success (i32.const 1 ) ) )
                       (else (set_local $-success (i32.const 0 ) ) ) )
                     (if
@@ -4228,294 +4523,294 @@
                         (drop (call $ns1\array_push
                             (call $-get_from_obj
                               (call $-get_from_obj
-                                (get_global $ns3\sections )
-                                (i32.const 24 ) )
-                              (i32.const 15 ) )
+                                (get_global $ns4\sections )
+                                (i32.const 35 ) )
+                              (i32.const 26 ) )
                             (i32.const 0 ) ) )
                         (set_local $-success (i32.const 1 ) ) ) )
                     (if
                       (call $-truthy (call $-equal
-                          (get_local $ns3\name )
-                          (i32.const 9 ) ) )
+                          (get_local $ns4\name )
+                          (i32.const 20 ) ) )
                       (then
-                        (drop (call $ns3\backstep ) )
+                        (drop (call $ns4\backstep ) )
                         (set_local $-success (i32.const 1 ) ) )
                       (else (set_local $-success (i32.const 0 ) ) ) )
-                    (drop (call $ns3\read_names ) )
+                    (drop (call $ns4\read_names ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
-                        (i32.const 18 ) ) ) )
+                        (get_local $ns4\token )
+                        (i32.const 29 ) ) ) )
                   (then
                     (drop (call $ns1\array_push
                         (call $-get_from_obj
                           (call $-get_from_obj
-                            (get_global $ns3\sections )
-                            (i32.const 24 ) )
-                          (i32.const 18 ) )
-                        (call $ns3\read_name ) ) )
+                            (get_global $ns4\sections )
+                            (i32.const 35 ) )
+                          (i32.const 29 ) )
+                        (call $ns4\read_name ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
+                        (get_local $ns4\token )
                         (i32.const 86 ) ) ) )
                   (then
                     (drop (call $ns1\array_push
-                        (get_global $ns3\local_names )
-                        (call $ns3\read_name ) ) )
+                        (get_global $ns4\local_names )
+                        (call $ns4\read_name ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
+                        (get_local $ns4\token )
                         (i32.const 87 ) ) ) )
                   (then
                     (drop (call $ns1\array_push
-                        (get_global $ns3\local_names )
-                        (call $ns3\read_name ) ) )
+                        (get_global $ns4\local_names )
+                        (call $ns4\read_name ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.eqz (get_local $-success ) )
                   (then
-                    (drop (call $ns3\exit_parens ) )
+                    (drop (call $ns4\exit_parens ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (set_local $-success (i32.const 1 ) ) )
               (else (set_local $-success (i32.const 0 ) ) ) )
             (drop
-              (set_local $ns3\token (call $ns3\read_token ) )
-              (get_local $ns3\token ) )
+              (set_local $ns4\token (call $ns4\read_token ) )
+              (get_local $ns4\token ) )
             (set_local $-success (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns3\exit_parens ) )
+      (drop (call $ns4\exit_parens ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\read_name
+  ;; function $ns4\read_name
 
-  (func $ns3\read_name
+  (func $ns4\read_name
     (result i32 )
-    (local $ns3\token i32 )
-    (local $ns3\name i32 )
+    (local $ns4\token i32 )
+    (local $ns4\name i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
       (drop
-        (set_local $ns3\token (call $ns3\read_token ) )
-        (get_local $ns3\token ) )
+        (set_local $ns4\token (call $ns4\read_token ) )
+        (get_local $ns4\token ) )
       (if
-        (call $-truthy (call $ns3\is_name (get_local $ns3\token ) ) )
+        (call $-truthy (call $ns4\is_name (get_local $ns4\token ) ) )
         (then
           (drop
-            (set_local $ns3\name (get_local $ns3\token ) )
-            (get_local $ns3\name ) )
+            (set_local $ns4\name (get_local $ns4\token ) )
+            (get_local $ns4\name ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (if
         (call $-truthy (call $-equal
-            (get_local $ns3\token )
-            (i32.const 9 ) ) )
+            (get_local $ns4\token )
+            (i32.const 20 ) ) )
         (then
-          (drop (call $ns3\exit_parens ) )
+          (drop (call $ns4\exit_parens ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
-      (drop (call $ns3\exit_parens ) )
-      (set_local $-ret (get_local $ns3\name ) )
+      (drop (call $ns4\exit_parens ) )
+      (set_local $-ret (get_local $ns4\name ) )
       (br 0 )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\read_module
+  ;; function $ns4\read_module
 
-  (func $ns3\read_module
+  (func $ns4\read_module
     (result i32 )
-    (local $ns3\token i32 )
+    (local $ns4\token i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
       (drop
-        (set_local $ns3\token (call $ns3\read_token ) )
-        (get_local $ns3\token ) )
+        (set_local $ns4\token (call $ns4\read_token ) )
+        (get_local $ns4\token ) )
       (block (loop
-          (br_if 1 (call $-falsy (get_local $ns3\token ) ) )
+          (br_if 1 (call $-falsy (get_local $ns4\token ) ) )
           (block
             (if
               (call $-truthy (call $-equal
-                  (get_local $ns3\token )
-                  (i32.const 9 ) ) )
+                  (get_local $ns4\token )
+                  (i32.const 20 ) ) )
               (then
                 (drop
-                  (set_local $ns3\token (call $ns3\read_token ) )
-                  (get_local $ns3\token ) )
+                  (set_local $ns4\token (call $ns4\read_token ) )
+                  (get_local $ns4\token ) )
                 (if
                   (call $-truthy (call $-equal
-                      (get_local $ns3\token )
-                      (i32.const 13 ) ) )
+                      (get_local $ns4\token )
+                      (i32.const 24 ) ) )
                   (then
-                    (drop (call $ns3\read_type ) )
+                    (drop (call $ns4\read_type ) )
                     (set_local $-success (i32.const 1 ) ) )
                   (else (set_local $-success (i32.const 0 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
-                        (i32.const 14 ) ) ) )
+                        (get_local $ns4\token )
+                        (i32.const 25 ) ) ) )
                   (then
-                    (drop (call $ns3\read_import ) )
+                    (drop (call $ns4\read_import ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
-                        (i32.const 16 ) ) ) )
+                        (get_local $ns4\token )
+                        (i32.const 27 ) ) ) )
                   (then
-                    (drop (call $ns3\read_table_type (i32.const 5 ) ) )
+                    (drop (call $ns4\read_table_type (i32.const 5 ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
-                        (i32.const 17 ) ) ) )
+                        (get_local $ns4\token )
+                        (i32.const 28 ) ) ) )
                   (then
-                    (drop (call $ns3\read_memory_type (i32.const 5 ) ) )
+                    (drop (call $ns4\read_memory_type (i32.const 5 ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
+                        (get_local $ns4\token )
                         (i32.const 85 ) ) ) )
                   (then
-                    (drop (call $ns3\read_func_type (i32.const 5 ) ) )
+                    (drop (call $ns4\read_func_type (i32.const 5 ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
-                        (i32.const 18 ) ) ) )
+                        (get_local $ns4\token )
+                        (i32.const 29 ) ) ) )
                   (then
-                    (drop (call $ns3\read_global_type (i32.const 5 ) ) )
+                    (drop (call $ns4\read_global_type (i32.const 5 ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
-                        (i32.const 19 ) ) ) )
+                        (get_local $ns4\token )
+                        (i32.const 30 ) ) ) )
                   (then
-                    (drop (call $ns3\read_export (i32.const 5 ) ) )
+                    (drop (call $ns4\read_export (i32.const 5 ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
-                        (i32.const 20 ) ) ) )
+                        (get_local $ns4\token )
+                        (i32.const 31 ) ) ) )
                   (then
-                    (drop (call $ns3\read_start (i32.const 5 ) ) )
+                    (drop (call $ns4\read_start (i32.const 5 ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
+                        (get_local $ns4\token )
                         (i32.const 88 ) ) ) )
                   (then
-                    (drop (call $ns3\read_element (i32.const 5 ) ) )
+                    (drop (call $ns4\read_element (i32.const 5 ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
-                        (i32.const 23 ) ) ) )
+                        (get_local $ns4\token )
+                        (i32.const 34 ) ) ) )
                   (then
-                    (drop (call $ns3\read_data (i32.const 5 ) ) )
+                    (drop (call $ns4\read_data (i32.const 5 ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.eqz (get_local $-success ) )
                   (then
-                    (set_local $-ret (call $ns3\unexpected
-                        (get_local $ns3\token )
+                    (set_local $-ret (call $ns4\unexpected
+                        (get_local $ns4\token )
                         (i32.const 89 ) ) )
                     (br 5 )
-                    (drop (call $ns3\exit_parens ) )
+                    (drop (call $ns4\exit_parens ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (set_local $-success (i32.const 1 ) ) )
               (else (set_local $-success (i32.const 0 ) ) ) )
             (if
               (i32.eqz (get_local $-success ) )
               (then
-                (set_local $-ret (call $ns3\unexpected
-                    (get_local $ns3\token )
-                    (i32.const 10 ) ) )
+                (set_local $-ret (call $ns4\unexpected
+                    (get_local $ns4\token )
+                    (i32.const 21 ) ) )
                 (br 4 )
                 (set_local $-success (i32.const 1 ) ) ) )
             (drop
-              (set_local $ns3\token (call $ns3\read_token ) )
-              (get_local $ns3\token ) )
+              (set_local $ns4\token (call $ns4\read_token ) )
+              (get_local $ns4\token ) )
             (set_local $-success (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns3\exit_parens ) )
+      (drop (call $ns4\exit_parens ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\read_type
+  ;; function $ns4\read_type
 
-  (func $ns3\read_type
+  (func $ns4\read_type
     (result i32 )
-    (local $ns3\type i32 )
-    (local $ns3\token i32 )
+    (local $ns4\type i32 )
+    (local $ns4\token i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
-      (drop (get_local $ns3\type ) )
+      (drop (get_local $ns4\type ) )
       (drop
-        (set_local $ns3\token (call $ns3\read_token ) )
-        (get_local $ns3\token ) )
+        (set_local $ns4\token (call $ns4\read_token ) )
+        (get_local $ns4\token ) )
       (if
-        (call $-truthy (call $ns3\is_name (get_local $ns3\token ) ) )
+        (call $-truthy (call $ns4\is_name (get_local $ns4\token ) ) )
         (then
           (drop
-            (set_local $ns3\token (call $ns3\read_token ) )
-            (get_local $ns3\token ) )
+            (set_local $ns4\token (call $ns4\read_token ) )
+            (get_local $ns4\token ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (if
         (call $-truthy (call $-equal
-            (get_local $ns3\token )
-            (i32.const 9 ) ) )
+            (get_local $ns4\token )
+            (i32.const 20 ) ) )
         (then
           (drop
-            (set_local $ns3\token (call $ns3\read_token ) )
-            (get_local $ns3\token ) )
+            (set_local $ns4\token (call $ns4\read_token ) )
+            (get_local $ns4\token ) )
           (if
             (call $-truthy (call $-equal
-                (get_local $ns3\token )
+                (get_local $ns4\token )
                 (i32.const 85 ) ) )
             (then
               (drop
-                (set_local $ns3\type (call $ns3\read_func_type (i32.const 0 ) ) )
-                (get_local $ns3\type ) )
+                (set_local $ns4\type (call $ns4\read_func_type (i32.const 0 ) ) )
+                (get_local $ns4\type ) )
               (set_local $-success (i32.const 1 ) ) )
             (else (set_local $-success (i32.const 0 ) ) ) )
           (if
             (i32.eqz (get_local $-success ) )
             (then
-              (set_local $-ret (call $ns3\unexpected
-                  (get_local $ns3\token )
+              (set_local $-ret (call $ns4\unexpected
+                  (get_local $ns4\token )
                   (i32.const 90 ) ) )
               (br 2 )
               (set_local $-success (i32.const 1 ) ) ) )
@@ -4524,80 +4819,80 @@
       (if
         (i32.eqz (get_local $-success ) )
         (then
-          (set_local $-ret (call $ns3\unexpected
-              (get_local $ns3\token )
-              (i32.const 10 ) ) )
+          (set_local $-ret (call $ns4\unexpected
+              (get_local $ns4\token )
+              (i32.const 21 ) ) )
           (br 1 )
           (set_local $-success (i32.const 1 ) ) ) )
-      (drop (call $ns3\exit_parens ) )
-      (set_local $-ret (get_local $ns3\type ) )
+      (drop (call $ns4\exit_parens ) )
+      (set_local $-ret (get_local $ns4\type ) )
       (br 0 )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\read_import
+  ;; function $ns4\read_import
 
-  (func $ns3\read_import
+  (func $ns4\read_import
     (result i32 )
-    (local $ns3\_import i32 )
-    (local $ns3\token i32 )
+    (local $ns4\_import i32 )
+    (local $ns4\token i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
       (drop
-        (set_local $ns3\_import (call $-new_value
+        (set_local $ns4\_import (call $-new_value
             (i32.const 5 )
             (i32.const 0 ) ) )
-        (get_local $ns3\_import ) )
+        (get_local $ns4\_import ) )
       (drop
-        (set_local $ns3\token (call $ns3\read_token ) )
-        (get_local $ns3\token ) )
+        (set_local $ns4\token (call $ns4\read_token ) )
+        (get_local $ns4\token ) )
       (block (loop
-          (br_if 1 (call $-falsy (get_local $ns3\token ) ) )
+          (br_if 1 (call $-falsy (get_local $ns4\token ) ) )
           (block
             (if
-              (call $-truthy (call $ns3\is_string (get_local $ns3\token ) ) )
+              (call $-truthy (call $ns4\is_string (get_local $ns4\token ) ) )
               (then
                 (drop
                   (call $-set_to_obj
-                    (get_local $ns3\_import )
-                    (i32.const 11 )
+                    (get_local $ns4\_import )
+                    (i32.const 22 )
                     (call $-add
                       (i32.const 3 )
                       (call $ns1\binary_slice
-                        (get_local $ns3\token )
+                        (get_local $ns4\token )
                         (call $-number (f64.const 1 ) )
-                        (call $ns1\size_of (get_local $ns3\token ) ) ) ) )
+                        (call $ns1\size_of (get_local $ns4\token ) ) ) ) )
                   (call $-get_from_obj
-                    (get_local $ns3\_import )
-                    (i32.const 11 ) ) )
+                    (get_local $ns4\_import )
+                    (i32.const 22 ) ) )
                 (drop
-                  (set_local $ns3\token (call $ns3\read_token ) )
-                  (get_local $ns3\token ) )
+                  (set_local $ns4\token (call $ns4\read_token ) )
+                  (get_local $ns4\token ) )
                 (if
-                  (call $-truthy (call $ns3\is_string (get_local $ns3\token ) ) )
+                  (call $-truthy (call $ns4\is_string (get_local $ns4\token ) ) )
                   (then
                     (drop
                       (call $-set_to_obj
-                        (get_local $ns3\_import )
+                        (get_local $ns4\_import )
                         (i32.const 91 )
                         (call $-add
                           (i32.const 3 )
                           (call $ns1\binary_slice
-                            (get_local $ns3\token )
+                            (get_local $ns4\token )
                             (call $-number (f64.const 1 ) )
-                            (call $ns1\size_of (get_local $ns3\token ) ) ) ) )
+                            (call $ns1\size_of (get_local $ns4\token ) ) ) ) )
                       (call $-get_from_obj
-                        (get_local $ns3\_import )
+                        (get_local $ns4\_import )
                         (i32.const 91 ) ) )
                     (set_local $-success (i32.const 1 ) ) )
                   (else (set_local $-success (i32.const 0 ) ) ) )
                 (if
                   (i32.eqz (get_local $-success ) )
                   (then
-                    (set_local $-ret (call $ns3\unexpected
-                        (get_local $ns3\token )
+                    (set_local $-ret (call $ns4\unexpected
+                        (get_local $ns4\token )
                         (i32.const 92 ) ) )
                     (br 5 )
                     (set_local $-success (i32.const 1 ) ) ) )
@@ -4607,112 +4902,112 @@
               (i32.and
                 (i32.eqz (get_local $-success ) )
                 (call $-truthy (call $-equal
-                    (get_local $ns3\token )
-                    (i32.const 9 ) ) ) )
+                    (get_local $ns4\token )
+                    (i32.const 20 ) ) ) )
               (then
                 (drop
-                  (set_local $ns3\token (call $ns3\read_token ) )
-                  (get_local $ns3\token ) )
+                  (set_local $ns4\token (call $ns4\read_token ) )
+                  (get_local $ns4\token ) )
                 (if
                   (call $-truthy (call $-equal
-                      (get_local $ns3\token )
+                      (get_local $ns4\token )
                       (i32.const 85 ) ) )
                   (then
                     (drop
                       (call $-set_to_obj
-                        (get_local $ns3\_import )
+                        (get_local $ns4\_import )
                         (i32.const 93 )
                         (call $-number (f64.const 0 ) ) )
                       (call $-get_from_obj
-                        (get_local $ns3\_import )
+                        (get_local $ns4\_import )
                         (i32.const 93 ) ) )
                     (drop
                       (call $-set_to_obj
-                        (get_local $ns3\_import )
-                        (i32.const 13 )
-                        (call $ns3\read_func_type (i32.const 0 ) ) )
+                        (get_local $ns4\_import )
+                        (i32.const 24 )
+                        (call $ns4\read_func_type (i32.const 0 ) ) )
                       (call $-get_from_obj
-                        (get_local $ns3\_import )
-                        (i32.const 13 ) ) )
+                        (get_local $ns4\_import )
+                        (i32.const 24 ) ) )
                     (set_local $-success (i32.const 1 ) ) )
                   (else (set_local $-success (i32.const 0 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
-                        (i32.const 16 ) ) ) )
+                        (get_local $ns4\token )
+                        (i32.const 27 ) ) ) )
                   (then
                     (drop
                       (call $-set_to_obj
-                        (get_local $ns3\_import )
+                        (get_local $ns4\_import )
                         (i32.const 93 )
                         (call $-number (f64.const 1 ) ) )
                       (call $-get_from_obj
-                        (get_local $ns3\_import )
+                        (get_local $ns4\_import )
                         (i32.const 93 ) ) )
                     (drop
                       (call $-set_to_obj
-                        (get_local $ns3\_import )
-                        (i32.const 13 )
-                        (call $ns3\read_table_type (i32.const 0 ) ) )
+                        (get_local $ns4\_import )
+                        (i32.const 24 )
+                        (call $ns4\read_table_type (i32.const 0 ) ) )
                       (call $-get_from_obj
-                        (get_local $ns3\_import )
-                        (i32.const 13 ) ) )
+                        (get_local $ns4\_import )
+                        (i32.const 24 ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
-                        (i32.const 17 ) ) ) )
+                        (get_local $ns4\token )
+                        (i32.const 28 ) ) ) )
                   (then
                     (drop
                       (call $-set_to_obj
-                        (get_local $ns3\_import )
+                        (get_local $ns4\_import )
                         (i32.const 93 )
                         (call $-number (f64.const 2 ) ) )
                       (call $-get_from_obj
-                        (get_local $ns3\_import )
+                        (get_local $ns4\_import )
                         (i32.const 93 ) ) )
                     (drop
                       (call $-set_to_obj
-                        (get_local $ns3\_import )
-                        (i32.const 13 )
-                        (call $ns3\read_memory_type (i32.const 0 ) ) )
+                        (get_local $ns4\_import )
+                        (i32.const 24 )
+                        (call $ns4\read_memory_type (i32.const 0 ) ) )
                       (call $-get_from_obj
-                        (get_local $ns3\_import )
-                        (i32.const 13 ) ) )
+                        (get_local $ns4\_import )
+                        (i32.const 24 ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
-                        (i32.const 18 ) ) ) )
+                        (get_local $ns4\token )
+                        (i32.const 29 ) ) ) )
                   (then
                     (drop
                       (call $-set_to_obj
-                        (get_local $ns3\_import )
+                        (get_local $ns4\_import )
                         (i32.const 93 )
                         (call $-number (f64.const 3 ) ) )
                       (call $-get_from_obj
-                        (get_local $ns3\_import )
+                        (get_local $ns4\_import )
                         (i32.const 93 ) ) )
                     (drop
                       (call $-set_to_obj
-                        (get_local $ns3\_import )
-                        (i32.const 13 )
-                        (call $ns3\read_global_type (i32.const 0 ) ) )
+                        (get_local $ns4\_import )
+                        (i32.const 24 )
+                        (call $ns4\read_global_type (i32.const 0 ) ) )
                       (call $-get_from_obj
-                        (get_local $ns3\_import )
-                        (i32.const 13 ) ) )
+                        (get_local $ns4\_import )
+                        (i32.const 24 ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.eqz (get_local $-success ) )
                   (then
-                    (set_local $-ret (call $ns3\unexpected
-                        (get_local $ns3\token )
+                    (set_local $-ret (call $ns4\unexpected
+                        (get_local $ns4\token )
                         (i32.const 94 ) ) )
                     (br 5 )
                     (set_local $-success (i32.const 1 ) ) ) )
@@ -4720,66 +5015,66 @@
             (if
               (i32.eqz (get_local $-success ) )
               (then
-                (set_local $-ret (call $ns3\unexpected
-                    (get_local $ns3\token )
+                (set_local $-ret (call $ns4\unexpected
+                    (get_local $ns4\token )
                     (i32.const 0 ) ) )
                 (br 4 )
                 (set_local $-success (i32.const 1 ) ) ) )
             (drop
-              (set_local $ns3\token (call $ns3\read_token ) )
-              (get_local $ns3\token ) )
+              (set_local $ns4\token (call $ns4\read_token ) )
+              (get_local $ns4\token ) )
             (set_local $-success (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns3\exit_parens ) )
+      (drop (call $ns4\exit_parens ) )
       (drop (call $ns1\array_push
           (call $-get_from_obj
-            (get_global $ns3\sections )
-            (i32.const 14 ) )
-          (get_local $ns3\_import ) ) )
-      (set_local $-ret (get_local $ns3\_import ) )
+            (get_global $ns4\sections )
+            (i32.const 25 ) )
+          (get_local $ns4\_import ) ) )
+      (set_local $-ret (get_local $ns4\_import ) )
       (br 0 )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\read_table_type
+  ;; function $ns4\read_table_type
 
-  (func $ns3\read_table_type
-    (param $ns3\save i32 )
+  (func $ns4\read_table_type
+    (param $ns4\save i32 )
     (result i32 )
-    (local $ns3\type i32 )
-    (local $ns3\token i32 )
+    (local $ns4\type i32 )
+    (local $ns4\token i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
       (drop
-        (set_local $ns3\type (call $-new_value
+        (set_local $ns4\type (call $-new_value
             (i32.const 5 )
             (i32.const 0 ) ) )
-        (get_local $ns3\type ) )
+        (get_local $ns4\type ) )
       (drop
-        (set_local $ns3\token (call $ns3\read_token ) )
-        (get_local $ns3\token ) )
+        (set_local $ns4\token (call $ns4\read_token ) )
+        (get_local $ns4\token ) )
       (block (loop
-          (br_if 1 (call $-falsy (get_local $ns3\token ) ) )
+          (br_if 1 (call $-falsy (get_local $ns4\token ) ) )
           (block
             (if
-              (call $-truthy (call $ns3\is_number (get_local $ns3\token ) ) )
+              (call $-truthy (call $ns4\is_number (get_local $ns4\token ) ) )
               (then
                 (if
                   (call $-truthy (call $-equal
                       (call $-get_from_obj
-                        (get_local $ns3\type )
+                        (get_local $ns4\type )
                         (i32.const 95 ) )
                       (i32.const 0 ) ) )
                   (then
                     (drop
                       (call $-set_to_obj
-                        (get_local $ns3\type )
+                        (get_local $ns4\type )
                         (i32.const 95 )
-                        (call $ns3\token_to_number (get_local $ns3\token ) ) )
+                        (call $ns4\token_to_number (get_local $ns4\token ) ) )
                       (call $-get_from_obj
-                        (get_local $ns3\type )
+                        (get_local $ns4\type )
                         (i32.const 95 ) ) )
                     (set_local $-success (i32.const 1 ) ) )
                   (else (set_local $-success (i32.const 0 ) ) ) )
@@ -4788,11 +5083,11 @@
                   (then
                     (drop
                       (call $-set_to_obj
-                        (get_local $ns3\type )
+                        (get_local $ns4\type )
                         (i32.const 96 )
-                        (call $ns3\token_to_number (get_local $ns3\token ) ) )
+                        (call $ns4\token_to_number (get_local $ns4\token ) ) )
                       (call $-get_from_obj
-                        (get_local $ns3\type )
+                        (get_local $ns4\type )
                         (i32.const 96 ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (set_local $-success (i32.const 1 ) ) )
@@ -4800,172 +5095,172 @@
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
-                (call $-truthy (call $ns3\is_name (get_local $ns3\token ) ) ) )
+                (call $-truthy (call $ns4\is_name (get_local $ns4\token ) ) ) )
               (then (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
                 (call $-truthy (call $-equal
-                    (get_local $ns3\token )
+                    (get_local $ns4\token )
                     (i32.const 53 ) ) ) )
               (then
                 (drop
                   (call $-set_to_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 97 )
                     (call $-number (f64.const 0x7f ) ) )
                   (call $-get_from_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 97 ) ) )
                 (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
                 (call $-truthy (call $-equal
-                    (get_local $ns3\token )
+                    (get_local $ns4\token )
                     (i32.const 54 ) ) ) )
               (then
                 (drop
                   (call $-set_to_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 97 )
                     (call $-number (f64.const 0x7e ) ) )
                   (call $-get_from_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 97 ) ) )
                 (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
                 (call $-truthy (call $-equal
-                    (get_local $ns3\token )
+                    (get_local $ns4\token )
                     (i32.const 55 ) ) ) )
               (then
                 (drop
                   (call $-set_to_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 97 )
                     (call $-number (f64.const 0x7d ) ) )
                   (call $-get_from_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 97 ) ) )
                 (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
                 (call $-truthy (call $-equal
-                    (get_local $ns3\token )
+                    (get_local $ns4\token )
                     (i32.const 56 ) ) ) )
               (then
                 (drop
                   (call $-set_to_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 97 )
                     (call $-number (f64.const 0x7c ) ) )
                   (call $-get_from_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 97 ) ) )
                 (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
                 (call $-truthy (call $-equal
-                    (get_local $ns3\token )
+                    (get_local $ns4\token )
                     (i32.const 98 ) ) ) )
               (then
                 (drop
                   (call $-set_to_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 97 )
                     (call $-number (f64.const 0x70 ) ) )
                   (call $-get_from_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 97 ) ) )
                 (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
                 (call $-truthy (call $-equal
-                    (get_local $ns3\token )
+                    (get_local $ns4\token )
                     (i32.const 85 ) ) ) )
               (then
                 (drop
                   (call $-set_to_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 97 )
                     (call $-number (f64.const 0x60 ) ) )
                   (call $-get_from_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 97 ) ) )
                 (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.eqz (get_local $-success ) )
               (then
-                (set_local $-ret (call $ns3\unexpected
-                    (get_local $ns3\token )
+                (set_local $-ret (call $ns4\unexpected
+                    (get_local $ns4\token )
                     (i32.const 0 ) ) )
                 (br 4 )
                 (set_local $-success (i32.const 1 ) ) ) )
             (drop
-              (set_local $ns3\token (call $ns3\read_token ) )
-              (get_local $ns3\token ) )
+              (set_local $ns4\token (call $ns4\read_token ) )
+              (get_local $ns4\token ) )
             (set_local $-success (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns3\exit_parens ) )
+      (drop (call $ns4\exit_parens ) )
       (if
-        (call $-truthy (get_local $ns3\save ) )
+        (call $-truthy (get_local $ns4\save ) )
         (then
           (drop (call $ns1\array_push
               (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 16 ) )
-              (get_local $ns3\type ) ) )
+                (get_global $ns4\sections )
+                (i32.const 27 ) )
+              (get_local $ns4\type ) ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
-      (set_local $-ret (get_local $ns3\type ) )
+      (set_local $-ret (get_local $ns4\type ) )
       (br 0 )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\read_memory_type
+  ;; function $ns4\read_memory_type
 
-  (func $ns3\read_memory_type
-    (param $ns3\save i32 )
+  (func $ns4\read_memory_type
+    (param $ns4\save i32 )
     (result i32 )
-    (local $ns3\type i32 )
-    (local $ns3\token i32 )
+    (local $ns4\type i32 )
+    (local $ns4\token i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
       (drop
-        (set_local $ns3\type (call $-new_value
+        (set_local $ns4\type (call $-new_value
             (i32.const 5 )
             (i32.const 0 ) ) )
-        (get_local $ns3\type ) )
+        (get_local $ns4\type ) )
       (drop
-        (set_local $ns3\token (call $ns3\read_token ) )
-        (get_local $ns3\token ) )
+        (set_local $ns4\token (call $ns4\read_token ) )
+        (get_local $ns4\token ) )
       (block (loop
-          (br_if 1 (call $-falsy (get_local $ns3\token ) ) )
+          (br_if 1 (call $-falsy (get_local $ns4\token ) ) )
           (block
             (if
-              (call $-truthy (call $ns3\is_number (get_local $ns3\token ) ) )
+              (call $-truthy (call $ns4\is_number (get_local $ns4\token ) ) )
               (then
                 (if
                   (call $-truthy (call $-equal
                       (call $-get_from_obj
-                        (get_local $ns3\type )
+                        (get_local $ns4\type )
                         (i32.const 95 ) )
                       (i32.const 0 ) ) )
                   (then
                     (drop
                       (call $-set_to_obj
-                        (get_local $ns3\type )
+                        (get_local $ns4\type )
                         (i32.const 95 )
-                        (call $ns3\token_to_number (get_local $ns3\token ) ) )
+                        (call $ns4\token_to_number (get_local $ns4\token ) ) )
                       (call $-get_from_obj
-                        (get_local $ns3\type )
+                        (get_local $ns4\type )
                         (i32.const 95 ) ) )
                     (set_local $-success (i32.const 1 ) ) )
                   (else (set_local $-success (i32.const 0 ) ) ) )
@@ -4974,24 +5269,24 @@
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
                         (call $-get_from_obj
-                          (get_local $ns3\type )
+                          (get_local $ns4\type )
                           (i32.const 96 ) )
                         (i32.const 0 ) ) ) )
                   (then
                     (drop
                       (call $-set_to_obj
-                        (get_local $ns3\type )
+                        (get_local $ns4\type )
                         (i32.const 96 )
-                        (call $ns3\token_to_number (get_local $ns3\token ) ) )
+                        (call $ns4\token_to_number (get_local $ns4\token ) ) )
                       (call $-get_from_obj
-                        (get_local $ns3\type )
+                        (get_local $ns4\type )
                         (i32.const 96 ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.eqz (get_local $-success ) )
                   (then
-                    (set_local $-ret (call $ns3\unexpected
-                        (get_local $ns3\token )
+                    (set_local $-ret (call $ns4\unexpected
+                        (get_local $ns4\token )
                         (i32.const 0 ) ) )
                     (br 5 )
                     (set_local $-success (i32.const 1 ) ) ) )
@@ -5000,80 +5295,80 @@
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
-                (call $-truthy (call $ns3\is_name (get_local $ns3\token ) ) ) )
+                (call $-truthy (call $ns4\is_name (get_local $ns4\token ) ) ) )
               (then (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.eqz (get_local $-success ) )
               (then
-                (set_local $-ret (call $ns3\unexpected
-                    (get_local $ns3\token )
+                (set_local $-ret (call $ns4\unexpected
+                    (get_local $ns4\token )
                     (i32.const 0 ) ) )
                 (br 4 )
                 (set_local $-success (i32.const 1 ) ) ) )
             (drop
-              (set_local $ns3\token (call $ns3\read_token ) )
-              (get_local $ns3\token ) )
+              (set_local $ns4\token (call $ns4\read_token ) )
+              (get_local $ns4\token ) )
             (set_local $-success (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns3\exit_parens ) )
+      (drop (call $ns4\exit_parens ) )
       (if
-        (call $-truthy (get_local $ns3\save ) )
+        (call $-truthy (get_local $ns4\save ) )
         (then
           (drop (call $ns1\array_push
               (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 17 ) )
-              (get_local $ns3\type ) ) )
+                (get_global $ns4\sections )
+                (i32.const 28 ) )
+              (get_local $ns4\type ) ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
-      (set_local $-ret (get_local $ns3\type ) )
+      (set_local $-ret (get_local $ns4\type ) )
       (br 0 )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\read_global_type
+  ;; function $ns4\read_global_type
 
-  (func $ns3\read_global_type
-    (param $ns3\save i32 )
+  (func $ns4\read_global_type
+    (param $ns4\save i32 )
     (result i32 )
-    (local $ns3\type i32 )
-    (local $ns3\token i32 )
+    (local $ns4\type i32 )
+    (local $ns4\token i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
       (drop
-        (set_local $ns3\type (call $-new_value
+        (set_local $ns4\type (call $-new_value
             (i32.const 5 )
             (i32.const 0 ) ) )
-        (get_local $ns3\type ) )
+        (get_local $ns4\type ) )
       (drop
-        (set_local $ns3\token (call $ns3\read_token ) )
-        (get_local $ns3\token ) )
+        (set_local $ns4\token (call $ns4\read_token ) )
+        (get_local $ns4\token ) )
       (block (loop
-          (br_if 1 (call $-falsy (get_local $ns3\token ) ) )
+          (br_if 1 (call $-falsy (get_local $ns4\token ) ) )
           (block
             (if
               (call $-truthy (call $-equal
-                  (get_local $ns3\token )
-                  (i32.const 9 ) ) )
+                  (get_local $ns4\token )
+                  (i32.const 20 ) ) )
               (then
                 (if
                   (call $-truthy (call $-get_from_obj
-                      (get_local $ns3\type )
+                      (get_local $ns4\type )
                       (i32.const 99 ) ) )
                   (then
                     (drop
                       (call $-set_to_obj
-                        (get_local $ns3\type )
+                        (get_local $ns4\type )
                         (i32.const 100 )
-                        (call $ns3\translate_code
+                        (call $ns4\translate_code
                           (call $-new_value
                             (i32.const 6 )
                             (i32.const 0 ) )
                           (i32.const 0 ) ) )
                       (call $-get_from_obj
-                        (get_local $ns3\type )
+                        (get_local $ns4\type )
                         (i32.const 100 ) ) )
                     (set_local $-success (i32.const 1 ) ) )
                   (else (set_local $-success (i32.const 0 ) ) ) )
@@ -5081,144 +5376,144 @@
                   (i32.eqz (get_local $-success ) )
                   (then
                     (drop
-                      (set_local $ns3\type (call $-add
-                          (get_local $ns3\type )
-                          (call $ns3\read_global_type (i32.const 0 ) ) ) )
-                      (get_local $ns3\type ) )
+                      (set_local $ns4\type (call $-add
+                          (get_local $ns4\type )
+                          (call $ns4\read_global_type (i32.const 0 ) ) ) )
+                      (get_local $ns4\type ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (set_local $-success (i32.const 1 ) ) )
               (else (set_local $-success (i32.const 0 ) ) ) )
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
-                (call $-truthy (call $ns3\is_name (get_local $ns3\token ) ) ) )
+                (call $-truthy (call $ns4\is_name (get_local $ns4\token ) ) ) )
               (then (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
                 (call $-truthy (call $-equal
-                    (get_local $ns3\token )
+                    (get_local $ns4\token )
                     (i32.const 101 ) ) ) )
               (then
                 (drop
                   (call $-set_to_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 102 )
                     (call $-number (f64.const 1 ) ) )
                   (call $-get_from_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 102 ) ) )
                 (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
                 (call $-truthy (call $-equal
-                    (get_local $ns3\token )
+                    (get_local $ns4\token )
                     (i32.const 53 ) ) ) )
               (then
                 (drop
                   (call $-set_to_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 99 )
                     (call $-number (f64.const 0x7f ) ) )
                   (call $-get_from_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 99 ) ) )
                 (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
                 (call $-truthy (call $-equal
-                    (get_local $ns3\token )
+                    (get_local $ns4\token )
                     (i32.const 54 ) ) ) )
               (then
                 (drop
                   (call $-set_to_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 99 )
                     (call $-number (f64.const 0x7e ) ) )
                   (call $-get_from_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 99 ) ) )
                 (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
                 (call $-truthy (call $-equal
-                    (get_local $ns3\token )
+                    (get_local $ns4\token )
                     (i32.const 55 ) ) ) )
               (then
                 (drop
                   (call $-set_to_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 99 )
                     (call $-number (f64.const 0x7d ) ) )
                   (call $-get_from_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 99 ) ) )
                 (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
                 (call $-truthy (call $-equal
-                    (get_local $ns3\token )
+                    (get_local $ns4\token )
                     (i32.const 56 ) ) ) )
               (then
                 (drop
                   (call $-set_to_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 99 )
                     (call $-number (f64.const 0x7c ) ) )
                   (call $-get_from_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 99 ) ) )
                 (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.eqz (get_local $-success ) )
               (then
-                (set_local $-ret (call $ns3\unexpected
-                    (get_local $ns3\token )
+                (set_local $-ret (call $ns4\unexpected
+                    (get_local $ns4\token )
                     (i32.const 0 ) ) )
                 (br 4 )
                 (set_local $-success (i32.const 1 ) ) ) )
             (drop
-              (set_local $ns3\token (call $ns3\read_token ) )
-              (get_local $ns3\token ) )
+              (set_local $ns4\token (call $ns4\read_token ) )
+              (get_local $ns4\token ) )
             (set_local $-success (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns3\exit_parens ) )
+      (drop (call $ns4\exit_parens ) )
       (if
-        (call $-truthy (get_local $ns3\save ) )
+        (call $-truthy (get_local $ns4\save ) )
         (then
           (drop (call $ns1\array_push
               (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 18 ) )
-              (get_local $ns3\type ) ) )
+                (get_global $ns4\sections )
+                (i32.const 29 ) )
+              (get_local $ns4\type ) ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
-      (set_local $-ret (get_local $ns3\type ) )
+      (set_local $-ret (get_local $ns4\type ) )
       (br 0 )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\read_func_type
+  ;; function $ns4\read_func_type
 
-  (func $ns3\read_func_type
-    (param $ns3\save i32 )
+  (func $ns4\read_func_type
+    (param $ns4\save i32 )
     (result i32 )
-    (local $ns3\type i32 )
+    (local $ns4\type i32 )
     (local $-obj0 i32 )
-    (local $ns3\function i32 )
+    (local $ns4\function i32 )
     (local $-obj1 i32 )
-    (local $ns3\token i32 )
-    (local $ns3\type_index i32 )
+    (local $ns4\token i32 )
+    (local $ns4\type_index i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
       (drop
-        (set_local $ns3\type
+        (set_local $ns4\type
           (tee_local $-obj0 (call $-new_value
               (i32.const 5 )
               (i32.const 0 ) ) )
@@ -5250,144 +5545,144 @@
             (call $-get_from_obj
               (get_local $-obj0 )
               (i32.const 105 ) ) ) )
-        (get_local $ns3\type ) )
+        (get_local $ns4\type ) )
       (drop
-        (set_global $ns3\local_names (call $-new_value
+        (set_global $ns4\local_names (call $-new_value
             (i32.const 4 )
             (i32.const 0 ) ) )
-        (get_global $ns3\local_names ) )
+        (get_global $ns4\local_names ) )
       (drop
-        (set_global $ns3\blocks (call $-new_value
+        (set_global $ns4\blocks (call $-new_value
             (i32.const 4 )
             (i32.const 0 ) ) )
-        (get_global $ns3\blocks ) )
+        (get_global $ns4\blocks ) )
       (drop
-        (set_local $ns3\function
+        (set_local $ns4\function
           (tee_local $-obj1 (call $-new_value
               (i32.const 5 )
               (i32.const 0 ) ) )
           (drop
             (call $-set_to_obj
               (get_local $-obj1 )
-              (i32.const 25 )
+              (i32.const 36 )
               (call $-new_value
                 (i32.const 4 )
                 (i32.const 0 ) ) )
             (call $-get_from_obj
               (get_local $-obj1 )
-              (i32.const 25 ) ) )
+              (i32.const 36 ) ) )
           (drop
             (call $-set_to_obj
               (get_local $-obj1 )
               (i32.const 106 )
-              (get_global $ns3\local_names ) )
+              (get_global $ns4\local_names ) )
             (call $-get_from_obj
               (get_local $-obj1 )
               (i32.const 106 ) ) )
           (drop
             (call $-set_to_obj
               (get_local $-obj1 )
-              (i32.const 22 )
+              (i32.const 33 )
               (call $-new_value
                 (i32.const 6 )
                 (i32.const 0 ) ) )
             (call $-get_from_obj
               (get_local $-obj1 )
-              (i32.const 22 ) ) ) )
-        (get_local $ns3\function ) )
+              (i32.const 33 ) ) ) )
+        (get_local $ns4\function ) )
       (drop
-        (set_local $ns3\token (call $ns3\read_token ) )
-        (get_local $ns3\token ) )
+        (set_local $ns4\token (call $ns4\read_token ) )
+        (get_local $ns4\token ) )
       (block (loop
-          (br_if 1 (call $-falsy (get_local $ns3\token ) ) )
+          (br_if 1 (call $-falsy (get_local $ns4\token ) ) )
           (block
             (if
-              (call $-truthy (call $ns3\is_name (get_local $ns3\token ) ) )
+              (call $-truthy (call $ns4\is_name (get_local $ns4\token ) ) )
               (then (set_local $-success (i32.const 1 ) ) )
               (else (set_local $-success (i32.const 0 ) ) ) )
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
                 (call $-truthy (call $-equal
-                    (get_local $ns3\token )
-                    (i32.const 9 ) ) ) )
+                    (get_local $ns4\token )
+                    (i32.const 20 ) ) ) )
               (then
                 (drop
-                  (set_local $ns3\token (call $ns3\read_token ) )
-                  (get_local $ns3\token ) )
+                  (set_local $ns4\token (call $ns4\read_token ) )
+                  (get_local $ns4\token ) )
                 (if
                   (call $-truthy (call $-equal
-                      (get_local $ns3\token )
-                      (i32.const 13 ) ) )
+                      (get_local $ns4\token )
+                      (i32.const 24 ) ) )
                   (then
                     (drop
-                      (set_local $ns3\token (call $ns3\read_token ) )
-                      (get_local $ns3\token ) )
+                      (set_local $ns4\token (call $ns4\read_token ) )
+                      (get_local $ns4\token ) )
                     (if
-                      (call $-truthy (call $ns3\is_name (get_local $ns3\token ) ) )
+                      (call $-truthy (call $ns4\is_name (get_local $ns4\token ) ) )
                       (then
                         (drop
-                          (set_local $ns3\type_index (call $ns1\array_search
+                          (set_local $ns4\type_index (call $ns1\array_search
                               (call $-get_from_obj
                                 (call $-get_from_obj
-                                  (get_global $ns3\sections )
-                                  (i32.const 24 ) )
-                                (i32.const 13 ) )
-                              (get_local $ns3\token )
+                                  (get_global $ns4\sections )
+                                  (i32.const 35 ) )
+                                (i32.const 24 ) )
+                              (get_local $ns4\token )
                               (i32.const 0 ) ) )
-                          (get_local $ns3\type_index ) )
+                          (get_local $ns4\type_index ) )
                         (set_local $-success (i32.const 1 ) ) )
                       (else (set_local $-success (i32.const 0 ) ) ) )
                     (if
                       (i32.and
                         (i32.eqz (get_local $-success ) )
-                        (call $-truthy (call $ns3\is_number (get_local $ns3\token ) ) ) )
+                        (call $-truthy (call $ns4\is_number (get_local $ns4\token ) ) ) )
                       (then
                         (drop
-                          (set_local $ns3\type_index (call $ns3\token_to_number (i32.const 0 ) ) )
-                          (get_local $ns3\type_index ) )
+                          (set_local $ns4\type_index (call $ns4\token_to_number (i32.const 0 ) ) )
+                          (get_local $ns4\type_index ) )
                         (set_local $-success (i32.const 1 ) ) ) )
                     (if
                       (i32.eqz (get_local $-success ) )
                       (then
-                        (set_local $-ret (call $ns3\unexpected
-                            (get_local $ns3\token )
+                        (set_local $-ret (call $ns4\unexpected
+                            (get_local $ns4\token )
                             (i32.const 107 ) ) )
                         (br 6 )
                         (set_local $-success (i32.const 1 ) ) ) )
-                    (drop (call $ns3\exit_parens ) )
+                    (drop (call $ns4\exit_parens ) )
                     (set_local $-success (i32.const 1 ) ) )
                   (else (set_local $-success (i32.const 0 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
+                        (get_local $ns4\token )
                         (i32.const 86 ) ) ) )
                   (then
                     (block (loop
-                        (br_if 1 (call $-falsy (get_local $ns3\token ) ) )
+                        (br_if 1 (call $-falsy (get_local $ns4\token ) ) )
                         (block
                           (if
-                            (call $-truthy (call $ns3\is_name (get_local $ns3\token ) ) )
+                            (call $-truthy (call $ns4\is_name (get_local $ns4\token ) ) )
                             (then
                               (drop (call $ns1\array_push
                                   (call $-get_from_obj
-                                    (get_local $ns3\function )
+                                    (get_local $ns4\function )
                                     (i32.const 106 ) )
-                                  (get_local $ns3\token ) ) )
+                                  (get_local $ns4\token ) ) )
                               (set_local $-success (i32.const 1 ) ) )
                             (else (set_local $-success (i32.const 0 ) ) ) )
                           (if
                             (i32.and
                               (i32.eqz (get_local $-success ) )
                               (call $-truthy (call $-equal
-                                  (get_local $ns3\token )
+                                  (get_local $ns4\token )
                                   (i32.const 53 ) ) ) )
                             (then
                               (drop (call $ns1\array_push
                                   (call $-get_from_obj
-                                    (get_local $ns3\type )
+                                    (get_local $ns4\type )
                                     (i32.const 104 ) )
                                   (call $-number (f64.const 0x7f ) ) ) )
                               (set_local $-success (i32.const 1 ) ) ) )
@@ -5395,12 +5690,12 @@
                             (i32.and
                               (i32.eqz (get_local $-success ) )
                               (call $-truthy (call $-equal
-                                  (get_local $ns3\token )
+                                  (get_local $ns4\token )
                                   (i32.const 54 ) ) ) )
                             (then
                               (drop (call $ns1\array_push
                                   (call $-get_from_obj
-                                    (get_local $ns3\type )
+                                    (get_local $ns4\type )
                                     (i32.const 104 ) )
                                   (call $-number (f64.const 0x7e ) ) ) )
                               (set_local $-success (i32.const 1 ) ) ) )
@@ -5408,12 +5703,12 @@
                             (i32.and
                               (i32.eqz (get_local $-success ) )
                               (call $-truthy (call $-equal
-                                  (get_local $ns3\token )
+                                  (get_local $ns4\token )
                                   (i32.const 55 ) ) ) )
                             (then
                               (drop (call $ns1\array_push
                                   (call $-get_from_obj
-                                    (get_local $ns3\type )
+                                    (get_local $ns4\type )
                                     (i32.const 104 ) )
                                   (call $-number (f64.const 0x7d ) ) ) )
                               (set_local $-success (i32.const 1 ) ) ) )
@@ -5421,119 +5716,119 @@
                             (i32.and
                               (i32.eqz (get_local $-success ) )
                               (call $-truthy (call $-equal
-                                  (get_local $ns3\token )
+                                  (get_local $ns4\token )
                                   (i32.const 56 ) ) ) )
                             (then
                               (drop (call $ns1\array_push
                                   (call $-get_from_obj
-                                    (get_local $ns3\type )
+                                    (get_local $ns4\type )
                                     (i32.const 104 ) )
                                   (call $-number (f64.const 0x7c ) ) ) )
                               (set_local $-success (i32.const 1 ) ) ) )
                           (drop
-                            (set_local $ns3\token (call $ns3\read_token ) )
-                            (get_local $ns3\token ) )
+                            (set_local $ns4\token (call $ns4\read_token ) )
+                            (get_local $ns4\token ) )
                           (set_local $-success (i32.const 1 ) ) )
                         (br 0 ) ) )
-                    (drop (call $ns3\exit_parens ) )
+                    (drop (call $ns4\exit_parens ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
+                        (get_local $ns4\token )
                         (i32.const 87 ) ) ) )
                   (then
                     (block (loop
-                        (br_if 1 (call $-falsy (get_local $ns3\token ) ) )
+                        (br_if 1 (call $-falsy (get_local $ns4\token ) ) )
                         (block
                           (if
-                            (call $-truthy (call $ns3\is_name (get_local $ns3\token ) ) )
+                            (call $-truthy (call $ns4\is_name (get_local $ns4\token ) ) )
                             (then
                               (drop (call $ns1\array_push
                                   (call $-get_from_obj
-                                    (get_local $ns3\function )
+                                    (get_local $ns4\function )
                                     (i32.const 106 ) )
-                                  (get_local $ns3\token ) ) )
+                                  (get_local $ns4\token ) ) )
                               (set_local $-success (i32.const 1 ) ) )
                             (else (set_local $-success (i32.const 0 ) ) ) )
                           (if
                             (i32.and
                               (i32.eqz (get_local $-success ) )
                               (call $-truthy (call $-equal
-                                  (get_local $ns3\token )
+                                  (get_local $ns4\token )
                                   (i32.const 53 ) ) ) )
                             (then
                               (drop (call $ns1\array_push
                                   (call $-get_from_obj
-                                    (get_local $ns3\function )
-                                    (i32.const 25 ) )
+                                    (get_local $ns4\function )
+                                    (i32.const 36 ) )
                                   (call $-number (f64.const 0x7f ) ) ) )
                               (set_local $-success (i32.const 1 ) ) ) )
                           (if
                             (i32.and
                               (i32.eqz (get_local $-success ) )
                               (call $-truthy (call $-equal
-                                  (get_local $ns3\token )
+                                  (get_local $ns4\token )
                                   (i32.const 54 ) ) ) )
                             (then
                               (drop (call $ns1\array_push
                                   (call $-get_from_obj
-                                    (get_local $ns3\function )
-                                    (i32.const 25 ) )
+                                    (get_local $ns4\function )
+                                    (i32.const 36 ) )
                                   (call $-number (f64.const 0x7e ) ) ) )
                               (set_local $-success (i32.const 1 ) ) ) )
                           (if
                             (i32.and
                               (i32.eqz (get_local $-success ) )
                               (call $-truthy (call $-equal
-                                  (get_local $ns3\token )
+                                  (get_local $ns4\token )
                                   (i32.const 55 ) ) ) )
                             (then
                               (drop (call $ns1\array_push
                                   (call $-get_from_obj
-                                    (get_local $ns3\function )
-                                    (i32.const 25 ) )
+                                    (get_local $ns4\function )
+                                    (i32.const 36 ) )
                                   (call $-number (f64.const 0x7d ) ) ) )
                               (set_local $-success (i32.const 1 ) ) ) )
                           (if
                             (i32.and
                               (i32.eqz (get_local $-success ) )
                               (call $-truthy (call $-equal
-                                  (get_local $ns3\token )
+                                  (get_local $ns4\token )
                                   (i32.const 56 ) ) ) )
                             (then
                               (drop (call $ns1\array_push
                                   (call $-get_from_obj
-                                    (get_local $ns3\function )
-                                    (i32.const 25 ) )
+                                    (get_local $ns4\function )
+                                    (i32.const 36 ) )
                                   (call $-number (f64.const 0x7c ) ) ) )
                               (set_local $-success (i32.const 1 ) ) ) )
                           (drop
-                            (set_local $ns3\token (call $ns3\read_token ) )
-                            (get_local $ns3\token ) )
+                            (set_local $ns4\token (call $ns4\read_token ) )
+                            (get_local $ns4\token ) )
                           (set_local $-success (i32.const 1 ) ) )
                         (br 0 ) ) )
-                    (drop (call $ns3\exit_parens ) )
+                    (drop (call $ns4\exit_parens ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.and
                     (i32.eqz (get_local $-success ) )
                     (call $-truthy (call $-equal
-                        (get_local $ns3\token )
+                        (get_local $ns4\token )
                         (i32.const 52 ) ) ) )
                   (then
                     (block (loop
-                        (br_if 1 (call $-falsy (get_local $ns3\token ) ) )
+                        (br_if 1 (call $-falsy (get_local $ns4\token ) ) )
                         (block
                           (if
                             (call $-truthy (call $-equal
-                                (get_local $ns3\token )
+                                (get_local $ns4\token )
                                 (i32.const 53 ) ) )
                             (then
                               (drop (call $ns1\array_push
                                   (call $-get_from_obj
-                                    (get_local $ns3\type )
+                                    (get_local $ns4\type )
                                     (i32.const 105 ) )
                                   (call $-number (f64.const 0x7f ) ) ) )
                               (set_local $-success (i32.const 1 ) ) )
@@ -5542,12 +5837,12 @@
                             (i32.and
                               (i32.eqz (get_local $-success ) )
                               (call $-truthy (call $-equal
-                                  (get_local $ns3\token )
+                                  (get_local $ns4\token )
                                   (i32.const 54 ) ) ) )
                             (then
                               (drop (call $ns1\array_push
                                   (call $-get_from_obj
-                                    (get_local $ns3\type )
+                                    (get_local $ns4\type )
                                     (i32.const 105 ) )
                                   (call $-number (f64.const 0x7e ) ) ) )
                               (set_local $-success (i32.const 1 ) ) ) )
@@ -5555,12 +5850,12 @@
                             (i32.and
                               (i32.eqz (get_local $-success ) )
                               (call $-truthy (call $-equal
-                                  (get_local $ns3\token )
+                                  (get_local $ns4\token )
                                   (i32.const 55 ) ) ) )
                             (then
                               (drop (call $ns1\array_push
                                   (call $-get_from_obj
-                                    (get_local $ns3\type )
+                                    (get_local $ns4\type )
                                     (i32.const 105 ) )
                                   (call $-number (f64.const 0x7d ) ) ) )
                               (set_local $-success (i32.const 1 ) ) ) )
@@ -5568,409 +5863,409 @@
                             (i32.and
                               (i32.eqz (get_local $-success ) )
                               (call $-truthy (call $-equal
-                                  (get_local $ns3\token )
+                                  (get_local $ns4\token )
                                   (i32.const 56 ) ) ) )
                             (then
                               (drop (call $ns1\array_push
                                   (call $-get_from_obj
-                                    (get_local $ns3\type )
+                                    (get_local $ns4\type )
                                     (i32.const 105 ) )
                                   (call $-number (f64.const 0x7c ) ) ) )
                               (set_local $-success (i32.const 1 ) ) ) )
                           (drop
-                            (set_local $ns3\token (call $ns3\read_token ) )
-                            (get_local $ns3\token ) )
+                            (set_local $ns4\token (call $ns4\read_token ) )
+                            (get_local $ns4\token ) )
                           (set_local $-success (i32.const 1 ) ) )
                         (br 0 ) ) )
-                    (drop (call $ns3\exit_parens ) )
+                    (drop (call $ns4\exit_parens ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (if
                   (i32.eqz (get_local $-success ) )
                   (then
-                    (drop (call $ns3\translate_code
+                    (drop (call $ns4\translate_code
                         (call $-get_from_obj
-                          (get_local $ns3\function )
-                          (i32.const 22 ) )
-                        (get_local $ns3\token ) ) )
+                          (get_local $ns4\function )
+                          (i32.const 33 ) )
+                        (get_local $ns4\token ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.eqz (get_local $-success ) )
               (then
-                (drop (call $ns3\translate_code
+                (drop (call $ns4\translate_code
                     (call $-get_from_obj
-                      (get_local $ns3\function )
-                      (i32.const 22 ) )
-                    (get_local $ns3\token ) ) )
-                (drop (call $ns3\backstep ) )
+                      (get_local $ns4\function )
+                      (i32.const 33 ) )
+                    (get_local $ns4\token ) ) )
+                (drop (call $ns4\backstep ) )
                 (set_local $-success (i32.const 1 ) ) ) )
             (drop
-              (set_local $ns3\token (call $ns3\read_token ) )
-              (get_local $ns3\token ) )
+              (set_local $ns4\token (call $ns4\read_token ) )
+              (get_local $ns4\token ) )
             (set_local $-success (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns3\exit_parens ) )
+      (drop (call $ns4\exit_parens ) )
       (if
         (call $-truthy (call $-equal
-            (get_local $ns3\type_index )
+            (get_local $ns4\type_index )
             (i32.const 0 ) ) )
         (then
           (drop
-            (set_local $ns3\type (call $ns1\json_encode (get_local $ns3\type ) ) )
-            (get_local $ns3\type ) )
+            (set_local $ns4\type (call $ns1\json_encode (get_local $ns4\type ) ) )
+            (get_local $ns4\type ) )
           (drop
-            (set_local $ns3\type_index (call $ns1\array_search
+            (set_local $ns4\type_index (call $ns1\array_search
                 (call $-get_from_obj
-                  (get_global $ns3\sections )
-                  (i32.const 13 ) )
-                (get_local $ns3\type )
+                  (get_global $ns4\sections )
+                  (i32.const 24 ) )
+                (get_local $ns4\type )
                 (i32.const 0 ) ) )
-            (get_local $ns3\type_index ) )
+            (get_local $ns4\type_index ) )
           (if
             (call $-truthy (call $-equal
-                (get_local $ns3\type_index )
+                (get_local $ns4\type_index )
                 (i32.const 0 ) ) )
             (then
               (drop
-                (set_local $ns3\type_index (call $ns1\array_length (call $-get_from_obj
-                      (get_global $ns3\sections )
-                      (i32.const 13 ) ) ) )
-                (get_local $ns3\type_index ) )
+                (set_local $ns4\type_index (call $ns1\array_length (call $-get_from_obj
+                      (get_global $ns4\sections )
+                      (i32.const 24 ) ) ) )
+                (get_local $ns4\type_index ) )
               (drop (call $ns1\array_push
                   (call $-get_from_obj
-                    (get_global $ns3\sections )
-                    (i32.const 13 ) )
-                  (get_local $ns3\type ) ) )
+                    (get_global $ns4\sections )
+                    (i32.const 24 ) )
+                  (get_local $ns4\type ) ) )
               (set_local $-success (i32.const 1 ) ) )
             (else (set_local $-success (i32.const 0 ) ) ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (if
-        (call $-truthy (get_local $ns3\save ) )
+        (call $-truthy (get_local $ns4\save ) )
         (then
           (drop (call $ns1\array_push
               (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 15 ) )
-              (get_local $ns3\type_index ) ) )
+                (get_global $ns4\sections )
+                (i32.const 26 ) )
+              (get_local $ns4\type_index ) ) )
           (drop (call $ns1\array_push
               (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 22 ) )
-              (get_local $ns3\function ) ) )
+                (get_global $ns4\sections )
+                (i32.const 33 ) )
+              (get_local $ns4\function ) ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
-      (set_local $-ret (get_local $ns3\type_index ) )
+      (set_local $-ret (get_local $ns4\type_index ) )
       (br 0 )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\read_export
+  ;; function $ns4\read_export
 
-  (func $ns3\read_export
-    (param $ns3\save i32 )
+  (func $ns4\read_export
+    (param $ns4\save i32 )
     (result i32 )
-    (local $ns3\xport i32 )
-    (local $ns3\token i32 )
+    (local $ns4\xport i32 )
+    (local $ns4\token i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
       (drop
-        (set_local $ns3\xport (call $-new_value
+        (set_local $ns4\xport (call $-new_value
             (i32.const 5 )
             (i32.const 0 ) ) )
-        (get_local $ns3\xport ) )
+        (get_local $ns4\xport ) )
       (drop
-        (set_local $ns3\token (call $ns3\read_token ) )
-        (get_local $ns3\token ) )
+        (set_local $ns4\token (call $ns4\read_token ) )
+        (get_local $ns4\token ) )
       (if
-        (call $-truthy (call $ns3\is_string (get_local $ns3\token ) ) )
+        (call $-truthy (call $ns4\is_string (get_local $ns4\token ) ) )
         (then
           (drop
             (call $-set_to_obj
-              (get_local $ns3\xport )
+              (get_local $ns4\xport )
               (i32.const 91 )
               (call $ns1\binary_slice
-                (get_local $ns3\token )
+                (get_local $ns4\token )
                 (call $-number (f64.const 1 ) )
-                (call $ns1\size_of (get_local $ns3\token ) ) ) )
+                (call $ns1\size_of (get_local $ns4\token ) ) ) )
             (call $-get_from_obj
-              (get_local $ns3\xport )
+              (get_local $ns4\xport )
               (i32.const 91 ) ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (if
         (i32.eqz (get_local $-success ) )
         (then
-          (set_local $-ret (call $ns3\unexpected
-              (get_local $ns3\token )
+          (set_local $-ret (call $ns4\unexpected
+              (get_local $ns4\token )
               (i32.const 92 ) ) )
           (br 1 )
           (set_local $-success (i32.const 1 ) ) ) )
       (drop
-        (set_local $ns3\token (call $ns3\read_token ) )
-        (get_local $ns3\token ) )
+        (set_local $ns4\token (call $ns4\read_token ) )
+        (get_local $ns4\token ) )
       (if
         (call $-truthy (call $-equal
-            (get_local $ns3\token )
-            (i32.const 9 ) ) )
+            (get_local $ns4\token )
+            (i32.const 20 ) ) )
         (then
           (drop
-            (set_local $ns3\token (call $ns3\read_token ) )
-            (get_local $ns3\token ) )
+            (set_local $ns4\token (call $ns4\read_token ) )
+            (get_local $ns4\token ) )
           (if
             (call $-truthy (call $-equal
-                (get_local $ns3\token )
+                (get_local $ns4\token )
                 (i32.const 85 ) ) )
             (then
               (drop
                 (call $-set_to_obj
-                  (get_local $ns3\xport )
+                  (get_local $ns4\xport )
                   (i32.const 93 )
                   (call $-number (f64.const 0 ) ) )
                 (call $-get_from_obj
-                  (get_local $ns3\xport )
+                  (get_local $ns4\xport )
                   (i32.const 93 ) ) )
               (drop
-                (set_local $ns3\token (call $ns3\read_token ) )
-                (get_local $ns3\token ) )
+                (set_local $ns4\token (call $ns4\read_token ) )
+                (get_local $ns4\token ) )
               (if
-                (call $-truthy (call $ns3\is_number (get_local $ns3\token ) ) )
+                (call $-truthy (call $ns4\is_number (get_local $ns4\token ) ) )
                 (then
                   (drop
                     (call $-set_to_obj
-                      (get_local $ns3\xport )
+                      (get_local $ns4\xport )
                       (i32.const 108 )
-                      (call $ns3\token_to_number (get_local $ns3\token ) ) )
+                      (call $ns4\token_to_number (get_local $ns4\token ) ) )
                     (call $-get_from_obj
-                      (get_local $ns3\xport )
+                      (get_local $ns4\xport )
                       (i32.const 108 ) ) )
                   (set_local $-success (i32.const 1 ) ) )
                 (else (set_local $-success (i32.const 0 ) ) ) )
               (if
                 (i32.and
                   (i32.eqz (get_local $-success ) )
-                  (call $-truthy (call $ns3\is_name (get_local $ns3\token ) ) ) )
+                  (call $-truthy (call $ns4\is_name (get_local $ns4\token ) ) ) )
                 (then
                   (drop
                     (call $-set_to_obj
-                      (get_local $ns3\xport )
+                      (get_local $ns4\xport )
                       (i32.const 108 )
                       (call $ns1\array_search
                         (call $-get_from_obj
                           (call $-get_from_obj
-                            (get_global $ns3\sections )
-                            (i32.const 24 ) )
-                          (i32.const 15 ) )
-                        (get_local $ns3\token )
+                            (get_global $ns4\sections )
+                            (i32.const 35 ) )
+                          (i32.const 26 ) )
+                        (get_local $ns4\token )
                         (i32.const 0 ) ) )
                     (call $-get_from_obj
-                      (get_local $ns3\xport )
+                      (get_local $ns4\xport )
                       (i32.const 108 ) ) )
                   (set_local $-success (i32.const 1 ) ) ) )
               (if
                 (i32.eqz (get_local $-success ) )
                 (then
-                  (set_local $-ret (call $ns3\unexpected
-                      (get_local $ns3\token )
+                  (set_local $-ret (call $ns4\unexpected
+                      (get_local $ns4\token )
                       (i32.const 109 ) ) )
                   (br 3 )
                   (set_local $-success (i32.const 1 ) ) ) )
-              (drop (call $ns3\exit_parens ) )
+              (drop (call $ns4\exit_parens ) )
               (set_local $-success (i32.const 1 ) ) )
             (else (set_local $-success (i32.const 0 ) ) ) )
           (if
             (i32.and
               (i32.eqz (get_local $-success ) )
               (call $-truthy (call $-equal
-                  (get_local $ns3\token )
-                  (i32.const 16 ) ) ) )
+                  (get_local $ns4\token )
+                  (i32.const 27 ) ) ) )
             (then
               (drop
                 (call $-set_to_obj
-                  (get_local $ns3\xport )
+                  (get_local $ns4\xport )
                   (i32.const 93 )
                   (call $-number (f64.const 1 ) ) )
                 (call $-get_from_obj
-                  (get_local $ns3\xport )
+                  (get_local $ns4\xport )
                   (i32.const 93 ) ) )
               (drop
-                (set_local $ns3\token (call $ns3\read_token ) )
-                (get_local $ns3\token ) )
+                (set_local $ns4\token (call $ns4\read_token ) )
+                (get_local $ns4\token ) )
               (if
-                (call $-truthy (call $ns3\is_number (get_local $ns3\token ) ) )
+                (call $-truthy (call $ns4\is_number (get_local $ns4\token ) ) )
                 (then
                   (drop
                     (call $-set_to_obj
-                      (get_local $ns3\xport )
+                      (get_local $ns4\xport )
                       (i32.const 108 )
-                      (call $ns3\token_to_number (get_local $ns3\token ) ) )
+                      (call $ns4\token_to_number (get_local $ns4\token ) ) )
                     (call $-get_from_obj
-                      (get_local $ns3\xport )
+                      (get_local $ns4\xport )
                       (i32.const 108 ) ) )
                   (set_local $-success (i32.const 1 ) ) )
                 (else (set_local $-success (i32.const 0 ) ) ) )
               (if
                 (i32.and
                   (i32.eqz (get_local $-success ) )
-                  (call $-truthy (call $ns3\is_name (get_local $ns3\token ) ) ) )
+                  (call $-truthy (call $ns4\is_name (get_local $ns4\token ) ) ) )
                 (then
                   (drop
                     (call $-set_to_obj
-                      (get_local $ns3\xport )
+                      (get_local $ns4\xport )
                       (i32.const 108 )
                       (call $ns1\array_search
                         (call $-get_from_obj
                           (call $-get_from_obj
-                            (get_global $ns3\sections )
-                            (i32.const 24 ) )
-                          (i32.const 16 ) )
-                        (get_local $ns3\token )
+                            (get_global $ns4\sections )
+                            (i32.const 35 ) )
+                          (i32.const 27 ) )
+                        (get_local $ns4\token )
                         (i32.const 0 ) ) )
                     (call $-get_from_obj
-                      (get_local $ns3\xport )
+                      (get_local $ns4\xport )
                       (i32.const 108 ) ) )
                   (set_local $-success (i32.const 1 ) ) ) )
               (if
                 (i32.eqz (get_local $-success ) )
                 (then
-                  (set_local $-ret (call $ns3\unexpected
-                      (get_local $ns3\token )
+                  (set_local $-ret (call $ns4\unexpected
+                      (get_local $ns4\token )
                       (i32.const 109 ) ) )
                   (br 3 )
                   (set_local $-success (i32.const 1 ) ) ) )
-              (drop (call $ns3\exit_parens ) )
+              (drop (call $ns4\exit_parens ) )
               (set_local $-success (i32.const 1 ) ) ) )
           (if
             (i32.and
               (i32.eqz (get_local $-success ) )
               (call $-truthy (call $-equal
-                  (get_local $ns3\token )
-                  (i32.const 17 ) ) ) )
+                  (get_local $ns4\token )
+                  (i32.const 28 ) ) ) )
             (then
               (drop
                 (call $-set_to_obj
-                  (get_local $ns3\xport )
+                  (get_local $ns4\xport )
                   (i32.const 93 )
                   (call $-number (f64.const 2 ) ) )
                 (call $-get_from_obj
-                  (get_local $ns3\xport )
+                  (get_local $ns4\xport )
                   (i32.const 93 ) ) )
               (drop
-                (set_local $ns3\token (call $ns3\read_token ) )
-                (get_local $ns3\token ) )
+                (set_local $ns4\token (call $ns4\read_token ) )
+                (get_local $ns4\token ) )
               (if
-                (call $-truthy (call $ns3\is_number (get_local $ns3\token ) ) )
+                (call $-truthy (call $ns4\is_number (get_local $ns4\token ) ) )
                 (then
                   (drop
                     (call $-set_to_obj
-                      (get_local $ns3\xport )
+                      (get_local $ns4\xport )
                       (i32.const 108 )
-                      (call $ns3\token_to_number (get_local $ns3\token ) ) )
+                      (call $ns4\token_to_number (get_local $ns4\token ) ) )
                     (call $-get_from_obj
-                      (get_local $ns3\xport )
+                      (get_local $ns4\xport )
                       (i32.const 108 ) ) )
                   (set_local $-success (i32.const 1 ) ) )
                 (else (set_local $-success (i32.const 0 ) ) ) )
               (if
                 (i32.and
                   (i32.eqz (get_local $-success ) )
-                  (call $-truthy (call $ns3\is_name (get_local $ns3\token ) ) ) )
+                  (call $-truthy (call $ns4\is_name (get_local $ns4\token ) ) ) )
                 (then
                   (drop
                     (call $-set_to_obj
-                      (get_local $ns3\xport )
+                      (get_local $ns4\xport )
                       (i32.const 108 )
                       (call $ns1\array_search
                         (call $-get_from_obj
                           (call $-get_from_obj
-                            (get_global $ns3\sections )
-                            (i32.const 24 ) )
-                          (i32.const 17 ) )
-                        (get_local $ns3\token )
+                            (get_global $ns4\sections )
+                            (i32.const 35 ) )
+                          (i32.const 28 ) )
+                        (get_local $ns4\token )
                         (i32.const 0 ) ) )
                     (call $-get_from_obj
-                      (get_local $ns3\xport )
+                      (get_local $ns4\xport )
                       (i32.const 108 ) ) )
                   (set_local $-success (i32.const 1 ) ) ) )
               (if
                 (i32.eqz (get_local $-success ) )
                 (then
-                  (set_local $-ret (call $ns3\unexpected
-                      (get_local $ns3\token )
+                  (set_local $-ret (call $ns4\unexpected
+                      (get_local $ns4\token )
                       (i32.const 109 ) ) )
                   (br 3 )
                   (set_local $-success (i32.const 1 ) ) ) )
-              (drop (call $ns3\exit_parens ) )
+              (drop (call $ns4\exit_parens ) )
               (set_local $-success (i32.const 1 ) ) ) )
           (if
             (i32.and
               (i32.eqz (get_local $-success ) )
               (call $-truthy (call $-equal
-                  (get_local $ns3\token )
-                  (i32.const 18 ) ) ) )
+                  (get_local $ns4\token )
+                  (i32.const 29 ) ) ) )
             (then
               (drop
                 (call $-set_to_obj
-                  (get_local $ns3\xport )
+                  (get_local $ns4\xport )
                   (i32.const 93 )
                   (call $-number (f64.const 3 ) ) )
                 (call $-get_from_obj
-                  (get_local $ns3\xport )
+                  (get_local $ns4\xport )
                   (i32.const 93 ) ) )
               (drop
-                (set_local $ns3\token (call $ns3\read_token ) )
-                (get_local $ns3\token ) )
+                (set_local $ns4\token (call $ns4\read_token ) )
+                (get_local $ns4\token ) )
               (if
-                (call $-truthy (call $ns3\is_number (get_local $ns3\token ) ) )
+                (call $-truthy (call $ns4\is_number (get_local $ns4\token ) ) )
                 (then
                   (drop
                     (call $-set_to_obj
-                      (get_local $ns3\xport )
+                      (get_local $ns4\xport )
                       (i32.const 108 )
-                      (call $ns3\token_to_number (get_local $ns3\token ) ) )
+                      (call $ns4\token_to_number (get_local $ns4\token ) ) )
                     (call $-get_from_obj
-                      (get_local $ns3\xport )
+                      (get_local $ns4\xport )
                       (i32.const 108 ) ) )
                   (set_local $-success (i32.const 1 ) ) )
                 (else (set_local $-success (i32.const 0 ) ) ) )
               (if
                 (i32.and
                   (i32.eqz (get_local $-success ) )
-                  (call $-truthy (call $ns3\is_name (get_local $ns3\token ) ) ) )
+                  (call $-truthy (call $ns4\is_name (get_local $ns4\token ) ) ) )
                 (then
                   (drop
                     (call $-set_to_obj
-                      (get_local $ns3\xport )
+                      (get_local $ns4\xport )
                       (i32.const 108 )
                       (call $ns1\array_search
                         (call $-get_from_obj
                           (call $-get_from_obj
-                            (get_global $ns3\sections )
-                            (i32.const 24 ) )
-                          (i32.const 18 ) )
-                        (get_local $ns3\token )
+                            (get_global $ns4\sections )
+                            (i32.const 35 ) )
+                          (i32.const 29 ) )
+                        (get_local $ns4\token )
                         (i32.const 0 ) ) )
                     (call $-get_from_obj
-                      (get_local $ns3\xport )
+                      (get_local $ns4\xport )
                       (i32.const 108 ) ) )
                   (set_local $-success (i32.const 1 ) ) ) )
               (if
                 (i32.eqz (get_local $-success ) )
                 (then
-                  (set_local $-ret (call $ns3\unexpected
-                      (get_local $ns3\token )
+                  (set_local $-ret (call $ns4\unexpected
+                      (get_local $ns4\token )
                       (i32.const 109 ) ) )
                   (br 3 )
                   (set_local $-success (i32.const 1 ) ) ) )
-              (drop (call $ns3\exit_parens ) )
+              (drop (call $ns4\exit_parens ) )
               (set_local $-success (i32.const 1 ) ) ) )
           (if
             (i32.eqz (get_local $-success ) )
             (then
-              (set_local $-ret (call $ns3\unexpected
-                  (get_local $ns3\token )
+              (set_local $-ret (call $ns4\unexpected
+                  (get_local $ns4\token )
                   (i32.const 93 ) ) )
               (br 2 )
               (set_local $-success (i32.const 1 ) ) ) )
@@ -5979,98 +6274,98 @@
       (if
         (i32.eqz (get_local $-success ) )
         (then
-          (set_local $-ret (call $ns3\unexpected
-              (get_local $ns3\token )
-              (i32.const 10 ) ) )
+          (set_local $-ret (call $ns4\unexpected
+              (get_local $ns4\token )
+              (i32.const 21 ) ) )
           (br 1 )
           (set_local $-success (i32.const 1 ) ) ) )
       (if
-        (call $-truthy (get_local $ns3\save ) )
+        (call $-truthy (get_local $ns4\save ) )
         (then
           (drop (call $ns1\array_push
               (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 19 ) )
-              (get_local $ns3\xport ) ) )
+                (get_global $ns4\sections )
+                (i32.const 30 ) )
+              (get_local $ns4\xport ) ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
-      (drop (call $ns3\exit_parens ) )
+      (drop (call $ns4\exit_parens ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\read_start
+  ;; function $ns4\read_start
 
-  (func $ns3\read_start
-    (param $ns3\save i32 )
+  (func $ns4\read_start
+    (param $ns4\save i32 )
     (result i32 )
-    (local $ns3\token i32 )
+    (local $ns4\token i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
       (drop
-        (set_local $ns3\token (call $ns3\read_token ) )
-        (get_local $ns3\token ) )
+        (set_local $ns4\token (call $ns4\read_token ) )
+        (get_local $ns4\token ) )
       (if
-        (call $-truthy (call $ns3\is_number (get_local $ns3\token ) ) )
+        (call $-truthy (call $ns4\is_number (get_local $ns4\token ) ) )
         (then
           (drop
             (call $-set_to_obj
-              (get_global $ns3\sections )
-              (i32.const 20 )
-              (call $ns3\token_to_number (get_local $ns3\token ) ) )
+              (get_global $ns4\sections )
+              (i32.const 31 )
+              (call $ns4\token_to_number (get_local $ns4\token ) ) )
             (call $-get_from_obj
-              (get_global $ns3\sections )
-              (i32.const 20 ) ) )
+              (get_global $ns4\sections )
+              (i32.const 31 ) ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (if
         (i32.and
           (i32.eqz (get_local $-success ) )
-          (call $-truthy (call $ns3\is_name (get_local $ns3\token ) ) ) )
+          (call $-truthy (call $ns4\is_name (get_local $ns4\token ) ) ) )
         (then
           (drop
             (call $-set_to_obj
-              (get_global $ns3\sections )
-              (i32.const 20 )
+              (get_global $ns4\sections )
+              (i32.const 31 )
               (call $ns1\array_search
                 (call $-get_from_obj
                   (call $-get_from_obj
-                    (get_global $ns3\sections )
-                    (i32.const 24 ) )
-                  (i32.const 15 ) )
-                (get_local $ns3\token )
+                    (get_global $ns4\sections )
+                    (i32.const 35 ) )
+                  (i32.const 26 ) )
+                (get_local $ns4\token )
                 (i32.const 0 ) ) )
             (call $-get_from_obj
-              (get_global $ns3\sections )
-              (i32.const 20 ) ) )
+              (get_global $ns4\sections )
+              (i32.const 31 ) ) )
           (set_local $-success (i32.const 1 ) ) ) )
       (if
         (i32.eqz (get_local $-success ) )
         (then
-          (set_local $-ret (call $ns3\unexpected
-              (get_local $ns3\token )
+          (set_local $-ret (call $ns4\unexpected
+              (get_local $ns4\token )
               (i32.const 110 ) ) )
           (br 1 )
           (set_local $-success (i32.const 1 ) ) ) )
-      (drop (call $ns3\exit_parens ) )
+      (drop (call $ns4\exit_parens ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\read_element
+  ;; function $ns4\read_element
 
-  (func $ns3\read_element
-    (param $ns3\save i32 )
+  (func $ns4\read_element
+    (param $ns4\save i32 )
     (result i32 )
-    (local $ns3\elem i32 )
+    (local $ns4\elem i32 )
     (local $-obj0 i32 )
-    (local $ns3\token i32 )
+    (local $ns4\token i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
       (drop
-        (set_local $ns3\elem
+        (set_local $ns4\elem
           (tee_local $-obj0 (call $-new_value
               (i32.const 5 )
               (i32.const 0 ) ) )
@@ -6084,30 +6379,30 @@
             (call $-get_from_obj
               (get_local $-obj0 )
               (i32.const 111 ) ) ) )
-        (get_local $ns3\elem ) )
+        (get_local $ns4\elem ) )
       (drop
-        (set_local $ns3\token (call $ns3\read_token ) )
-        (get_local $ns3\token ) )
+        (set_local $ns4\token (call $ns4\read_token ) )
+        (get_local $ns4\token ) )
       (block (loop
-          (br_if 1 (call $-falsy (get_local $ns3\token ) ) )
+          (br_if 1 (call $-falsy (get_local $ns4\token ) ) )
           (block
             (if
-              (call $-truthy (call $ns3\is_number (get_local $ns3\token ) ) )
+              (call $-truthy (call $ns4\is_number (get_local $ns4\token ) ) )
               (then
                 (if
                   (call $-truthy (call $-equal
                       (call $-get_from_obj
-                        (get_local $ns3\elem )
+                        (get_local $ns4\elem )
                         (i32.const 108 ) )
                       (i32.const 0 ) ) )
                   (then
                     (drop
                       (call $-set_to_obj
-                        (get_local $ns3\elem )
+                        (get_local $ns4\elem )
                         (i32.const 108 )
-                        (call $ns3\token_to_number (get_local $ns3\token ) ) )
+                        (call $ns4\token_to_number (get_local $ns4\token ) ) )
                       (call $-get_from_obj
-                        (get_local $ns3\elem )
+                        (get_local $ns4\elem )
                         (i32.const 108 ) ) )
                     (set_local $-success (i32.const 1 ) ) )
                   (else (set_local $-success (i32.const 0 ) ) ) )
@@ -6116,38 +6411,38 @@
                   (then
                     (drop (call $ns1\array_push
                         (call $-get_from_obj
-                          (get_local $ns3\elem )
+                          (get_local $ns4\elem )
                           (i32.const 111 ) )
-                        (call $ns3\token_to_number (get_local $ns3\token ) ) ) )
+                        (call $ns4\token_to_number (get_local $ns4\token ) ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (set_local $-success (i32.const 1 ) ) )
               (else (set_local $-success (i32.const 0 ) ) ) )
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
-                (call $-truthy (call $ns3\is_name (get_local $ns3\token ) ) ) )
+                (call $-truthy (call $ns4\is_name (get_local $ns4\token ) ) ) )
               (then
                 (if
                   (call $-truthy (call $-equal
                       (call $-get_from_obj
-                        (get_local $ns3\elem )
+                        (get_local $ns4\elem )
                         (i32.const 108 ) )
                       (i32.const 0 ) ) )
                   (then
                     (drop
                       (call $-set_to_obj
-                        (get_local $ns3\elem )
+                        (get_local $ns4\elem )
                         (i32.const 108 )
                         (call $ns1\array_search
                           (call $-get_from_obj
                             (call $-get_from_obj
-                              (get_global $ns3\sections )
-                              (i32.const 24 ) )
-                            (i32.const 16 ) )
-                          (get_local $ns3\token )
+                              (get_global $ns4\sections )
+                              (i32.const 35 ) )
+                            (i32.const 27 ) )
+                          (get_local $ns4\token )
                           (i32.const 0 ) ) )
                       (call $-get_from_obj
-                        (get_local $ns3\elem )
+                        (get_local $ns4\elem )
                         (i32.const 108 ) ) )
                     (set_local $-success (i32.const 1 ) ) )
                   (else (set_local $-success (i32.const 0 ) ) ) )
@@ -6156,15 +6451,15 @@
                   (then
                     (drop (call $ns1\array_push
                         (call $-get_from_obj
-                          (get_local $ns3\elem )
+                          (get_local $ns4\elem )
                           (i32.const 111 ) )
                         (call $ns1\array_search
                           (call $-get_from_obj
                             (call $-get_from_obj
-                              (get_global $ns3\sections )
-                              (i32.const 24 ) )
-                            (i32.const 15 ) )
-                          (get_local $ns3\token )
+                              (get_global $ns4\sections )
+                              (i32.const 35 ) )
+                            (i32.const 26 ) )
+                          (get_local $ns4\token )
                           (i32.const 0 ) ) ) )
                     (set_local $-success (i32.const 1 ) ) ) )
                 (set_local $-success (i32.const 1 ) ) ) )
@@ -6172,249 +6467,249 @@
               (i32.and
                 (i32.eqz (get_local $-success ) )
                 (call $-truthy (call $-equal
-                    (get_local $ns3\token )
-                    (i32.const 9 ) ) ) )
+                    (get_local $ns4\token )
+                    (i32.const 20 ) ) ) )
               (then
                 (if
                   (call $-truthy (call $-equal
                       (call $-get_from_obj
-                        (get_local $ns3\elem )
+                        (get_local $ns4\elem )
                         (i32.const 108 ) )
                       (i32.const 0 ) ) )
                   (then
                     (drop
                       (call $-set_to_obj
-                        (get_local $ns3\elem )
+                        (get_local $ns4\elem )
                         (i32.const 108 )
                         (call $-number (f64.const 0 ) ) )
                       (call $-get_from_obj
-                        (get_local $ns3\elem )
+                        (get_local $ns4\elem )
                         (i32.const 108 ) ) )
                     (set_local $-success (i32.const 1 ) ) )
                   (else (set_local $-success (i32.const 0 ) ) ) )
                 (drop
                   (call $-set_to_obj
-                    (get_local $ns3\elem )
+                    (get_local $ns4\elem )
                     (i32.const 112 )
-                    (call $ns3\translate_code
+                    (call $ns4\translate_code
                       (call $-new_value
                         (i32.const 6 )
                         (i32.const 0 ) )
                       (i32.const 0 ) ) )
                   (call $-get_from_obj
-                    (get_local $ns3\elem )
+                    (get_local $ns4\elem )
                     (i32.const 112 ) ) )
                 (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.eqz (get_local $-success ) )
               (then
-                (set_local $-ret (call $ns3\unexpected
-                    (get_local $ns3\token )
+                (set_local $-ret (call $ns4\unexpected
+                    (get_local $ns4\token )
                     (i32.const 0 ) ) )
                 (br 4 )
                 (set_local $-success (i32.const 1 ) ) ) )
             (drop
-              (set_local $ns3\token (call $ns3\read_token ) )
-              (get_local $ns3\token ) )
+              (set_local $ns4\token (call $ns4\read_token ) )
+              (get_local $ns4\token ) )
             (set_local $-success (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns3\exit_parens ) )
+      (drop (call $ns4\exit_parens ) )
       (if
-        (call $-truthy (get_local $ns3\save ) )
+        (call $-truthy (get_local $ns4\save ) )
         (then
           (drop (call $ns1\array_push
               (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 21 ) )
-              (get_local $ns3\elem ) ) )
+                (get_global $ns4\sections )
+                (i32.const 32 ) )
+              (get_local $ns4\elem ) ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
-      (set_local $-ret (get_local $ns3\elem ) )
+      (set_local $-ret (get_local $ns4\elem ) )
       (br 0 )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\read_data
+  ;; function $ns4\read_data
 
-  (func $ns3\read_data
-    (param $ns3\save i32 )
+  (func $ns4\read_data
+    (param $ns4\save i32 )
     (result i32 )
-    (local $ns3\data i32 )
-    (local $ns3\token i32 )
+    (local $ns4\data i32 )
+    (local $ns4\token i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
       (drop
-        (set_local $ns3\data (call $-new_value
+        (set_local $ns4\data (call $-new_value
             (i32.const 5 )
             (i32.const 0 ) ) )
-        (get_local $ns3\data ) )
+        (get_local $ns4\data ) )
       (drop
-        (set_local $ns3\token (call $ns3\read_token ) )
-        (get_local $ns3\token ) )
+        (set_local $ns4\token (call $ns4\read_token ) )
+        (get_local $ns4\token ) )
       (block (loop
-          (br_if 1 (call $-falsy (get_local $ns3\token ) ) )
+          (br_if 1 (call $-falsy (get_local $ns4\token ) ) )
           (block
             (if
-              (call $-truthy (call $ns3\is_number (get_local $ns3\token ) ) )
+              (call $-truthy (call $ns4\is_number (get_local $ns4\token ) ) )
               (then
                 (drop
                   (call $-set_to_obj
-                    (get_local $ns3\data )
+                    (get_local $ns4\data )
                     (i32.const 108 )
-                    (call $ns3\token_to_number (get_local $ns3\token ) ) )
+                    (call $ns4\token_to_number (get_local $ns4\token ) ) )
                   (call $-get_from_obj
-                    (get_local $ns3\data )
+                    (get_local $ns4\data )
                     (i32.const 108 ) ) )
                 (set_local $-success (i32.const 1 ) ) )
               (else (set_local $-success (i32.const 0 ) ) ) )
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
-                (call $-truthy (call $ns3\is_name (get_local $ns3\token ) ) ) )
+                (call $-truthy (call $ns4\is_name (get_local $ns4\token ) ) ) )
               (then
                 (drop
                   (call $-set_to_obj
-                    (get_local $ns3\data )
+                    (get_local $ns4\data )
                     (i32.const 108 )
                     (call $ns1\array_search
                       (call $-get_from_obj
                         (call $-get_from_obj
-                          (get_global $ns3\sections )
-                          (i32.const 24 ) )
-                        (i32.const 17 ) )
-                      (get_local $ns3\token )
+                          (get_global $ns4\sections )
+                          (i32.const 35 ) )
+                        (i32.const 28 ) )
+                      (get_local $ns4\token )
                       (i32.const 0 ) ) )
                   (call $-get_from_obj
-                    (get_local $ns3\data )
+                    (get_local $ns4\data )
                     (i32.const 108 ) ) )
                 (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
                 (call $-truthy (call $-equal
-                    (get_local $ns3\token )
-                    (i32.const 9 ) ) ) )
+                    (get_local $ns4\token )
+                    (i32.const 20 ) ) ) )
               (then
                 (drop
                   (call $-set_to_obj
-                    (get_local $ns3\data )
+                    (get_local $ns4\data )
                     (i32.const 112 )
-                    (call $ns3\translate_code
+                    (call $ns4\translate_code
                       (call $-new_value
                         (i32.const 6 )
                         (i32.const 0 ) )
                       (i32.const 0 ) ) )
                   (call $-get_from_obj
-                    (get_local $ns3\data )
+                    (get_local $ns4\data )
                     (i32.const 112 ) ) )
                 (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.and
                 (i32.eqz (get_local $-success ) )
-                (call $-truthy (call $ns3\is_string (get_local $ns3\token ) ) ) )
+                (call $-truthy (call $ns4\is_string (get_local $ns4\token ) ) ) )
               (then
                 (drop
                   (call $-set_to_obj
-                    (get_local $ns3\data )
+                    (get_local $ns4\data )
                     (i32.const 113 )
                     (call $ns1\binary_slice
-                      (get_local $ns3\token )
+                      (get_local $ns4\token )
                       (call $-number (f64.const 1 ) )
-                      (call $ns1\size_of (get_local $ns3\token ) ) ) )
+                      (call $ns1\size_of (get_local $ns4\token ) ) ) )
                   (call $-get_from_obj
-                    (get_local $ns3\data )
+                    (get_local $ns4\data )
                     (i32.const 113 ) ) )
                 (set_local $-success (i32.const 1 ) ) ) )
             (if
               (i32.eqz (get_local $-success ) )
               (then
-                (set_local $-ret (call $ns3\unexpected
-                    (get_local $ns3\token )
+                (set_local $-ret (call $ns4\unexpected
+                    (get_local $ns4\token )
                     (i32.const 0 ) ) )
                 (br 4 )
                 (set_local $-success (i32.const 1 ) ) ) )
             (drop
-              (set_local $ns3\token (call $ns3\read_token ) )
-              (get_local $ns3\token ) )
+              (set_local $ns4\token (call $ns4\read_token ) )
+              (get_local $ns4\token ) )
             (set_local $-success (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns3\exit_parens ) )
+      (drop (call $ns4\exit_parens ) )
       (if
-        (call $-truthy (get_local $ns3\save ) )
+        (call $-truthy (get_local $ns4\save ) )
         (then
           (drop (call $ns1\array_push
               (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 23 ) )
-              (get_local $ns3\data ) ) )
+                (get_global $ns4\sections )
+                (i32.const 34 ) )
+              (get_local $ns4\data ) ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
-      (set_local $-ret (get_local $ns3\data ) )
+      (set_local $-ret (get_local $ns4\data ) )
       (br 0 )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\write_module
+  ;; function $ns4\write_module
 
-  (func $ns3\write_module
+  (func $ns4\write_module
     (result i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
       (drop
-        (set_global $ns3\wasm (call $ns1\binary_string (call $-number (f64.const 8 ) ) ) )
-        (get_global $ns3\wasm ) )
+        (set_global $ns4\wasm (call $ns1\binary_string (call $-number (f64.const 8 ) ) ) )
+        (get_global $ns4\wasm ) )
       (drop (call $ns1\binary_write
-          (get_global $ns3\wasm )
+          (get_global $ns4\wasm )
           (call $-number (f64.const 1 ) )
           (i32.const 114 ) ) )
       (drop (call $ns1\binary_write
-          (get_global $ns3\wasm )
+          (get_global $ns4\wasm )
           (call $-number (f64.const 4 ) )
           (call $-number (f64.const 1 ) ) ) )
-      (drop (call $ns3\write_type_section ) )
-      (drop (call $ns3\write_import_section ) )
-      (drop (call $ns3\write_function_section ) )
-      (drop (call $ns3\write_table_section ) )
-      (drop (call $ns3\write_memory_section ) )
-      (drop (call $ns3\write_global_section ) )
-      (drop (call $ns3\write_export_section ) )
-      (drop (call $ns3\write_start_section ) )
-      (drop (call $ns3\write_element_section ) )
-      (drop (call $ns3\write_code_section ) )
-      (drop (call $ns3\write_data_section ) )
-      (drop (call $ns3\write_name_section ) )
+      (drop (call $ns4\write_type_section ) )
+      (drop (call $ns4\write_import_section ) )
+      (drop (call $ns4\write_function_section ) )
+      (drop (call $ns4\write_table_section ) )
+      (drop (call $ns4\write_memory_section ) )
+      (drop (call $ns4\write_global_section ) )
+      (drop (call $ns4\write_export_section ) )
+      (drop (call $ns4\write_start_section ) )
+      (drop (call $ns4\write_element_section ) )
+      (drop (call $ns4\write_code_section ) )
+      (drop (call $ns4\write_data_section ) )
+      (drop (call $ns4\write_name_section ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\write_string
+  ;; function $ns4\write_string
 
-  (func $ns3\write_string
-    (param $ns3\bin i32 )
-    (param $ns3\str i32 )
+  (func $ns4\write_string
+    (param $ns4\bin i32 )
+    (param $ns4\str i32 )
     (result i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
     (block
-      (drop (call $ns4\write_varuint
-          (get_local $ns3\bin )
-          (call $ns1\size_of (get_local $ns3\str ) ) ) )
+      (drop (call $ns5\write_varuint
+          (get_local $ns4\bin )
+          (call $ns1\size_of (get_local $ns4\str ) ) ) )
       (drop (call $ns1\binary_write
-          (get_local $ns3\bin )
-          (call $ns1\size_of (get_local $ns3\bin ) )
-          (get_local $ns3\str ) ) )
+          (get_local $ns4\bin )
+          (call $ns1\size_of (get_local $ns4\bin ) )
+          (get_local $ns4\str ) ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\write_resizable_limits
+  ;; function $ns4\write_resizable_limits
 
-  (func $ns3\write_resizable_limits
-    (param $ns3\bin i32 )
-    (param $ns3\limits i32 )
+  (func $ns4\write_resizable_limits
+    (param $ns4\bin i32 )
+    (param $ns4\limits i32 )
     (result i32 )
     (local $-ret i32 )
     (local $-success i32 )
@@ -6423,54 +6718,54 @@
       (if
         (call $-truthy (call $-equal
             (call $-get_from_obj
-              (get_local $ns3\limits )
+              (get_local $ns4\limits )
               (i32.const 96 ) )
             (i32.const 0 ) ) )
         (then
-          (drop (call $ns4\write_varuint
-              (get_local $ns3\bin )
+          (drop (call $ns5\write_varuint
+              (get_local $ns4\bin )
               (call $-number (f64.const 0 ) ) ) )
-          (drop (call $ns4\write_varuint
-              (get_local $ns3\bin )
+          (drop (call $ns5\write_varuint
+              (get_local $ns4\bin )
               (call $-get_from_obj
-                (get_local $ns3\limits )
+                (get_local $ns4\limits )
                 (i32.const 95 ) ) ) )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (if
         (i32.eqz (get_local $-success ) )
         (then
-          (drop (call $ns4\write_varuint
-              (get_local $ns3\bin )
+          (drop (call $ns5\write_varuint
+              (get_local $ns4\bin )
               (call $-number (f64.const 1 ) ) ) )
-          (drop (call $ns4\write_varuint
-              (get_local $ns3\bin )
+          (drop (call $ns5\write_varuint
+              (get_local $ns4\bin )
               (call $-get_from_obj
-                (get_local $ns3\limits )
+                (get_local $ns4\limits )
                 (i32.const 95 ) ) ) )
-          (drop (call $ns4\write_varuint
-              (get_local $ns3\bin )
+          (drop (call $ns5\write_varuint
+              (get_local $ns4\bin )
               (call $-get_from_obj
-                (get_local $ns3\limits )
+                (get_local $ns4\limits )
                 (i32.const 96 ) ) ) )
           (set_local $-success (i32.const 1 ) ) ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\write_type_section
+  ;; function $ns4\write_type_section
 
-  (func $ns3\write_type_section
+  (func $ns4\write_type_section
     (result i32 )
-    (local $ns3\bin i32 )
-    (local $ns3\type i32 )
+    (local $ns4\bin i32 )
+    (local $ns4\type i32 )
     (local $-fori0 i32 )
     (local $-forl0 i32 )
     (local $-fora0 i32 )
-    (local $ns3\param i32 )
+    (local $ns4\param i32 )
     (local $-fori1 i32 )
     (local $-forl1 i32 )
     (local $-fora1 i32 )
-    (local $ns3\_return i32 )
+    (local $ns4\_return i32 )
     (local $-fori2 i32 )
     (local $-forl2 i32 )
     (local $-fora2 i32 )
@@ -6481,8 +6776,8 @@
       (if
         (call $-truthy (call $-equal
             (call $ns1\array_length (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 13 ) ) )
+                (get_global $ns4\sections )
+                (i32.const 24 ) ) )
             (call $-number (f64.const 0 ) ) ) )
         (then
           (set_local $-ret (i32.const 0 ) )
@@ -6490,19 +6785,19 @@
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (drop
-        (set_local $ns3\bin (call $-new_value
+        (set_local $ns4\bin (call $-new_value
             (i32.const 6 )
             (i32.const 0 ) ) )
-        (get_local $ns3\bin ) )
-      (drop (call $ns4\write_varuint
-          (get_local $ns3\bin )
+        (get_local $ns4\bin ) )
+      (drop (call $ns5\write_varuint
+          (get_local $ns4\bin )
           (call $ns1\array_length (call $-get_from_obj
-              (get_global $ns3\sections )
-              (i32.const 13 ) ) ) ) )
+              (get_global $ns4\sections )
+              (i32.const 24 ) ) ) ) )
       (set_local $-fori0 (i32.const 0 ) )
       (set_local $-fora0 (call $-get_from_obj
-          (get_global $ns3\sections )
-          (i32.const 13 ) ) )
+          (get_global $ns4\sections )
+          (i32.const 24 ) ) )
       (set_local $-forl0 (i32.div_u
           (call $-len (get_local $-fora0 ) )
           (i32.const 4 ) ) )
@@ -6510,26 +6805,26 @@
           (br_if 1 (i32.ge_u
               (get_local $-fori0 )
               (get_local $-forl0 ) ) )
-          (set_local $ns3\type (call $-get_from_obj
+          (set_local $ns4\type (call $-get_from_obj
               (get_local $-fora0 )
               (call $-integer_u (get_local $-fori0 ) ) ) )
           (block
             (drop
-              (set_local $ns3\type (call $ns1\json_decode (get_local $ns3\type ) ) )
-              (get_local $ns3\type ) )
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\bin )
+              (set_local $ns4\type (call $ns1\json_decode (get_local $ns4\type ) ) )
+              (get_local $ns4\type ) )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\bin )
                 (call $-get_from_obj
-                  (get_local $ns3\type )
+                  (get_local $ns4\type )
                   (i32.const 103 ) ) ) )
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\bin )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\bin )
                 (call $ns1\array_length (call $-get_from_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 104 ) ) ) ) )
             (set_local $-fori1 (i32.const 0 ) )
             (set_local $-fora1 (call $-get_from_obj
-                (get_local $ns3\type )
+                (get_local $ns4\type )
                 (i32.const 104 ) ) )
             (set_local $-forl1 (i32.div_u
                 (call $-len (get_local $-fora1 ) )
@@ -6538,26 +6833,26 @@
                 (br_if 1 (i32.ge_u
                     (get_local $-fori1 )
                     (get_local $-forl1 ) ) )
-                (set_local $ns3\param (call $-get_from_obj
+                (set_local $ns4\param (call $-get_from_obj
                     (get_local $-fora1 )
                     (call $-integer_u (get_local $-fori1 ) ) ) )
                 (block
-                  (drop (call $ns4\write_varuint
-                      (get_local $ns3\bin )
-                      (get_local $ns3\param ) ) )
+                  (drop (call $ns5\write_varuint
+                      (get_local $ns4\bin )
+                      (get_local $ns4\param ) ) )
                   (set_local $-success (i32.const 1 ) ) )
                 (set_local $-fori1 (i32.add
                     (get_local $-fori1 )
                     (i32.const 1 ) ) )
                 (br 0 ) ) )
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\bin )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\bin )
                 (call $ns1\array_length (call $-get_from_obj
-                    (get_local $ns3\type )
+                    (get_local $ns4\type )
                     (i32.const 105 ) ) ) ) )
             (set_local $-fori2 (i32.const 0 ) )
             (set_local $-fora2 (call $-get_from_obj
-                (get_local $ns3\type )
+                (get_local $ns4\type )
                 (i32.const 105 ) ) )
             (set_local $-forl2 (i32.div_u
                 (call $-len (get_local $-fora2 ) )
@@ -6566,13 +6861,13 @@
                 (br_if 1 (i32.ge_u
                     (get_local $-fori2 )
                     (get_local $-forl2 ) ) )
-                (set_local $ns3\_return (call $-get_from_obj
+                (set_local $ns4\_return (call $-get_from_obj
                     (get_local $-fora2 )
                     (call $-integer_u (get_local $-fori2 ) ) ) )
                 (block
-                  (drop (call $ns4\write_varuint
-                      (get_local $ns3\bin )
-                      (get_local $ns3\_return ) ) )
+                  (drop (call $ns5\write_varuint
+                      (get_local $ns4\bin )
+                      (get_local $ns4\_return ) ) )
                   (set_local $-success (i32.const 1 ) ) )
                 (set_local $-fori2 (i32.add
                     (get_local $-fori2 )
@@ -6583,25 +6878,25 @@
               (get_local $-fori0 )
               (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
           (call $-number (f64.const 1 ) ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_local $ns3\bin ) ) ) )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_local $ns4\bin ) ) ) )
       (drop (call $ns1\binary_write
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_global $ns3\wasm ) )
-          (get_local $ns3\bin ) ) )
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_global $ns4\wasm ) )
+          (get_local $ns4\bin ) ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\write_import_section
+  ;; function $ns4\write_import_section
 
-  (func $ns3\write_import_section
+  (func $ns4\write_import_section
     (result i32 )
-    (local $ns3\bin i32 )
-    (local $ns3\_import i32 )
+    (local $ns4\bin i32 )
+    (local $ns4\_import i32 )
     (local $-fori0 i32 )
     (local $-forl0 i32 )
     (local $-fora0 i32 )
@@ -6612,8 +6907,8 @@
       (if
         (call $-truthy (call $-equal
             (call $ns1\array_length (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 14 ) ) )
+                (get_global $ns4\sections )
+                (i32.const 25 ) ) )
             (call $-number (f64.const 0 ) ) ) )
         (then
           (set_local $-ret (i32.const 0 ) )
@@ -6621,19 +6916,19 @@
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (drop
-        (set_local $ns3\bin (call $-new_value
+        (set_local $ns4\bin (call $-new_value
             (i32.const 6 )
             (i32.const 0 ) ) )
-        (get_local $ns3\bin ) )
-      (drop (call $ns4\write_varuint
-          (get_local $ns3\bin )
+        (get_local $ns4\bin ) )
+      (drop (call $ns5\write_varuint
+          (get_local $ns4\bin )
           (call $ns1\array_length (call $-get_from_obj
-              (get_global $ns3\sections )
-              (i32.const 14 ) ) ) ) )
+              (get_global $ns4\sections )
+              (i32.const 25 ) ) ) ) )
       (set_local $-fori0 (i32.const 0 ) )
       (set_local $-fora0 (call $-get_from_obj
-          (get_global $ns3\sections )
-          (i32.const 14 ) ) )
+          (get_global $ns4\sections )
+          (i32.const 25 ) ) )
       (set_local $-forl0 (i32.div_u
           (call $-len (get_local $-fora0 ) )
           (i32.const 4 ) ) )
@@ -6641,94 +6936,94 @@
           (br_if 1 (i32.ge_u
               (get_local $-fori0 )
               (get_local $-forl0 ) ) )
-          (set_local $ns3\_import (call $-get_from_obj
+          (set_local $ns4\_import (call $-get_from_obj
               (get_local $-fora0 )
               (call $-integer_u (get_local $-fori0 ) ) ) )
           (block
-            (drop (call $ns3\write_string
-                (get_local $ns3\bin )
+            (drop (call $ns4\write_string
+                (get_local $ns4\bin )
                 (call $-get_from_obj
-                  (get_local $ns3\_import )
-                  (i32.const 11 ) ) ) )
-            (drop (call $ns3\write_string
-                (get_local $ns3\bin )
+                  (get_local $ns4\_import )
+                  (i32.const 22 ) ) ) )
+            (drop (call $ns4\write_string
+                (get_local $ns4\bin )
                 (call $-get_from_obj
-                  (get_local $ns3\_import )
+                  (get_local $ns4\_import )
                   (i32.const 91 ) ) ) )
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\bin )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\bin )
                 (call $-get_from_obj
-                  (get_local $ns3\_import )
+                  (get_local $ns4\_import )
                   (i32.const 93 ) ) ) )
             (if
               (call $-truthy (call $-equal
                   (call $-get_from_obj
-                    (get_local $ns3\_import )
+                    (get_local $ns4\_import )
                     (i32.const 93 ) )
                   (call $-number (f64.const 0 ) ) ) )
               (then
-                (drop (call $ns4\write_varuint
-                    (get_local $ns3\bin )
+                (drop (call $ns5\write_varuint
+                    (get_local $ns4\bin )
                     (call $-get_from_obj
-                      (get_local $ns3\_import )
-                      (i32.const 13 ) ) ) )
+                      (get_local $ns4\_import )
+                      (i32.const 24 ) ) ) )
                 (set_local $-success (i32.const 1 ) ) )
               (else (set_local $-success (i32.const 0 ) ) ) )
             (if
               (call $-truthy (call $-equal
                   (call $-get_from_obj
-                    (get_local $ns3\_import )
+                    (get_local $ns4\_import )
                     (i32.const 93 ) )
                   (call $-number (f64.const 1 ) ) ) )
               (then
-                (drop (call $ns4\write_varuint
-                    (get_local $ns3\bin )
+                (drop (call $ns5\write_varuint
+                    (get_local $ns4\bin )
                     (call $-get_from_obj
                       (call $-get_from_obj
-                        (get_local $ns3\_import )
-                        (i32.const 13 ) )
+                        (get_local $ns4\_import )
+                        (i32.const 24 ) )
                       (i32.const 97 ) ) ) )
-                (drop (call $ns3\write_resizable_limits
-                    (get_local $ns3\bin )
+                (drop (call $ns4\write_resizable_limits
+                    (get_local $ns4\bin )
                     (call $-get_from_obj
-                      (get_local $ns3\_import )
-                      (i32.const 13 ) ) ) )
+                      (get_local $ns4\_import )
+                      (i32.const 24 ) ) ) )
                 (set_local $-success (i32.const 1 ) ) )
               (else (set_local $-success (i32.const 0 ) ) ) )
             (if
               (call $-truthy (call $-equal
                   (call $-get_from_obj
-                    (get_local $ns3\_import )
+                    (get_local $ns4\_import )
                     (i32.const 93 ) )
                   (call $-number (f64.const 2 ) ) ) )
               (then
-                (drop (call $ns3\write_resizable_limits
-                    (get_local $ns3\bin )
+                (drop (call $ns4\write_resizable_limits
+                    (get_local $ns4\bin )
                     (call $-get_from_obj
-                      (get_local $ns3\_import )
-                      (i32.const 13 ) ) ) )
+                      (get_local $ns4\_import )
+                      (i32.const 24 ) ) ) )
                 (set_local $-success (i32.const 1 ) ) )
               (else (set_local $-success (i32.const 0 ) ) ) )
             (if
               (call $-truthy (call $-equal
                   (call $-get_from_obj
-                    (get_local $ns3\_import )
+                    (get_local $ns4\_import )
                     (i32.const 93 ) )
                   (call $-number (f64.const 3 ) ) ) )
               (then
-                (drop (call $ns4\write_varuint
-                    (get_local $ns3\bin )
+                (drop (call $ns5\write_varuint
+                    (get_local $ns4\bin )
                     (call $-get_from_obj
                       (call $-get_from_obj
-                        (get_local $ns3\_import )
-                        (i32.const 13 ) )
+                        (get_local $ns4\_import )
+                        (i32.const 24 ) )
                       (i32.const 99 ) ) ) )
-                (drop (call $ns4\write_varuint
-                    (get_local $ns3\bin )
+                (drop (call $ns5\write_varuint
+                    (get_local $ns4\bin )
                     (call $-get_from_obj
                       (call $-get_from_obj
-                        (get_local $ns3\_import )
-                        (i32.const 13 ) )
+                        (get_local $ns4\_import )
+                        (i32.const 24 ) )
                       (i32.const 102 ) ) ) )
                 (set_local $-success (i32.const 1 ) ) )
               (else (set_local $-success (i32.const 0 ) ) ) )
@@ -6737,25 +7032,25 @@
               (get_local $-fori0 )
               (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
           (call $-number (f64.const 2 ) ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_local $ns3\bin ) ) ) )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_local $ns4\bin ) ) ) )
       (drop (call $ns1\binary_write
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_global $ns3\wasm ) )
-          (get_local $ns3\bin ) ) )
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_global $ns4\wasm ) )
+          (get_local $ns4\bin ) ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\write_function_section
+  ;; function $ns4\write_function_section
 
-  (func $ns3\write_function_section
+  (func $ns4\write_function_section
     (result i32 )
-    (local $ns3\bin i32 )
-    (local $ns3\function i32 )
+    (local $ns4\bin i32 )
+    (local $ns4\function i32 )
     (local $-fori0 i32 )
     (local $-forl0 i32 )
     (local $-fora0 i32 )
@@ -6766,8 +7061,8 @@
       (if
         (call $-truthy (call $-equal
             (call $ns1\array_length (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 15 ) ) )
+                (get_global $ns4\sections )
+                (i32.const 26 ) ) )
             (call $-number (f64.const 0 ) ) ) )
         (then
           (set_local $-ret (i32.const 0 ) )
@@ -6775,19 +7070,19 @@
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (drop
-        (set_local $ns3\bin (call $-new_value
+        (set_local $ns4\bin (call $-new_value
             (i32.const 6 )
             (i32.const 0 ) ) )
-        (get_local $ns3\bin ) )
-      (drop (call $ns4\write_varuint
-          (get_local $ns3\bin )
+        (get_local $ns4\bin ) )
+      (drop (call $ns5\write_varuint
+          (get_local $ns4\bin )
           (call $ns1\array_length (call $-get_from_obj
-              (get_global $ns3\sections )
-              (i32.const 15 ) ) ) ) )
+              (get_global $ns4\sections )
+              (i32.const 26 ) ) ) ) )
       (set_local $-fori0 (i32.const 0 ) )
       (set_local $-fora0 (call $-get_from_obj
-          (get_global $ns3\sections )
-          (i32.const 15 ) ) )
+          (get_global $ns4\sections )
+          (i32.const 26 ) ) )
       (set_local $-forl0 (i32.div_u
           (call $-len (get_local $-fora0 ) )
           (i32.const 4 ) ) )
@@ -6795,37 +7090,37 @@
           (br_if 1 (i32.ge_u
               (get_local $-fori0 )
               (get_local $-forl0 ) ) )
-          (set_local $ns3\function (call $-get_from_obj
+          (set_local $ns4\function (call $-get_from_obj
               (get_local $-fora0 )
               (call $-integer_u (get_local $-fori0 ) ) ) )
           (block
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\bin )
-                (get_local $ns3\function ) ) )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\bin )
+                (get_local $ns4\function ) ) )
             (set_local $-success (i32.const 1 ) ) )
           (set_local $-fori0 (i32.add
               (get_local $-fori0 )
               (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
           (call $-number (f64.const 3 ) ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_local $ns3\bin ) ) ) )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_local $ns4\bin ) ) ) )
       (drop (call $ns1\binary_write
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_global $ns3\wasm ) )
-          (get_local $ns3\bin ) ) )
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_global $ns4\wasm ) )
+          (get_local $ns4\bin ) ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\write_table_section
+  ;; function $ns4\write_table_section
 
-  (func $ns3\write_table_section
+  (func $ns4\write_table_section
     (result i32 )
-    (local $ns3\bin i32 )
-    (local $ns3\table i32 )
+    (local $ns4\bin i32 )
+    (local $ns4\table i32 )
     (local $-fori0 i32 )
     (local $-forl0 i32 )
     (local $-fora0 i32 )
@@ -6836,8 +7131,8 @@
       (if
         (call $-truthy (call $-equal
             (call $ns1\array_length (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 16 ) ) )
+                (get_global $ns4\sections )
+                (i32.const 27 ) ) )
             (call $-number (f64.const 0 ) ) ) )
         (then
           (set_local $-ret (i32.const 0 ) )
@@ -6845,19 +7140,19 @@
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (drop
-        (set_local $ns3\bin (call $-new_value
+        (set_local $ns4\bin (call $-new_value
             (i32.const 6 )
             (i32.const 0 ) ) )
-        (get_local $ns3\bin ) )
-      (drop (call $ns4\write_varuint
-          (get_local $ns3\bin )
+        (get_local $ns4\bin ) )
+      (drop (call $ns5\write_varuint
+          (get_local $ns4\bin )
           (call $ns1\array_length (call $-get_from_obj
-              (get_global $ns3\sections )
-              (i32.const 16 ) ) ) ) )
+              (get_global $ns4\sections )
+              (i32.const 27 ) ) ) ) )
       (set_local $-fori0 (i32.const 0 ) )
       (set_local $-fora0 (call $-get_from_obj
-          (get_global $ns3\sections )
-          (i32.const 16 ) ) )
+          (get_global $ns4\sections )
+          (i32.const 27 ) ) )
       (set_local $-forl0 (i32.div_u
           (call $-len (get_local $-fora0 ) )
           (i32.const 4 ) ) )
@@ -6865,42 +7160,42 @@
           (br_if 1 (i32.ge_u
               (get_local $-fori0 )
               (get_local $-forl0 ) ) )
-          (set_local $ns3\table (call $-get_from_obj
+          (set_local $ns4\table (call $-get_from_obj
               (get_local $-fora0 )
               (call $-integer_u (get_local $-fori0 ) ) ) )
           (block
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\bin )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\bin )
                 (call $-get_from_obj
-                  (get_local $ns3\table )
+                  (get_local $ns4\table )
                   (i32.const 97 ) ) ) )
-            (drop (call $ns3\write_resizable_limits
-                (get_local $ns3\bin )
-                (get_local $ns3\table ) ) )
+            (drop (call $ns4\write_resizable_limits
+                (get_local $ns4\bin )
+                (get_local $ns4\table ) ) )
             (set_local $-success (i32.const 1 ) ) )
           (set_local $-fori0 (i32.add
               (get_local $-fori0 )
               (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
           (call $-number (f64.const 4 ) ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_local $ns3\bin ) ) ) )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_local $ns4\bin ) ) ) )
       (drop (call $ns1\binary_write
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_global $ns3\wasm ) )
-          (get_local $ns3\bin ) ) )
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_global $ns4\wasm ) )
+          (get_local $ns4\bin ) ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\write_memory_section
+  ;; function $ns4\write_memory_section
 
-  (func $ns3\write_memory_section
+  (func $ns4\write_memory_section
     (result i32 )
-    (local $ns3\bin i32 )
-    (local $ns3\memory i32 )
+    (local $ns4\bin i32 )
+    (local $ns4\memory i32 )
     (local $-fori0 i32 )
     (local $-forl0 i32 )
     (local $-fora0 i32 )
@@ -6911,8 +7206,8 @@
       (if
         (call $-truthy (call $-equal
             (call $ns1\array_length (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 17 ) ) )
+                (get_global $ns4\sections )
+                (i32.const 28 ) ) )
             (call $-number (f64.const 0 ) ) ) )
         (then
           (set_local $-ret (i32.const 0 ) )
@@ -6920,19 +7215,19 @@
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (drop
-        (set_local $ns3\bin (call $-new_value
+        (set_local $ns4\bin (call $-new_value
             (i32.const 6 )
             (i32.const 0 ) ) )
-        (get_local $ns3\bin ) )
-      (drop (call $ns4\write_varuint
-          (get_local $ns3\bin )
+        (get_local $ns4\bin ) )
+      (drop (call $ns5\write_varuint
+          (get_local $ns4\bin )
           (call $ns1\array_length (call $-get_from_obj
-              (get_global $ns3\sections )
-              (i32.const 17 ) ) ) ) )
+              (get_global $ns4\sections )
+              (i32.const 28 ) ) ) ) )
       (set_local $-fori0 (i32.const 0 ) )
       (set_local $-fora0 (call $-get_from_obj
-          (get_global $ns3\sections )
-          (i32.const 17 ) ) )
+          (get_global $ns4\sections )
+          (i32.const 28 ) ) )
       (set_local $-forl0 (i32.div_u
           (call $-len (get_local $-fora0 ) )
           (i32.const 4 ) ) )
@@ -6940,37 +7235,37 @@
           (br_if 1 (i32.ge_u
               (get_local $-fori0 )
               (get_local $-forl0 ) ) )
-          (set_local $ns3\memory (call $-get_from_obj
+          (set_local $ns4\memory (call $-get_from_obj
               (get_local $-fora0 )
               (call $-integer_u (get_local $-fori0 ) ) ) )
           (block
-            (drop (call $ns3\write_resizable_limits
-                (get_local $ns3\bin )
-                (get_local $ns3\memory ) ) )
+            (drop (call $ns4\write_resizable_limits
+                (get_local $ns4\bin )
+                (get_local $ns4\memory ) ) )
             (set_local $-success (i32.const 1 ) ) )
           (set_local $-fori0 (i32.add
               (get_local $-fori0 )
               (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
           (call $-number (f64.const 5 ) ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_local $ns3\bin ) ) ) )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_local $ns4\bin ) ) ) )
       (drop (call $ns1\binary_write
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_global $ns3\wasm ) )
-          (get_local $ns3\bin ) ) )
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_global $ns4\wasm ) )
+          (get_local $ns4\bin ) ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\write_global_section
+  ;; function $ns4\write_global_section
 
-  (func $ns3\write_global_section
+  (func $ns4\write_global_section
     (result i32 )
-    (local $ns3\bin i32 )
-    (local $ns3\global i32 )
+    (local $ns4\bin i32 )
+    (local $ns4\global i32 )
     (local $-fori0 i32 )
     (local $-forl0 i32 )
     (local $-fora0 i32 )
@@ -6981,8 +7276,8 @@
       (if
         (call $-truthy (call $-equal
             (call $ns1\array_length (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 18 ) ) )
+                (get_global $ns4\sections )
+                (i32.const 29 ) ) )
             (call $-number (f64.const 0 ) ) ) )
         (then
           (set_local $-ret (i32.const 0 ) )
@@ -6990,19 +7285,19 @@
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (drop
-        (set_local $ns3\bin (call $-new_value
+        (set_local $ns4\bin (call $-new_value
             (i32.const 6 )
             (i32.const 0 ) ) )
-        (get_local $ns3\bin ) )
-      (drop (call $ns4\write_varuint
-          (get_local $ns3\bin )
+        (get_local $ns4\bin ) )
+      (drop (call $ns5\write_varuint
+          (get_local $ns4\bin )
           (call $ns1\array_length (call $-get_from_obj
-              (get_global $ns3\sections )
-              (i32.const 18 ) ) ) ) )
+              (get_global $ns4\sections )
+              (i32.const 29 ) ) ) ) )
       (set_local $-fori0 (i32.const 0 ) )
       (set_local $-fora0 (call $-get_from_obj
-          (get_global $ns3\sections )
-          (i32.const 18 ) ) )
+          (get_global $ns4\sections )
+          (i32.const 29 ) ) )
       (set_local $-forl0 (i32.div_u
           (call $-len (get_local $-fora0 ) )
           (i32.const 4 ) ) )
@@ -7010,54 +7305,54 @@
           (br_if 1 (i32.ge_u
               (get_local $-fori0 )
               (get_local $-forl0 ) ) )
-          (set_local $ns3\global (call $-get_from_obj
+          (set_local $ns4\global (call $-get_from_obj
               (get_local $-fora0 )
               (call $-integer_u (get_local $-fori0 ) ) ) )
           (block
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\bin )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\bin )
                 (call $-get_from_obj
-                  (get_local $ns3\global )
+                  (get_local $ns4\global )
                   (i32.const 99 ) ) ) )
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\bin )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\bin )
                 (call $-get_from_obj
-                  (get_local $ns3\global )
+                  (get_local $ns4\global )
                   (i32.const 102 ) ) ) )
             (drop (call $ns1\binary_write
-                (get_local $ns3\bin )
-                (call $ns1\size_of (get_local $ns3\bin ) )
+                (get_local $ns4\bin )
+                (call $ns1\size_of (get_local $ns4\bin ) )
                 (call $-get_from_obj
-                  (get_local $ns3\global )
+                  (get_local $ns4\global )
                   (i32.const 100 ) ) ) )
             (drop (call $ns1\binary_write
-                (get_local $ns3\bin )
-                (call $ns1\size_of (get_local $ns3\bin ) )
+                (get_local $ns4\bin )
+                (call $ns1\size_of (get_local $ns4\bin ) )
                 (call $-number (f64.const 0x0b ) ) ) )
             (set_local $-success (i32.const 1 ) ) )
           (set_local $-fori0 (i32.add
               (get_local $-fori0 )
               (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
           (call $-number (f64.const 6 ) ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_local $ns3\bin ) ) ) )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_local $ns4\bin ) ) ) )
       (drop (call $ns1\binary_write
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_global $ns3\wasm ) )
-          (get_local $ns3\bin ) ) )
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_global $ns4\wasm ) )
+          (get_local $ns4\bin ) ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\write_export_section
+  ;; function $ns4\write_export_section
 
-  (func $ns3\write_export_section
+  (func $ns4\write_export_section
     (result i32 )
-    (local $ns3\bin i32 )
-    (local $ns3\xport i32 )
+    (local $ns4\bin i32 )
+    (local $ns4\xport i32 )
     (local $-fori0 i32 )
     (local $-forl0 i32 )
     (local $-fora0 i32 )
@@ -7068,8 +7363,8 @@
       (if
         (call $-truthy (call $-equal
             (call $ns1\array_length (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 19 ) ) )
+                (get_global $ns4\sections )
+                (i32.const 30 ) ) )
             (call $-number (f64.const 0 ) ) ) )
         (then
           (set_local $-ret (i32.const 0 ) )
@@ -7077,19 +7372,19 @@
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (drop
-        (set_local $ns3\bin (call $-new_value
+        (set_local $ns4\bin (call $-new_value
             (i32.const 6 )
             (i32.const 0 ) ) )
-        (get_local $ns3\bin ) )
-      (drop (call $ns4\write_varuint
-          (get_local $ns3\bin )
+        (get_local $ns4\bin ) )
+      (drop (call $ns5\write_varuint
+          (get_local $ns4\bin )
           (call $ns1\array_length (call $-get_from_obj
-              (get_global $ns3\sections )
-              (i32.const 19 ) ) ) ) )
+              (get_global $ns4\sections )
+              (i32.const 30 ) ) ) ) )
       (set_local $-fori0 (i32.const 0 ) )
       (set_local $-fora0 (call $-get_from_obj
-          (get_global $ns3\sections )
-          (i32.const 19 ) ) )
+          (get_global $ns4\sections )
+          (i32.const 30 ) ) )
       (set_local $-forl0 (i32.div_u
           (call $-len (get_local $-fora0 ) )
           (i32.const 4 ) ) )
@@ -7097,48 +7392,48 @@
           (br_if 1 (i32.ge_u
               (get_local $-fori0 )
               (get_local $-forl0 ) ) )
-          (set_local $ns3\xport (call $-get_from_obj
+          (set_local $ns4\xport (call $-get_from_obj
               (get_local $-fora0 )
               (call $-integer_u (get_local $-fori0 ) ) ) )
           (block
-            (drop (call $ns3\write_string
-                (get_local $ns3\bin )
+            (drop (call $ns4\write_string
+                (get_local $ns4\bin )
                 (call $-get_from_obj
-                  (get_local $ns3\xport )
+                  (get_local $ns4\xport )
                   (i32.const 91 ) ) ) )
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\bin )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\bin )
                 (call $-get_from_obj
-                  (get_local $ns3\xport )
+                  (get_local $ns4\xport )
                   (i32.const 93 ) ) ) )
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\bin )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\bin )
                 (call $-get_from_obj
-                  (get_local $ns3\xport )
+                  (get_local $ns4\xport )
                   (i32.const 108 ) ) ) )
             (set_local $-success (i32.const 1 ) ) )
           (set_local $-fori0 (i32.add
               (get_local $-fori0 )
               (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
           (call $-number (f64.const 7 ) ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_local $ns3\bin ) ) ) )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_local $ns4\bin ) ) ) )
       (drop (call $ns1\binary_write
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_global $ns3\wasm ) )
-          (get_local $ns3\bin ) ) )
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_global $ns4\wasm ) )
+          (get_local $ns4\bin ) ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\write_start_section
+  ;; function $ns4\write_start_section
 
-  (func $ns3\write_start_section
+  (func $ns4\write_start_section
     (result i32 )
-    (local $ns3\bin i32 )
+    (local $ns4\bin i32 )
     (local $-ret i32 )
     (local $-success i32 )
     (call $-funcstart )
@@ -7146,8 +7441,8 @@
       (if
         (call $-truthy (call $-equal
             (call $-get_from_obj
-              (get_global $ns3\sections )
-              (i32.const 20 ) )
+              (get_global $ns4\sections )
+              (i32.const 31 ) )
             (i32.const 0 ) ) )
         (then
           (set_local $-ret (i32.const 0 ) )
@@ -7155,38 +7450,38 @@
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (drop
-        (set_local $ns3\bin (call $-new_value
+        (set_local $ns4\bin (call $-new_value
             (i32.const 6 )
             (i32.const 0 ) ) )
-        (get_local $ns3\bin ) )
-      (drop (call $ns4\write_varuint
-          (get_local $ns3\bin )
+        (get_local $ns4\bin ) )
+      (drop (call $ns5\write_varuint
+          (get_local $ns4\bin )
           (call $-get_from_obj
-            (get_global $ns3\sections )
-            (i32.const 20 ) ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
+            (get_global $ns4\sections )
+            (i32.const 31 ) ) ) )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
           (call $-number (f64.const 8 ) ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_local $ns3\bin ) ) ) )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_local $ns4\bin ) ) ) )
       (drop (call $ns1\binary_write
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_global $ns3\wasm ) )
-          (get_local $ns3\bin ) ) )
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_global $ns4\wasm ) )
+          (get_local $ns4\bin ) ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\write_element_section
+  ;; function $ns4\write_element_section
 
-  (func $ns3\write_element_section
+  (func $ns4\write_element_section
     (result i32 )
-    (local $ns3\bin i32 )
-    (local $ns3\elem i32 )
+    (local $ns4\bin i32 )
+    (local $ns4\elem i32 )
     (local $-fori0 i32 )
     (local $-forl0 i32 )
     (local $-fora0 i32 )
-    (local $ns3\_elem i32 )
+    (local $ns4\_elem i32 )
     (local $-fori1 i32 )
     (local $-forl1 i32 )
     (local $-fora1 i32 )
@@ -7197,8 +7492,8 @@
       (if
         (call $-truthy (call $-equal
             (call $ns1\array_length (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 21 ) ) )
+                (get_global $ns4\sections )
+                (i32.const 32 ) ) )
             (call $-number (f64.const 0 ) ) ) )
         (then
           (set_local $-ret (i32.const 0 ) )
@@ -7206,19 +7501,19 @@
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (drop
-        (set_local $ns3\bin (call $-new_value
+        (set_local $ns4\bin (call $-new_value
             (i32.const 6 )
             (i32.const 0 ) ) )
-        (get_local $ns3\bin ) )
-      (drop (call $ns4\write_varuint
-          (get_local $ns3\bin )
+        (get_local $ns4\bin ) )
+      (drop (call $ns5\write_varuint
+          (get_local $ns4\bin )
           (call $ns1\array_length (call $-get_from_obj
-              (get_global $ns3\sections )
-              (i32.const 21 ) ) ) ) )
+              (get_global $ns4\sections )
+              (i32.const 32 ) ) ) ) )
       (set_local $-fori0 (i32.const 0 ) )
       (set_local $-fora0 (call $-get_from_obj
-          (get_global $ns3\sections )
-          (i32.const 21 ) ) )
+          (get_global $ns4\sections )
+          (i32.const 32 ) ) )
       (set_local $-forl0 (i32.div_u
           (call $-len (get_local $-fora0 ) )
           (i32.const 4 ) ) )
@@ -7226,33 +7521,33 @@
           (br_if 1 (i32.ge_u
               (get_local $-fori0 )
               (get_local $-forl0 ) ) )
-          (set_local $ns3\elem (call $-get_from_obj
+          (set_local $ns4\elem (call $-get_from_obj
               (get_local $-fora0 )
               (call $-integer_u (get_local $-fori0 ) ) ) )
           (block
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\bin )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\bin )
                 (call $-get_from_obj
-                  (get_local $ns3\elem )
+                  (get_local $ns4\elem )
                   (i32.const 108 ) ) ) )
             (drop (call $ns1\binary_write
-                (get_local $ns3\bin )
-                (call $ns1\size_of (get_local $ns3\bin ) )
+                (get_local $ns4\bin )
+                (call $ns1\size_of (get_local $ns4\bin ) )
                 (call $-get_from_obj
-                  (get_local $ns3\elem )
+                  (get_local $ns4\elem )
                   (i32.const 112 ) ) ) )
             (drop (call $ns1\binary_write
-                (get_local $ns3\bin )
-                (call $ns1\size_of (get_local $ns3\bin ) )
+                (get_local $ns4\bin )
+                (call $ns1\size_of (get_local $ns4\bin ) )
                 (call $-number (f64.const 0x0b ) ) ) )
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\bin )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\bin )
                 (call $ns1\array_length (call $-get_from_obj
-                    (get_local $ns3\elem )
+                    (get_local $ns4\elem )
                     (i32.const 111 ) ) ) ) )
             (set_local $-fori1 (i32.const 0 ) )
             (set_local $-fora1 (call $-get_from_obj
-                (get_local $ns3\elem )
+                (get_local $ns4\elem )
                 (i32.const 111 ) ) )
             (set_local $-forl1 (i32.div_u
                 (call $-len (get_local $-fora1 ) )
@@ -7261,13 +7556,13 @@
                 (br_if 1 (i32.ge_u
                     (get_local $-fori1 )
                     (get_local $-forl1 ) ) )
-                (set_local $ns3\_elem (call $-get_from_obj
+                (set_local $ns4\_elem (call $-get_from_obj
                     (get_local $-fora1 )
                     (call $-integer_u (get_local $-fori1 ) ) ) )
                 (block
-                  (drop (call $ns4\write_varuint
-                      (get_local $ns3\bin )
-                      (get_local $ns3\_elem ) ) )
+                  (drop (call $ns5\write_varuint
+                      (get_local $ns4\bin )
+                      (get_local $ns4\_elem ) ) )
                   (set_local $-success (i32.const 1 ) ) )
                 (set_local $-fori1 (i32.add
                     (get_local $-fori1 )
@@ -7278,33 +7573,33 @@
               (get_local $-fori0 )
               (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
           (call $-number (f64.const 9 ) ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_local $ns3\bin ) ) ) )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_local $ns4\bin ) ) ) )
       (drop (call $ns1\binary_write
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_global $ns3\wasm ) )
-          (get_local $ns3\bin ) ) )
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_global $ns4\wasm ) )
+          (get_local $ns4\bin ) ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\write_code_section
+  ;; function $ns4\write_code_section
 
-  (func $ns3\write_code_section
+  (func $ns4\write_code_section
     (result i32 )
-    (local $ns3\t i32 )
-    (local $ns3\c i32 )
-    (local $ns3\locals i32 )
-    (local $ns3\bin i32 )
-    (local $ns3\body i32 )
+    (local $ns4\t i32 )
+    (local $ns4\c i32 )
+    (local $ns4\locals i32 )
+    (local $ns4\bin i32 )
+    (local $ns4\body i32 )
     (local $-fori0 i32 )
     (local $-forl0 i32 )
     (local $-fora0 i32 )
-    (local $ns3\bodybin i32 )
-    (local $ns3\local i32 )
+    (local $ns4\bodybin i32 )
+    (local $ns4\local i32 )
     (local $-fori1 i32 )
     (local $-forl1 i32 )
     (local $-fora1 i32 )
@@ -7320,31 +7615,31 @@
       (if
         (call $-truthy (call $-equal
             (call $ns1\array_length (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 22 ) ) )
+                (get_global $ns4\sections )
+                (i32.const 33 ) ) )
             (call $-number (f64.const 0 ) ) ) )
         (then
           (set_local $-ret (i32.const 0 ) )
           (br 1 )
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
-      (drop (get_local $ns3\t ) )
-      (drop (get_local $ns3\c ) )
-      (drop (get_local $ns3\locals ) )
+      (drop (get_local $ns4\t ) )
+      (drop (get_local $ns4\c ) )
+      (drop (get_local $ns4\locals ) )
       (drop
-        (set_local $ns3\bin (call $-new_value
+        (set_local $ns4\bin (call $-new_value
             (i32.const 6 )
             (i32.const 0 ) ) )
-        (get_local $ns3\bin ) )
-      (drop (call $ns4\write_varuint
-          (get_local $ns3\bin )
+        (get_local $ns4\bin ) )
+      (drop (call $ns5\write_varuint
+          (get_local $ns4\bin )
           (call $ns1\array_length (call $-get_from_obj
-              (get_global $ns3\sections )
-              (i32.const 22 ) ) ) ) )
+              (get_global $ns4\sections )
+              (i32.const 33 ) ) ) ) )
       (set_local $-fori0 (i32.const 0 ) )
       (set_local $-fora0 (call $-get_from_obj
-          (get_global $ns3\sections )
-          (i32.const 22 ) ) )
+          (get_global $ns4\sections )
+          (i32.const 33 ) ) )
       (set_local $-forl0 (i32.div_u
           (call $-len (get_local $-fora0 ) )
           (i32.const 4 ) ) )
@@ -7352,30 +7647,30 @@
           (br_if 1 (i32.ge_u
               (get_local $-fori0 )
               (get_local $-forl0 ) ) )
-          (set_local $ns3\body (call $-get_from_obj
+          (set_local $ns4\body (call $-get_from_obj
               (get_local $-fora0 )
               (call $-integer_u (get_local $-fori0 ) ) ) )
           (block
             (drop
-              (set_local $ns3\bodybin (call $-new_value
+              (set_local $ns4\bodybin (call $-new_value
                   (i32.const 6 )
                   (i32.const 0 ) ) )
-              (get_local $ns3\bodybin ) )
+              (get_local $ns4\bodybin ) )
             (drop
-              (set_local $ns3\locals (call $-new_value
+              (set_local $ns4\locals (call $-new_value
                   (i32.const 4 )
                   (i32.const 0 ) ) )
-              (get_local $ns3\locals ) )
+              (get_local $ns4\locals ) )
             (drop
-              (set_local $ns3\c (call $-number (f64.const 0 ) ) )
-              (get_local $ns3\c ) )
+              (set_local $ns4\c (call $-number (f64.const 0 ) ) )
+              (get_local $ns4\c ) )
             (drop
-              (set_local $ns3\t (i32.const 0 ) )
-              (get_local $ns3\t ) )
+              (set_local $ns4\t (i32.const 0 ) )
+              (get_local $ns4\t ) )
             (set_local $-fori1 (i32.const 0 ) )
             (set_local $-fora1 (call $-get_from_obj
-                (get_local $ns3\body )
-                (i32.const 25 ) ) )
+                (get_local $ns4\body )
+                (i32.const 36 ) ) )
             (set_local $-forl1 (i32.div_u
                 (call $-len (get_local $-fora1 ) )
                 (i32.const 4 ) ) )
@@ -7383,20 +7678,20 @@
                 (br_if 1 (i32.ge_u
                     (get_local $-fori1 )
                     (get_local $-forl1 ) ) )
-                (set_local $ns3\local (call $-get_from_obj
+                (set_local $ns4\local (call $-get_from_obj
                     (get_local $-fora1 )
                     (call $-integer_u (get_local $-fori1 ) ) ) )
                 (block
                   (if
                     (call $-truthy (call $-unequal
-                        (get_local $ns3\local )
-                        (get_local $ns3\t ) ) )
+                        (get_local $ns4\local )
+                        (get_local $ns4\t ) ) )
                     (then
                       (if
-                        (call $-truthy (get_local $ns3\c ) )
+                        (call $-truthy (get_local $ns4\c ) )
                         (then
                           (drop (call $ns1\array_push
-                              (get_local $ns3\locals )
+                              (get_local $ns4\locals )
                               (tee_local $-obj0 (call $-new_value
                                   (i32.const 5 )
                                   (i32.const 0 ) ) )
@@ -7404,43 +7699,43 @@
                                 (call $-set_to_obj
                                   (get_local $-obj0 )
                                   (i32.const 115 )
-                                  (get_local $ns3\c ) )
+                                  (get_local $ns4\c ) )
                                 (call $-get_from_obj
                                   (get_local $-obj0 )
                                   (i32.const 115 ) ) )
                               (drop
                                 (call $-set_to_obj
                                   (get_local $-obj0 )
-                                  (i32.const 13 )
-                                  (get_local $ns3\t ) )
+                                  (i32.const 24 )
+                                  (get_local $ns4\t ) )
                                 (call $-get_from_obj
                                   (get_local $-obj0 )
-                                  (i32.const 13 ) ) ) ) )
+                                  (i32.const 24 ) ) ) ) )
                           (set_local $-success (i32.const 1 ) ) )
                         (else (set_local $-success (i32.const 0 ) ) ) )
                       (drop
-                        (set_local $ns3\c (call $-number (f64.const 0 ) ) )
-                        (get_local $ns3\c ) )
+                        (set_local $ns4\c (call $-number (f64.const 0 ) ) )
+                        (get_local $ns4\c ) )
                       (drop
-                        (set_local $ns3\t (get_local $ns3\local ) )
-                        (get_local $ns3\t ) )
+                        (set_local $ns4\t (get_local $ns4\local ) )
+                        (get_local $ns4\t ) )
                       (set_local $-success (i32.const 1 ) ) )
                     (else (set_local $-success (i32.const 0 ) ) ) )
                   (drop
-                    (set_local $ns3\c (call $-inc
-                        (get_local $ns3\c )
+                    (set_local $ns4\c (call $-inc
+                        (get_local $ns4\c )
                         (f64.const 1 ) ) )
-                    (get_local $ns3\c ) )
+                    (get_local $ns4\c ) )
                   (set_local $-success (i32.const 1 ) ) )
                 (set_local $-fori1 (i32.add
                     (get_local $-fori1 )
                     (i32.const 1 ) ) )
                 (br 0 ) ) )
             (if
-              (call $-truthy (get_local $ns3\c ) )
+              (call $-truthy (get_local $ns4\c ) )
               (then
                 (drop (call $ns1\array_push
-                    (get_local $ns3\locals )
+                    (get_local $ns4\locals )
                     (tee_local $-obj1 (call $-new_value
                         (i32.const 5 )
                         (i32.const 0 ) ) )
@@ -7448,25 +7743,25 @@
                       (call $-set_to_obj
                         (get_local $-obj1 )
                         (i32.const 115 )
-                        (get_local $ns3\c ) )
+                        (get_local $ns4\c ) )
                       (call $-get_from_obj
                         (get_local $-obj1 )
                         (i32.const 115 ) ) )
                     (drop
                       (call $-set_to_obj
                         (get_local $-obj1 )
-                        (i32.const 13 )
-                        (get_local $ns3\t ) )
+                        (i32.const 24 )
+                        (get_local $ns4\t ) )
                       (call $-get_from_obj
                         (get_local $-obj1 )
-                        (i32.const 13 ) ) ) ) )
+                        (i32.const 24 ) ) ) ) )
                 (set_local $-success (i32.const 1 ) ) )
               (else (set_local $-success (i32.const 0 ) ) ) )
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\bodybin )
-                (call $ns1\array_length (get_local $ns3\locals ) ) ) )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\bodybin )
+                (call $ns1\array_length (get_local $ns4\locals ) ) ) )
             (set_local $-fori2 (i32.const 0 ) )
-            (set_local $-fora2 (get_local $ns3\locals ) )
+            (set_local $-fora2 (get_local $ns4\locals ) )
             (set_local $-forl2 (i32.div_u
                 (call $-len (get_local $-fora2 ) )
                 (i32.const 4 ) ) )
@@ -7474,66 +7769,66 @@
                 (br_if 1 (i32.ge_u
                     (get_local $-fori2 )
                     (get_local $-forl2 ) ) )
-                (set_local $ns3\local (call $-get_from_obj
+                (set_local $ns4\local (call $-get_from_obj
                     (get_local $-fora2 )
                     (call $-integer_u (get_local $-fori2 ) ) ) )
                 (block
-                  (drop (call $ns4\write_varuint
-                      (get_local $ns3\bodybin )
+                  (drop (call $ns5\write_varuint
+                      (get_local $ns4\bodybin )
                       (call $-get_from_obj
-                        (get_local $ns3\local )
+                        (get_local $ns4\local )
                         (i32.const 115 ) ) ) )
-                  (drop (call $ns4\write_varuint
-                      (get_local $ns3\bodybin )
+                  (drop (call $ns5\write_varuint
+                      (get_local $ns4\bodybin )
                       (call $-get_from_obj
-                        (get_local $ns3\local )
-                        (i32.const 13 ) ) ) )
+                        (get_local $ns4\local )
+                        (i32.const 24 ) ) ) )
                   (set_local $-success (i32.const 1 ) ) )
                 (set_local $-fori2 (i32.add
                     (get_local $-fori2 )
                     (i32.const 1 ) ) )
                 (br 0 ) ) )
             (drop (call $ns1\binary_write
-                (get_local $ns3\bodybin )
-                (call $ns1\size_of (get_local $ns3\bodybin ) )
+                (get_local $ns4\bodybin )
+                (call $ns1\size_of (get_local $ns4\bodybin ) )
                 (call $-get_from_obj
-                  (get_local $ns3\body )
-                  (i32.const 22 ) ) ) )
+                  (get_local $ns4\body )
+                  (i32.const 33 ) ) ) )
             (drop (call $ns1\binary_write
-                (get_local $ns3\bodybin )
-                (call $ns1\size_of (get_local $ns3\bodybin ) )
+                (get_local $ns4\bodybin )
+                (call $ns1\size_of (get_local $ns4\bodybin ) )
                 (call $-number (f64.const 0x0b ) ) ) )
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\bin )
-                (call $ns1\size_of (get_local $ns3\bodybin ) ) ) )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\bin )
+                (call $ns1\size_of (get_local $ns4\bodybin ) ) ) )
             (drop (call $ns1\binary_write
-                (get_local $ns3\bin )
-                (call $ns1\size_of (get_local $ns3\bin ) )
-                (get_local $ns3\bodybin ) ) )
+                (get_local $ns4\bin )
+                (call $ns1\size_of (get_local $ns4\bin ) )
+                (get_local $ns4\bodybin ) ) )
             (set_local $-success (i32.const 1 ) ) )
           (set_local $-fori0 (i32.add
               (get_local $-fori0 )
               (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
           (call $-number (f64.const 10 ) ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_local $ns3\bin ) ) ) )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_local $ns4\bin ) ) ) )
       (drop (call $ns1\binary_write
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_global $ns3\wasm ) )
-          (get_local $ns3\bin ) ) )
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_global $ns4\wasm ) )
+          (get_local $ns4\bin ) ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\write_data_section
+  ;; function $ns4\write_data_section
 
-  (func $ns3\write_data_section
+  (func $ns4\write_data_section
     (result i32 )
-    (local $ns3\bin i32 )
-    (local $ns3\data i32 )
+    (local $ns4\bin i32 )
+    (local $ns4\data i32 )
     (local $-fori0 i32 )
     (local $-forl0 i32 )
     (local $-fora0 i32 )
@@ -7544,8 +7839,8 @@
       (if
         (call $-truthy (call $-equal
             (call $ns1\array_length (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 23 ) ) )
+                (get_global $ns4\sections )
+                (i32.const 34 ) ) )
             (call $-number (f64.const 0 ) ) ) )
         (then
           (set_local $-ret (i32.const 0 ) )
@@ -7553,19 +7848,19 @@
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (drop
-        (set_local $ns3\bin (call $-new_value
+        (set_local $ns4\bin (call $-new_value
             (i32.const 6 )
             (i32.const 0 ) ) )
-        (get_local $ns3\bin ) )
-      (drop (call $ns4\write_varuint
-          (get_local $ns3\bin )
+        (get_local $ns4\bin ) )
+      (drop (call $ns5\write_varuint
+          (get_local $ns4\bin )
           (call $ns1\array_length (call $-get_from_obj
-              (get_global $ns3\sections )
-              (i32.const 23 ) ) ) ) )
+              (get_global $ns4\sections )
+              (i32.const 34 ) ) ) ) )
       (set_local $-fori0 (i32.const 0 ) )
       (set_local $-fora0 (call $-get_from_obj
-          (get_global $ns3\sections )
-          (i32.const 23 ) ) )
+          (get_global $ns4\sections )
+          (i32.const 34 ) ) )
       (set_local $-forl0 (i32.div_u
           (call $-len (get_local $-fora0 ) )
           (i32.const 4 ) ) )
@@ -7573,68 +7868,68 @@
           (br_if 1 (i32.ge_u
               (get_local $-fori0 )
               (get_local $-forl0 ) ) )
-          (set_local $ns3\data (call $-get_from_obj
+          (set_local $ns4\data (call $-get_from_obj
               (get_local $-fora0 )
               (call $-integer_u (get_local $-fori0 ) ) ) )
           (block
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\bin )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\bin )
                 (call $-get_from_obj
-                  (get_local $ns3\data )
+                  (get_local $ns4\data )
                   (i32.const 108 ) ) ) )
             (drop (call $ns1\binary_write
-                (get_local $ns3\bin )
-                (call $ns1\size_of (get_local $ns3\bin ) )
+                (get_local $ns4\bin )
+                (call $ns1\size_of (get_local $ns4\bin ) )
                 (call $-get_from_obj
-                  (get_local $ns3\data )
+                  (get_local $ns4\data )
                   (i32.const 112 ) ) ) )
             (drop (call $ns1\binary_write
-                (get_local $ns3\bin )
-                (call $ns1\size_of (get_local $ns3\bin ) )
+                (get_local $ns4\bin )
+                (call $ns1\size_of (get_local $ns4\bin ) )
                 (call $-number (f64.const 0x0b ) ) ) )
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\bin )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\bin )
                 (call $ns1\size_of (call $-get_from_obj
-                    (get_local $ns3\data )
+                    (get_local $ns4\data )
                     (i32.const 113 ) ) ) ) )
             (drop (call $ns1\binary_write
-                (get_local $ns3\bin )
-                (call $ns1\size_of (get_local $ns3\bin ) )
+                (get_local $ns4\bin )
+                (call $ns1\size_of (get_local $ns4\bin ) )
                 (call $-get_from_obj
-                  (get_local $ns3\data )
+                  (get_local $ns4\data )
                   (i32.const 113 ) ) ) )
             (set_local $-success (i32.const 1 ) ) )
           (set_local $-fori0 (i32.add
               (get_local $-fori0 )
               (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
           (call $-number (f64.const 11 ) ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_local $ns3\bin ) ) ) )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_local $ns4\bin ) ) ) )
       (drop (call $ns1\binary_write
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_global $ns3\wasm ) )
-          (get_local $ns3\bin ) ) )
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_global $ns4\wasm ) )
+          (get_local $ns4\bin ) ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
 
-  ;; function $ns3\write_name_section
+  ;; function $ns4\write_name_section
 
-  (func $ns3\write_name_section
+  (func $ns4\write_name_section
     (result i32 )
-    (local $ns3\bin i32 )
-    (local $ns3\total_locals i32 )
-    (local $ns3\names i32 )
-    (local $ns3\index i32 )
-    (local $ns3\name i32 )
+    (local $ns4\bin i32 )
+    (local $ns4\total_locals i32 )
+    (local $ns4\names i32 )
+    (local $ns4\index i32 )
+    (local $ns4\name i32 )
     (local $-fori0 i32 )
     (local $-forl0 i32 )
     (local $-fora0 i32 )
-    (local $ns3\fun i32 )
-    (local $ns3\locals i32 )
+    (local $ns4\fun i32 )
+    (local $ns4\locals i32 )
     (local $-fori1 i32 )
     (local $-forl1 i32 )
     (local $-fora1 i32 )
@@ -7648,8 +7943,8 @@
       (if
         (call $-truthy (call $-equal
             (call $ns1\array_length (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 24 ) ) )
+                (get_global $ns4\sections )
+                (i32.const 35 ) ) )
             (call $-number (f64.const 0 ) ) ) )
         (then
           (set_local $-ret (i32.const 0 ) )
@@ -7657,37 +7952,37 @@
           (set_local $-success (i32.const 1 ) ) )
         (else (set_local $-success (i32.const 0 ) ) ) )
       (drop
-        (set_local $ns3\bin (call $-new_value
+        (set_local $ns4\bin (call $-new_value
             (i32.const 6 )
             (i32.const 0 ) ) )
-        (get_local $ns3\bin ) )
-      (drop (call $ns3\write_string
-          (get_local $ns3\bin )
-          (i32.const 24 ) ) )
+        (get_local $ns4\bin ) )
+      (drop (call $ns4\write_string
+          (get_local $ns4\bin )
+          (i32.const 35 ) ) )
       (drop
-        (set_local $ns3\total_locals (call $-number (f64.const 0 ) ) )
-        (get_local $ns3\total_locals ) )
+        (set_local $ns4\total_locals (call $-number (f64.const 0 ) ) )
+        (get_local $ns4\total_locals ) )
       (drop
-        (set_local $ns3\names (call $-new_value
+        (set_local $ns4\names (call $-new_value
             (i32.const 6 )
             (i32.const 0 ) ) )
-        (get_local $ns3\names ) )
+        (get_local $ns4\names ) )
       (drop
-        (set_local $ns3\index (call $-number (f64.const 0 ) ) )
-        (get_local $ns3\index ) )
-      (drop (call $ns4\write_varuint
-          (get_local $ns3\names )
+        (set_local $ns4\index (call $-number (f64.const 0 ) ) )
+        (get_local $ns4\index ) )
+      (drop (call $ns5\write_varuint
+          (get_local $ns4\names )
           (call $ns1\array_length (call $-get_from_obj
               (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 24 ) )
-              (i32.const 15 ) ) ) ) )
+                (get_global $ns4\sections )
+                (i32.const 35 ) )
+              (i32.const 26 ) ) ) ) )
       (set_local $-fori0 (i32.const 0 ) )
       (set_local $-fora0 (call $-get_from_obj
           (call $-get_from_obj
-            (get_global $ns3\sections )
-            (i32.const 24 ) )
-          (i32.const 15 ) ) )
+            (get_global $ns4\sections )
+            (i32.const 35 ) )
+          (i32.const 26 ) ) )
       (set_local $-forl0 (i32.div_u
           (call $-len (get_local $-fora0 ) )
           (i32.const 4 ) ) )
@@ -7695,67 +7990,67 @@
           (br_if 1 (i32.ge_u
               (get_local $-fori0 )
               (get_local $-forl0 ) ) )
-          (set_local $ns3\name (call $-get_from_obj
+          (set_local $ns4\name (call $-get_from_obj
               (get_local $-fora0 )
               (call $-integer_u (get_local $-fori0 ) ) ) )
           (block
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\names )
-                (get_local $ns3\index ) ) )
-            (drop (call $ns3\write_string
-                (get_local $ns3\names )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\names )
+                (get_local $ns4\index ) ) )
+            (drop (call $ns4\write_string
+                (get_local $ns4\names )
                 (call $ns1\binary_slice
-                  (get_local $ns3\name )
+                  (get_local $ns4\name )
                   (call $-number (f64.const 1 ) )
-                  (call $ns1\size_of (get_local $ns3\name ) ) ) ) )
+                  (call $ns1\size_of (get_local $ns4\name ) ) ) ) )
             (drop
-              (set_local $ns3\total_locals (call $-add
-                  (get_local $ns3\total_locals )
+              (set_local $ns4\total_locals (call $-add
+                  (get_local $ns4\total_locals )
                   (call $ns1\array_length (call $-get_from_obj
                       (call $-get_from_obj
                         (call $-get_from_obj
-                          (get_global $ns3\sections )
-                          (i32.const 24 ) )
-                        (i32.const 25 ) )
-                      (get_local $ns3\index ) ) ) ) )
-              (get_local $ns3\total_locals ) )
+                          (get_global $ns4\sections )
+                          (i32.const 35 ) )
+                        (i32.const 36 ) )
+                      (get_local $ns4\index ) ) ) ) )
+              (get_local $ns4\total_locals ) )
             (drop
-              (set_local $ns3\index (call $-inc
-                  (get_local $ns3\index )
+              (set_local $ns4\index (call $-inc
+                  (get_local $ns4\index )
                   (f64.const 1 ) ) )
-              (get_local $ns3\index ) )
+              (get_local $ns4\index ) )
             (set_local $-success (i32.const 1 ) ) )
           (set_local $-fori0 (i32.add
               (get_local $-fori0 )
               (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns4\write_varuint
-          (get_local $ns3\bin )
+      (drop (call $ns5\write_varuint
+          (get_local $ns4\bin )
           (call $-number (f64.const 1 ) ) ) )
-      (drop (call $ns3\write_string
-          (get_local $ns3\bin )
-          (get_local $ns3\names ) ) )
+      (drop (call $ns4\write_string
+          (get_local $ns4\bin )
+          (get_local $ns4\names ) ) )
       (drop
-        (set_local $ns3\names (call $-new_value
+        (set_local $ns4\names (call $-new_value
             (i32.const 6 )
             (i32.const 0 ) ) )
-        (get_local $ns3\names ) )
-      (drop (call $ns4\write_varuint
-          (get_local $ns3\names )
+        (get_local $ns4\names ) )
+      (drop (call $ns5\write_varuint
+          (get_local $ns4\names )
           (call $ns1\array_length (call $-get_from_obj
               (call $-get_from_obj
-                (get_global $ns3\sections )
-                (i32.const 24 ) )
-              (i32.const 25 ) ) ) ) )
+                (get_global $ns4\sections )
+                (i32.const 35 ) )
+              (i32.const 36 ) ) ) ) )
       (drop
-        (set_local $ns3\fun (call $-number (f64.const 0 ) ) )
-        (get_local $ns3\fun ) )
+        (set_local $ns4\fun (call $-number (f64.const 0 ) ) )
+        (get_local $ns4\fun ) )
       (set_local $-fori1 (i32.const 0 ) )
       (set_local $-fora1 (call $-get_from_obj
           (call $-get_from_obj
-            (get_global $ns3\sections )
-            (i32.const 24 ) )
-          (i32.const 25 ) ) )
+            (get_global $ns4\sections )
+            (i32.const 35 ) )
+          (i32.const 36 ) ) )
       (set_local $-forl1 (i32.div_u
           (call $-len (get_local $-fora1 ) )
           (i32.const 4 ) ) )
@@ -7763,21 +8058,21 @@
           (br_if 1 (i32.ge_u
               (get_local $-fori1 )
               (get_local $-forl1 ) ) )
-          (set_local $ns3\locals (call $-get_from_obj
+          (set_local $ns4\locals (call $-get_from_obj
               (get_local $-fora1 )
               (call $-integer_u (get_local $-fori1 ) ) ) )
           (block
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\names )
-                (get_local $ns3\fun ) ) )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\names )
+                (get_local $ns4\fun ) ) )
             (drop
-              (set_local $ns3\index (call $-number (f64.const 0 ) ) )
-              (get_local $ns3\index ) )
-            (drop (call $ns4\write_varuint
-                (get_local $ns3\names )
-                (call $ns1\array_length (get_local $ns3\locals ) ) ) )
+              (set_local $ns4\index (call $-number (f64.const 0 ) ) )
+              (get_local $ns4\index ) )
+            (drop (call $ns5\write_varuint
+                (get_local $ns4\names )
+                (call $ns1\array_length (get_local $ns4\locals ) ) ) )
             (set_local $-fori2 (i32.const 0 ) )
-            (set_local $-fora2 (get_local $ns3\locals ) )
+            (set_local $-fora2 (get_local $ns4\locals ) )
             (set_local $-forl2 (i32.div_u
                 (call $-len (get_local $-fora2 ) )
                 (i32.const 4 ) ) )
@@ -7785,283 +8080,283 @@
                 (br_if 1 (i32.ge_u
                     (get_local $-fori2 )
                     (get_local $-forl2 ) ) )
-                (set_local $ns3\name (call $-get_from_obj
+                (set_local $ns4\name (call $-get_from_obj
                     (get_local $-fora2 )
                     (call $-integer_u (get_local $-fori2 ) ) ) )
                 (block
-                  (drop (call $ns4\write_varuint
-                      (get_local $ns3\names )
-                      (get_local $ns3\index ) ) )
-                  (drop (call $ns3\write_string
-                      (get_local $ns3\names )
+                  (drop (call $ns5\write_varuint
+                      (get_local $ns4\names )
+                      (get_local $ns4\index ) ) )
+                  (drop (call $ns4\write_string
+                      (get_local $ns4\names )
                       (call $ns1\binary_slice
-                        (get_local $ns3\name )
+                        (get_local $ns4\name )
                         (call $-number (f64.const 1 ) )
-                        (call $ns1\size_of (get_local $ns3\name ) ) ) ) )
+                        (call $ns1\size_of (get_local $ns4\name ) ) ) ) )
                   (drop
-                    (set_local $ns3\index (call $-inc
-                        (get_local $ns3\index )
+                    (set_local $ns4\index (call $-inc
+                        (get_local $ns4\index )
                         (f64.const 1 ) ) )
-                    (get_local $ns3\index ) )
+                    (get_local $ns4\index ) )
                   (set_local $-success (i32.const 1 ) ) )
                 (set_local $-fori2 (i32.add
                     (get_local $-fori2 )
                     (i32.const 1 ) ) )
                 (br 0 ) ) )
             (drop
-              (set_local $ns3\fun (call $-inc
-                  (get_local $ns3\fun )
+              (set_local $ns4\fun (call $-inc
+                  (get_local $ns4\fun )
                   (f64.const 1 ) ) )
-              (get_local $ns3\fun ) )
+              (get_local $ns4\fun ) )
             (set_local $-success (i32.const 1 ) ) )
           (set_local $-fori1 (i32.add
               (get_local $-fori1 )
               (i32.const 1 ) ) )
           (br 0 ) ) )
-      (drop (call $ns4\write_varuint
-          (get_local $ns3\bin )
+      (drop (call $ns5\write_varuint
+          (get_local $ns4\bin )
           (call $-number (f64.const 2 ) ) ) )
-      (drop (call $ns3\write_string
-          (get_local $ns3\bin )
-          (get_local $ns3\names ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
+      (drop (call $ns4\write_string
+          (get_local $ns4\bin )
+          (get_local $ns4\names ) ) )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
           (call $-number (f64.const 0 ) ) ) )
-      (drop (call $ns4\write_varuint
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_local $ns3\bin ) ) ) )
+      (drop (call $ns5\write_varuint
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_local $ns4\bin ) ) ) )
       (drop (call $ns1\binary_write
-          (get_global $ns3\wasm )
-          (call $ns1\size_of (get_global $ns3\wasm ) )
-          (get_local $ns3\bin ) ) )
+          (get_global $ns4\wasm )
+          (call $ns1\size_of (get_global $ns4\wasm ) )
+          (get_local $ns4\bin ) ) )
       (set_local $-success (i32.const 1 ) ) )
     (call $-funcend (get_local $-ret ) ) )
-  (func $ns4\token_to_varint
-    (param $ns4\token i32 )
+  (func $ns5\token_to_varint
+    (param $ns5\token i32 )
     (result i32 )
-    (local $ns4\pos i32 )
-    (local $ns4\len i32 )
-    (local $ns4\neg i32 )
-    (local $ns4\dig i64 )
-    (local $ns4\num i64 )
-    (local $ns4\out i32 )
-    (set_local $ns4\pos (call $-offset (get_local $ns4\token ) ) )
-    (set_local $ns4\len (call $-len (get_local $ns4\token ) ) )
-    (set_local $ns4\dig (i64.load8_u (get_local $ns4\pos ) ) )
+    (local $ns5\pos i32 )
+    (local $ns5\len i32 )
+    (local $ns5\neg i32 )
+    (local $ns5\dig i64 )
+    (local $ns5\num i64 )
+    (local $ns5\out i32 )
+    (set_local $ns5\pos (call $-offset (get_local $ns5\token ) ) )
+    (set_local $ns5\len (call $-len (get_local $ns5\token ) ) )
+    (set_local $ns5\dig (i64.load8_u (get_local $ns5\pos ) ) )
     (if
       (i64.eq
-        (get_local $ns4\dig )
+        (get_local $ns5\dig )
         (i64.const 0x2d ) )
       (then
-        (set_local $ns4\neg (i32.const 1 ) )
-        (set_local $ns4\pos (i32.add
-            (get_local $ns4\pos )
+        (set_local $ns5\neg (i32.const 1 ) )
+        (set_local $ns5\pos (i32.add
+            (get_local $ns5\pos )
             (i32.const 1 ) ) )
-        (set_local $ns4\len (i32.sub
-            (get_local $ns4\len )
+        (set_local $ns5\len (i32.sub
+            (get_local $ns5\len )
             (i32.const 1 ) ) ) ) )
     (if
       (i32.eq
-        (i32.load16_u (get_local $ns4\pos ) )
+        (i32.load16_u (get_local $ns5\pos ) )
         (i32.const 0x7830 ) )
       (then
-        (set_local $ns4\pos (i32.add
-            (get_local $ns4\pos )
+        (set_local $ns5\pos (i32.add
+            (get_local $ns5\pos )
             (i32.const 2 ) ) )
-        (set_local $ns4\len (i32.sub
-            (get_local $ns4\len )
+        (set_local $ns5\len (i32.sub
+            (get_local $ns5\len )
             (i32.const 2 ) ) )
         (block (loop
-            (br_if 1 (i32.eqz (get_local $ns4\len ) ) )
-            (set_local $ns4\dig (i64.load8_u (get_local $ns4\pos ) ) )
-            (set_local $ns4\num (i64.mul
-                (get_local $ns4\num )
+            (br_if 1 (i32.eqz (get_local $ns5\len ) ) )
+            (set_local $ns5\dig (i64.load8_u (get_local $ns5\pos ) ) )
+            (set_local $ns5\num (i64.mul
+                (get_local $ns5\num )
                 (i64.const 0x10 ) ) )
             (if
               (i64.lt_u
-                (get_local $ns4\dig )
+                (get_local $ns5\dig )
                 (i64.const 0x40 ) )
-              (then (set_local $ns4\num (i64.add
-                    (get_local $ns4\num )
+              (then (set_local $ns5\num (i64.add
+                    (get_local $ns5\num )
                     (i64.sub
-                      (get_local $ns4\dig )
+                      (get_local $ns5\dig )
                       (i64.const 0x30 ) ) ) ) )
               (else (if
                   (i64.lt_u
-                    (get_local $ns4\dig )
+                    (get_local $ns5\dig )
                     (i64.const 0x60 ) )
-                  (then (set_local $ns4\num (i64.add
-                        (get_local $ns4\num )
+                  (then (set_local $ns5\num (i64.add
+                        (get_local $ns5\num )
                         (i64.sub
-                          (get_local $ns4\dig )
+                          (get_local $ns5\dig )
                           (i64.const 0x37 ) ) ) ) )
-                  (else (set_local $ns4\num (i64.add
-                        (get_local $ns4\num )
+                  (else (set_local $ns5\num (i64.add
+                        (get_local $ns5\num )
                         (i64.sub
-                          (get_local $ns4\dig )
+                          (get_local $ns5\dig )
                           (i64.const 0x57 ) ) ) ) ) ) ) )
-            (set_local $ns4\pos (i32.add
-                (get_local $ns4\pos )
+            (set_local $ns5\pos (i32.add
+                (get_local $ns5\pos )
                 (i32.const 1 ) ) )
-            (set_local $ns4\len (i32.sub
-                (get_local $ns4\len )
+            (set_local $ns5\len (i32.sub
+                (get_local $ns5\len )
                 (i32.const 1 ) ) )
             (br 0 ) ) ) )
       (else (block (loop
-            (br_if 1 (i32.eqz (get_local $ns4\len ) ) )
-            (set_local $ns4\dig (i64.load8_u (get_local $ns4\pos ) ) )
-            (set_local $ns4\num (i64.mul
-                (get_local $ns4\num )
+            (br_if 1 (i32.eqz (get_local $ns5\len ) ) )
+            (set_local $ns5\dig (i64.load8_u (get_local $ns5\pos ) ) )
+            (set_local $ns5\num (i64.mul
+                (get_local $ns5\num )
                 (i64.const 10 ) ) )
-            (set_local $ns4\num (i64.add
-                (get_local $ns4\num )
+            (set_local $ns5\num (i64.add
+                (get_local $ns5\num )
                 (i64.sub
-                  (get_local $ns4\dig )
+                  (get_local $ns5\dig )
                   (i64.const 0x30 ) ) ) )
-            (set_local $ns4\pos (i32.add
-                (get_local $ns4\pos )
+            (set_local $ns5\pos (i32.add
+                (get_local $ns5\pos )
                 (i32.const 1 ) ) )
-            (set_local $ns4\len (i32.sub
-                (get_local $ns4\len )
+            (set_local $ns5\len (i32.sub
+                (get_local $ns5\len )
                 (i32.const 1 ) ) )
             (br 0 ) ) ) ) )
     (if
-      (get_local $ns4\neg )
-      (then (set_local $ns4\num (i64.add
+      (get_local $ns5\neg )
+      (then (set_local $ns5\num (i64.add
             (i64.xor
-              (get_local $ns4\num )
+              (get_local $ns5\num )
               (i64.const -1 ) )
             (i64.const 1 ) ) ) ) )
-    (set_local $ns4\out (call $-new_value
+    (set_local $ns5\out (call $-new_value
         (i32.const 6 )
         (i32.const 0 ) ) )
     (block (loop
         (call $-write8
-          (get_local $ns4\out )
-          (get_local $ns4\len )
+          (get_local $ns5\out )
+          (get_local $ns5\len )
           (i32.wrap/i64 (i64.or
               (i64.rem_u
-                (get_local $ns4\num )
+                (get_local $ns5\num )
                 (i64.const 128 ) )
               (i64.const 128 ) ) ) )
-        (set_local $ns4\num (i64.shr_s
-            (get_local $ns4\num )
+        (set_local $ns5\num (i64.shr_s
+            (get_local $ns5\num )
             (i64.const 7 ) ) )
-        (br_if 1 (i64.eqz (get_local $ns4\num ) ) )
+        (br_if 1 (i64.eqz (get_local $ns5\num ) ) )
         (br_if 1 (i64.eq
-            (get_local $ns4\num )
+            (get_local $ns5\num )
             (i64.const -1 ) ) )
-        (set_local $ns4\len (i32.add
-            (get_local $ns4\len )
+        (set_local $ns5\len (i32.add
+            (get_local $ns5\len )
             (i32.const 1 ) ) )
         (br 0 ) ) )
-    (set_local $ns4\pos (i32.and
+    (set_local $ns5\pos (i32.and
         (call $-read8
-          (get_local $ns4\out )
-          (get_local $ns4\len ) )
+          (get_local $ns5\out )
+          (get_local $ns5\len ) )
         (i32.const 127 ) ) )
     (call $-write8
-      (get_local $ns4\out )
-      (get_local $ns4\len )
-      (get_local $ns4\pos ) )
+      (get_local $ns5\out )
+      (get_local $ns5\len )
+      (get_local $ns5\pos ) )
     (if
-      (get_local $ns4\neg )
+      (get_local $ns5\neg )
       (then (if
           (i32.eqz (i32.and
-              (get_local $ns4\pos )
+              (get_local $ns5\pos )
               (i32.const 64 ) ) )
           (then
             (call $-write8
-              (get_local $ns4\out )
-              (get_local $ns4\len )
+              (get_local $ns5\out )
+              (get_local $ns5\len )
               (i32.or
-                (get_local $ns4\pos )
+                (get_local $ns5\pos )
                 (i32.const 128 ) ) )
             (call $-write8
-              (get_local $ns4\out )
+              (get_local $ns5\out )
               (i32.add
-                (get_local $ns4\len )
+                (get_local $ns5\len )
                 (i32.const 1 ) )
               (i32.const 127 ) ) ) ) )
       (else (if
           (i32.and
-            (get_local $ns4\pos )
+            (get_local $ns5\pos )
             (i32.const 64 ) )
           (then
             (call $-write8
-              (get_local $ns4\out )
-              (get_local $ns4\len )
+              (get_local $ns5\out )
+              (get_local $ns5\len )
               (i32.or
-                (get_local $ns4\pos )
+                (get_local $ns5\pos )
                 (i32.const 128 ) ) )
             (call $-write8
-              (get_local $ns4\out )
+              (get_local $ns5\out )
               (i32.add
-                (get_local $ns4\len )
+                (get_local $ns5\len )
                 (i32.const 1 ) )
               (i32.const 0 ) ) ) ) ) )
-    (get_local $ns4\out ) )
-  (func $ns4\number_to_f64bin
-    (param $ns4\num i32 )
+    (get_local $ns5\out ) )
+  (func $ns5\number_to_f64bin
+    (param $ns5\num i32 )
     (result i32 )
-    (local $ns4\out i32 )
-    (set_local $ns4\out (call $-new_value
+    (local $ns5\out i32 )
+    (set_local $ns5\out (call $-new_value
         (i32.const 6 )
         (i32.const 8 ) ) )
     (f64.store
-      (call $-offset (get_local $ns4\out ) )
-      (call $-f64 (get_local $ns4\num ) ) )
-    (get_local $ns4\out ) )
-  (func $ns4\number_to_f32bin
-    (param $ns4\num i32 )
+      (call $-offset (get_local $ns5\out ) )
+      (call $-f64 (get_local $ns5\num ) ) )
+    (get_local $ns5\out ) )
+  (func $ns5\number_to_f32bin
+    (param $ns5\num i32 )
     (result i32 )
-    (local $ns4\out i32 )
-    (set_local $ns4\out (call $-new_value
+    (local $ns5\out i32 )
+    (set_local $ns5\out (call $-new_value
         (i32.const 6 )
         (i32.const 4 ) ) )
     (f32.store
-      (call $-offset (get_local $ns4\out ) )
-      (f32.demote/f64 (call $-f64 (get_local $ns4\num ) ) ) )
-    (get_local $ns4\out ) )
-  (func $ns4\write_varuint
-    (param $ns4\id i32 )
-    (param $ns4\num i32 )
+      (call $-offset (get_local $ns5\out ) )
+      (f32.demote/f64 (call $-f64 (get_local $ns5\num ) ) ) )
+    (get_local $ns5\out ) )
+  (func $ns5\write_varuint
+    (param $ns5\id i32 )
+    (param $ns5\num i32 )
     (result i32 )
-    (local $ns4\len i32 )
-    (set_local $ns4\len (call $-len (get_local $ns4\id ) ) )
-    (set_local $ns4\num (call $-i32_u (get_local $ns4\num ) ) )
+    (local $ns5\len i32 )
+    (set_local $ns5\len (call $-len (get_local $ns5\id ) ) )
+    (set_local $ns5\num (call $-i32_u (get_local $ns5\num ) ) )
     (block (loop
         (if
           (i32.lt_u
-            (get_local $ns4\num )
+            (get_local $ns5\num )
             (i32.const 128 ) )
           (then (call $-write8
-              (get_local $ns4\id )
-              (get_local $ns4\len )
+              (get_local $ns5\id )
+              (get_local $ns5\len )
               (i32.rem_u
-                (get_local $ns4\num )
+                (get_local $ns5\num )
                 (i32.const 128 ) ) ) )
           (else (call $-write8
-              (get_local $ns4\id )
-              (get_local $ns4\len )
+              (get_local $ns5\id )
+              (get_local $ns5\len )
               (i32.or
                 (i32.rem_u
-                  (get_local $ns4\num )
+                  (get_local $ns5\num )
                   (i32.const 128 ) )
                 (i32.const 128 ) ) ) ) )
-        (set_local $ns4\len (i32.add
-            (get_local $ns4\len )
+        (set_local $ns5\len (i32.add
+            (get_local $ns5\len )
             (i32.const 1 ) ) )
-        (set_local $ns4\num (i32.shr_u
-            (get_local $ns4\num )
+        (set_local $ns5\num (i32.shr_u
+            (get_local $ns5\num )
             (i32.const 7 ) ) )
-        (br_if 1 (i32.eqz (get_local $ns4\num ) ) )
+        (br_if 1 (i32.eqz (get_local $ns5\num ) ) )
         (br 0 ) ) )
-    (get_local $ns4\id ) )
-  (func $ns4\from_hex
-    (param $ns4\hex i32 )
+    (get_local $ns5\id ) )
+  (func $ns5\from_hex
+    (param $ns5\hex i32 )
     (result i32 )
-    (call $-integer_u (call $-from_hex (get_local $ns4\hex ) ) ) )
+    (call $-integer_u (call $-from_hex (get_local $ns5\hex ) ) ) )
 
   ;; start
 
@@ -8078,88 +8373,88 @@
         (i32.const 34 ) ) )
     (drop (call $-string
         (i32.const 65584 )
-        (i32.const 1 ) ) )
+        (i32.const 3 ) ) )
     (drop (call $-string
         (i32.const 65600 )
-        (i32.const 3 ) ) )
+        (i32.const 4 ) ) )
     (drop (call $-string
         (i32.const 65616 )
         (i32.const 6 ) ) )
     (drop (call $-string
         (i32.const 65632 )
-        (i32.const 8 ) ) )
-    (drop (call $-string
-        (i32.const 65656 )
-        (i32.const 4 ) ) )
-    (drop (call $-string
-        (i32.const 65672 )
-        (i32.const 6 ) ) )
-    (drop (call $-string
-        (i32.const 65688 )
-        (i32.const 8 ) ) )
-    (drop (call $-string
-        (i32.const 65712 )
-        (i32.const 5 ) ) )
-    (drop (call $-string
-        (i32.const 65728 )
-        (i32.const 6 ) ) )
-    (drop (call $-string
-        (i32.const 65744 )
-        (i32.const 6 ) ) )
-    (drop (call $-string
-        (i32.const 65760 )
-        (i32.const 6 ) ) )
-    (drop (call $-string
-        (i32.const 65776 )
-        (i32.const 5 ) ) )
-    (drop (call $-string
-        (i32.const 65792 )
-        (i32.const 7 ) ) )
-    (drop (call $-string
-        (i32.const 65808 )
-        (i32.const 4 ) ) )
-    (drop (call $-string
-        (i32.const 65824 )
-        (i32.const 4 ) ) )
-    (drop (call $-string
-        (i32.const 65840 )
-        (i32.const 4 ) ) )
-    (drop (call $-string
-        (i32.const 65856 )
-        (i32.const 6 ) ) )
-    (drop (call $-string
-        (i32.const 65872 )
-        (i32.const 3 ) ) )
-    (drop (call $-string
-        (i32.const 65888 )
-        (i32.const 4 ) ) )
-    (drop (call $-string
-        (i32.const 65904 )
-        (i32.const 6 ) ) )
-    (drop (call $-string
-        (i32.const 65920 )
         (i32.const 11 ) ) )
     (drop (call $-string
-        (i32.const 65944 )
+        (i32.const 65656 )
         (i32.const 1 ) ) )
     (drop (call $-string
-        (i32.const 65960 )
+        (i32.const 65672 )
         (i32.const 1 ) ) )
     (drop (call $-string
-        (i32.const 65976 )
+        (i32.const 65688 )
         (i32.const 18 ) ) )
     (drop (call $-string
-        (i32.const 66008 )
+        (i32.const 65720 )
         (i32.const 1 ) ) )
     (drop (call $-string
-        (i32.const 66024 )
+        (i32.const 65736 )
         (i32.const 8 ) ) )
     (drop (call $-string
-        (i32.const 66048 )
+        (i32.const 65760 )
         (i32.const 10 ) ) )
     (drop (call $-string
-        (i32.const 66072 )
+        (i32.const 65784 )
         (i32.const 1 ) ) )
+    (drop (call $-string
+        (i32.const 65800 )
+        (i32.const 1 ) ) )
+    (drop (call $-string
+        (i32.const 65816 )
+        (i32.const 3 ) ) )
+    (drop (call $-string
+        (i32.const 65832 )
+        (i32.const 6 ) ) )
+    (drop (call $-string
+        (i32.const 65848 )
+        (i32.const 8 ) ) )
+    (drop (call $-string
+        (i32.const 65872 )
+        (i32.const 4 ) ) )
+    (drop (call $-string
+        (i32.const 65888 )
+        (i32.const 6 ) ) )
+    (drop (call $-string
+        (i32.const 65904 )
+        (i32.const 8 ) ) )
+    (drop (call $-string
+        (i32.const 65928 )
+        (i32.const 5 ) ) )
+    (drop (call $-string
+        (i32.const 65944 )
+        (i32.const 6 ) ) )
+    (drop (call $-string
+        (i32.const 65960 )
+        (i32.const 6 ) ) )
+    (drop (call $-string
+        (i32.const 65976 )
+        (i32.const 6 ) ) )
+    (drop (call $-string
+        (i32.const 65992 )
+        (i32.const 5 ) ) )
+    (drop (call $-string
+        (i32.const 66008 )
+        (i32.const 7 ) ) )
+    (drop (call $-string
+        (i32.const 66024 )
+        (i32.const 4 ) ) )
+    (drop (call $-string
+        (i32.const 66040 )
+        (i32.const 4 ) ) )
+    (drop (call $-string
+        (i32.const 66056 )
+        (i32.const 4 ) ) )
+    (drop (call $-string
+        (i32.const 66072 )
+        (i32.const 6 ) ) )
     (drop (call $-string
         (i32.const 66088 )
         (i32.const 22 ) ) )
@@ -8900,20 +9195,25 @@
       (get_global $ns0\_callbacks ) )
     (drop (get_global $ns2\read ) )
     (drop (get_global $ns2\list ) )
-    (drop (get_global $ns2\finished ) )
+    (drop (get_global $ns2\finish ) )
     (drop (get_global $ns2\error ) )
-    (drop (get_global $ns3\error ) )
     (drop (get_global $ns3\src ) )
     (drop (get_global $ns3\pos ) )
     (drop (get_global $ns3\line ) )
     (drop (get_global $ns3\column ) )
     (drop (get_global $ns3\pos_stack ) )
-    (drop (get_global $ns3\sections ) )
-    (drop (get_global $ns3\wasm ) )
-    (drop (get_global $ns3\local_names ) )
-    (drop (get_global $ns3\blocks ) )
+    (drop (get_global $ns4\error ) )
+    (drop (get_global $ns4\src ) )
+    (drop (get_global $ns4\pos ) )
+    (drop (get_global $ns4\line ) )
+    (drop (get_global $ns4\column ) )
+    (drop (get_global $ns4\pos_stack ) )
+    (drop (get_global $ns4\sections ) )
+    (drop (get_global $ns4\wasm ) )
+    (drop (get_global $ns4\local_names ) )
+    (drop (get_global $ns4\blocks ) )
     (drop
-      (set_global $ns5\opcodes
+      (set_global $ns6\opcodes
         (tee_local $-obj0 (call $-new_value
             (i32.const 5 )
             (i32.const 0 ) ) )
@@ -10149,206 +10449,206 @@
           (call $-get_from_obj
             (get_local $-obj0 )
             (i32.const 255 ) ) ) )
-      (get_global $ns5\opcodes ) )
+      (get_global $ns6\opcodes ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 256 )
         (call $-number (f64.const 0xa7 ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 256 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 257 )
         (call $-number (f64.const 0xa8 ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 257 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 258 )
         (call $-number (f64.const 0xa9 ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 258 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 259 )
         (call $-number (f64.const 0xaa ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 259 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 260 )
         (call $-number (f64.const 0xab ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 260 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 261 )
         (call $-number (f64.const 0xac ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 261 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 262 )
         (call $-number (f64.const 0xad ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 262 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 263 )
         (call $-number (f64.const 0xae ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 263 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 264 )
         (call $-number (f64.const 0xaf ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 264 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 265 )
         (call $-number (f64.const 0xb0 ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 265 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 266 )
         (call $-number (f64.const 0xb1 ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 266 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 267 )
         (call $-number (f64.const 0xb2 ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 267 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 268 )
         (call $-number (f64.const 0xb3 ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 268 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 269 )
         (call $-number (f64.const 0xb4 ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 269 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 270 )
         (call $-number (f64.const 0xb5 ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 270 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 271 )
         (call $-number (f64.const 0xb6 ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 271 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 272 )
         (call $-number (f64.const 0xb7 ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 272 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 273 )
         (call $-number (f64.const 0xb8 ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 273 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 274 )
         (call $-number (f64.const 0xb9 ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 274 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 275 )
         (call $-number (f64.const 0xba ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 275 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 276 )
         (call $-number (f64.const 0xbb ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 276 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 277 )
         (call $-number (f64.const 0xbc ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 277 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 278 )
         (call $-number (f64.const 0xbd ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 278 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 279 )
         (call $-number (f64.const 0xbe ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 279 ) ) )
     (drop
       (call $-set_to_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 280 )
         (call $-number (f64.const 0xbf ) ) )
       (call $-get_from_obj
-        (get_global $ns5\opcodes )
+        (get_global $ns6\opcodes )
         (i32.const 280 ) ) ) )
   (start $-start )
 
@@ -13208,16 +13508,21 @@
     (call $-passdown (get_global $ns0\_callbacks ) )
     (call $-passdown (get_global $ns2\read ) )
     (call $-passdown (get_global $ns2\list ) )
-    (call $-passdown (get_global $ns2\finished ) )
+    (call $-passdown (get_global $ns2\finish ) )
     (call $-passdown (get_global $ns2\error ) )
-    (call $-passdown (get_global $ns3\error ) )
     (call $-passdown (get_global $ns3\src ) )
     (call $-passdown (get_global $ns3\pos ) )
     (call $-passdown (get_global $ns3\line ) )
     (call $-passdown (get_global $ns3\column ) )
     (call $-passdown (get_global $ns3\pos_stack ) )
-    (call $-passdown (get_global $ns3\sections ) )
-    (call $-passdown (get_global $ns3\wasm ) )
-    (call $-passdown (get_global $ns3\local_names ) )
-    (call $-passdown (get_global $ns3\blocks ) )
-    (call $-passdown (get_global $ns5\opcodes ) ) ) )
+    (call $-passdown (get_global $ns4\error ) )
+    (call $-passdown (get_global $ns4\src ) )
+    (call $-passdown (get_global $ns4\pos ) )
+    (call $-passdown (get_global $ns4\line ) )
+    (call $-passdown (get_global $ns4\column ) )
+    (call $-passdown (get_global $ns4\pos_stack ) )
+    (call $-passdown (get_global $ns4\sections ) )
+    (call $-passdown (get_global $ns4\wasm ) )
+    (call $-passdown (get_global $ns4\local_names ) )
+    (call $-passdown (get_global $ns4\blocks ) )
+    (call $-passdown (get_global $ns6\opcodes ) ) ) )

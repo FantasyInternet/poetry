@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node old_cli.js index.poem -t test/index.wast -b index.wasm --debug test/index.debug.json",
     "test": "npm run build && mocha",
-    "watch": "watch \"npm test\" . --wait 16 -d"
+    "watch": "watch \"npm test\" . --wait 8 -d"
   },
   "bin": {
     "poetry": "./cli.js"

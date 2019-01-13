@@ -1,0 +1,58 @@
+var src
+var pos
+var line
+var column
+var pos_stack
+
+func load_src _src
+  src = _src
+  rewind
+
+func rewind
+  pos = 0
+  line = 1
+  column = 0
+  pos_stack = array
+
+func save_pos
+  var p =
+    :pos = 0+pos
+    :line = 0+line
+    :column = 0+column
+  array_push pos_stack p
+  return p
+
+func restore_pos
+  var p = array_pop pos_stack
+  pos = p:pos
+  line = p:line
+  column = p:column
+  return p
+
+func pop_pos
+  return array_pop pos_stack
+
+func croak message
+  return message + "! (<input>:" + line + ":" + column + ")"
+
+func unexpected actual expected
+  var message = "unexpected token '" + actual + "'"
+  if expected
+    message += ", where " + expected + " should be"
+  return croak message
+
+func is_eof
+  return pos >= (size_of src)
+
+func peek_char
+  return ""+binary_slice src pos 1
+
+func read_char
+  var char = peek_char
+  pos++
+  column++
+  if char == "\n"
+    line++
+    column = 0
+  return char
+

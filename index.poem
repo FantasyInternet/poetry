@@ -19,12 +19,13 @@ export "init" init
   poetry\read = #read
   poetry\list = #list
   poetry\compile (get_input) #finish
-  if poetry\error
-    send_error poetry\error
 
 func finish output
-  _push_from_memory (address_of output) (size_of output)
-  _finish
+  if poetry\error
+    send_error poetry\error
+  else
+    _push_from_memory (address_of output) (size_of output)
+    _finish
 
 func log msg
   _push_from_memory (address_of msg) (size_of msg)

@@ -19,14 +19,14 @@ describe("Poetry", function () {
             result = new Buffer(error.stack)
           }
           try {
-            target = fs.readFileSync(examples + file.replace(".poem", ".txt"))
+            target = fs.readFileSync(examples + file.replace(".poem", ".wasm"))
           } catch (error) {
-            fs.writeFileSync(examples + file.replace(".poem", ".txt"), result)
+            fs.writeFileSync(examples + file.replace(".poem", ".wasm"), result)
           }
           try {
             assert.deepEqual(result, target)
           } catch (error) {
-            fs.writeFileSync(examples + file.replace(".poem", ".json"), result)
+            fs.writeFileSync(examples + file.replace(".poem", ".txt"), result)
             assert.deepEqual(result, target.slice(0, result.byteLength))
             console.warn("\t ↙` " + ("" + result.byteLength / target.byteLength * 100).substr(0, 4) + "% match")
           }

@@ -1,20 +1,21 @@
-include "bnny/bnny.poem"
+include "./tokenizer.poem"
+include "bnny/bnny.poem" bnny\
 
 ~ filesystem callbacks
 var read
 var list
-var finished
+var finish
 
 var error
 
 func compile filename callback
-  finished = callback
+  finish = callback
   #read filename #load_file
 
 func load_file success data reqId
   if success
-    #finished (string_upper data)
+    #finish (string_upper data)
   else
     error = "sorry, sir! I just couldn't do it!"
-    #finished null
+    #finish null
 
